@@ -37,7 +37,7 @@ class JobScore(BaseModel):
     gaps: list[str] = Field(description="requirements the person does not clearly meet")
     hard_blockers: list[str] = Field(description="dealbreakers: wrong country without visa, clearance, >N years gap, etc. Empty if none")
     action: Literal["apply", "maybe", "skip"]
-    one_line: str = Field(description="one plain sentence a human would say about this job, no hype")
+    one_line: str = Field(description="one plain sentence to the person about this job, addressing them as 'you'; no pronouns like she/he")
 
 
 def score_job(job: dict) -> JobScore:

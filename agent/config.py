@@ -15,7 +15,7 @@ RESUME_OUT = OUT_DIR / "resumes"
 PROFILE_DIR = ROOT / "profile" if (ROOT / "profile").exists() else ROOT / "profile.example"
 MASTER_DIR = PROFILE_DIR / "master"
 DOCS_DIR = ROOT / "docs"
-DB_PATH = DATA_DIR / "jobs.sqlite"
+DB_PATH = Path(os.getenv("JHA_DB", str(DATA_DIR / "jobs.sqlite")))
 
 for d in (DATA_DIR, RESUME_OUT, OUT_DIR / "emails"):
     d.mkdir(parents=True, exist_ok=True)
