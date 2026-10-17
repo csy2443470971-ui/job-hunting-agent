@@ -5,6 +5,8 @@
 A personal agent that turns your own material into job applications: it finds postings, ranks them, writes a
 one-page résumé from facts you approved, fills the form or drafts the email, and waits for you to say yes.
 
+**New here? Start with the [User guide](USER_GUIDE.md).**
+
 ![Pipeline](docs/architecture.svg)
 
 ## The seven steps
@@ -38,6 +40,9 @@ python -m agent.run daily              # discover, rank, compose, write, fill fo
 python -m dashboard.app                # http://127.0.0.1:8765
 python -m agent.run submit             # submit what you approved, in a visible browser
 ```
+
+Several stories at once: keep one storybook per story under `profiles/` and pick it with `JHA_PROFILE=profiles/<story>`.
+Voice notes in `inbox/` are transcribed locally if `faster-whisper` is installed.
 
 Other commands: `intake`, `discover`, `score`, `tailor <job_id>`, `cover <job_id>`, `prepare`, `outbox`, `status`.
 

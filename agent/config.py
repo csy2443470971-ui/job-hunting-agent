@@ -12,7 +12,11 @@ load_dotenv(ROOT / ".env")
 DATA_DIR = ROOT / "data"
 OUT_DIR = ROOT / "out"
 RESUME_OUT = OUT_DIR / "resumes"
-PROFILE_DIR = ROOT / "profile" if (ROOT / "profile").exists() else ROOT / "profile.example"
+# One storybook per story you want to tell: JHA_PROFILE=profiles/design-engineer python -m agent.run daily
+PROFILE_DIR = Path(os.getenv("JHA_PROFILE")).expanduser() if os.getenv("JHA_PROFILE") else (
+    ROOT / "profile" if (ROOT / "profile").exists() else ROOT / "profile.example")
+if not PROFILE_DIR.is_absolute():
+    PROFILE_DIR = ROOT / PROFILE_DIR
 MASTER_DIR = PROFILE_DIR / "master"
 DOCS_DIR = ROOT / "docs"
 DB_PATH = Path(os.getenv("JHA_DB", str(DATA_DIR / "jobs.sqlite")))

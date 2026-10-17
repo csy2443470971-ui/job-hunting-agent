@@ -132,7 +132,13 @@ def answer_form(job: dict, questions: list[dict]) -> FormAnswers:
     task = f"Answer this application form. Anything only {config.first_name()} can answer goes in needs_human with a short reason."
     body = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\n\n## QUESTIONS\n" +
             json.dumps(questions, ensure_ascii=False, indent=1) + "\n\n## POSTING\n" + (job.get('description') or '')[:8000])
-    return structured(_system(task), body, FormAnswers, effort="medium", max_tokens=8000)
+    fa = structured(_system(task), body, FormAnswers, effort="medium", max_tokens=8000)
+    from .apply.identity import identity_answer
+    for a in fa.answers:
+        v = identity_answer(a.question)
+        if v is not None:
+            a.answer, a.provenance, a.note = v, "master", "identity rule: legal name first"
+    return fa
 
 
 # ---------------------------------------------------------------- email / proposal

@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from .inspect_form import JS as FIELDS_JS
+from .identity import identity_answer
 
 
 def _norm(s: str) -> str:
@@ -34,7 +35,9 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
                 if lab and resume_pdf and ("resume" in lab or "cv" in lab):
                     pg.set_input_files(sel, resume_pdf); log.append(f"attached résumé → {f['label']}")
                 continue
-            val = next((v for k, v in answers.items() if _norm(k) and _norm(k) in lab), None)
+            val = identity_answer(f["label"])          # legal name first; preferred name only in its own field
+            if val is None:
+                val = next((v for k, v in answers.items() if _norm(k) and _norm(k) in lab), None)
             if val is None:
                 if f["required"]: log.append(f"UNFILLED required: {f['label']}")
                 continue

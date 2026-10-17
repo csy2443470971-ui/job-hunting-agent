@@ -1,5 +1,7 @@
 # Copy this folder to profile/ and replace everything. profile/ is git-ignored.
 name: Alex Rivera
+legal_name: {first: Alejandro, last: Rivera}
+preferred_name: Alex
 email: alex@example.com
 phone: "(555) 010-0000"
 location: "Brooklyn, NY · open to relocation"

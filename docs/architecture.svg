@@ -1,21 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 860" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
-  <title>Job Hunting Agent · pipeline</title>
-  <style>
-    .node { fill:#FFFFFF; stroke:#1F1F1F; stroke-width:1.6; }
-    .gate { fill:#EDF3EC; stroke:#4F7A5B; stroke-width:1.6; }
-    .num { font-size:10px; fill:#9B9A97; letter-spacing:.08em; }
-    .name { font-size:15px; font-weight:600; fill:#1F1F1F; }
-    .lab { font-size:10.5px; fill:#8A8984; text-anchor:middle; }
-    .ic { fill:none; stroke:#1F1F1F; stroke-width:1.5; stroke-linejoin:round; stroke-linecap:round; }
-    .icf { fill:#F3EEE3; stroke:#1F1F1F; stroke-width:1.5; stroke-linejoin:round; }
-    .flow { stroke:#1F1F1F; stroke-width:1.5; fill:none; }
-    .tie { stroke:#C9C7C2; stroke-width:1.2; fill:none; }
-    .loop { stroke:#4F7A5B; stroke-width:1.3; fill:none; stroke-dasharray:3 4; }
-  </style>
-  <defs>
-    <marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#1F1F1F"/></marker>
-    <marker id="arg" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4F7A5B"/></marker>
-    <!-- icons, drawn in a 28x28 box centred on 0,0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 1086" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Job Hunting Agent · pipeline</title>
+<style>
+  .node{fill:#fff;stroke:#1F1F1F;stroke-width:1.6}.gate{fill:#EDF3EC;stroke:#4F7A5B;stroke-width:1.6}
+  .num{font-size:10px;fill:#9B9A97;letter-spacing:.08em}.name{font-size:15px;font-weight:600;fill:#1F1F1F}
+  .tool{font-size:10.5px;fill:#787774;font-family:ui-monospace,Menlo,monospace}
+  .lab{font-size:10.5px;fill:#8A8984;text-anchor:middle}.hd{font-size:10px;fill:#9B9A97;letter-spacing:.14em;text-anchor:middle}
+  .ic{fill:none;stroke:#1F1F1F;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}.icf{fill:#F3EEE3;stroke:#1F1F1F;stroke-width:1.5;stroke-linejoin:round}
+  .flow{stroke:#1F1F1F;stroke-width:1.5;fill:none}.tie{stroke:#C9C7C2;stroke-width:1.2;fill:none}
+  .route{fill:#fff;stroke:#1F1F1F;stroke-width:1.4}.rl{font-size:10.5px;fill:#5F5E5B}
+  .no{stroke:#B54A3F;stroke-width:1.3;fill:none;stroke-dasharray:3 3}.loop{stroke:#4F7A5B;stroke-width:1.3;fill:none;stroke-dasharray:3 4}
+</style>
+<defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#1F1F1F"/></marker><marker id="arg" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4F7A5B"/></marker><marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#B54A3F"/></marker>
     <g id="doc"><path class="icf" d="M-9 -12 h12 l6 6 v18 h-18 z"/><path class="ic" d="M-5 -2 h10 M-5 3 h10 M-5 8 h6"/></g>
     <g id="mic"><rect class="icf" x="-5" y="-13" width="10" height="16" rx="5"/><path class="ic" d="M-9 -1 a9 9 0 0 0 18 0 M0 8 v5 M-5 13 h10"/></g>
     <g id="book"><path class="icf" d="M-12 -11 q6 -3 12 0 v22 q-6 -3 -12 0 z"/><path class="icf" d="M12 -11 q-6 -3 -12 0 v22 q6 -3 12 0 z"/></g>
@@ -24,55 +19,95 @@
     <g id="bars"><path class="ic" d="M-12 -9 h24 M-12 -1 h17 M-12 7 h10"/></g>
     <g id="page"><path class="icf" d="M-10 -13 h20 v26 h-20 z"/><path class="ic" d="M-6 -7 h12 M-6 -2 h12 M-6 3 h12 M-6 8 h7"/></g>
     <g id="mail"><rect class="icf" x="-13" y="-9" width="26" height="18" rx="2"/><path class="ic" d="M-13 -8 l13 10 l13 -10"/></g>
+    <g id="form"><rect class="icf" x="-11" y="-13" width="22" height="26" rx="2"/><path class="ic" d="M-7 -6 h14 M-7 0 h14 M-7 6 h8"/></g>
     <g id="check"><rect x="-11" y="-11" width="22" height="22" rx="5" fill="#4F7A5B"/><path d="M-5 0 l4 4 l7 -8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g>
     <g id="plane"><path class="icf" d="M-13 1 L13 -10 L3 12 L-1 4 Z"/><path class="ic" d="M-1 4 L13 -10"/></g>
     <g id="person"><circle class="icf" cx="0" cy="-6" r="5.5"/><path class="icf" d="M-10 12 q10 -14 20 0 z"/></g>
-  </defs>
-  <rect width="520" height="860" fill="#FBFAF8"/>
-  <text x="40" y="46" font-size="20" font-weight="700" fill="#1F1F1F">Job Hunting Agent</text>
-
-  <!-- node column: x 175..345, step 112 -->
-  <g transform="translate(0,84)">
-    <!-- 01 Intake -->
-    <use href="#doc" x="70" y="22"/><use href="#mic" x="108" y="22"/><text class="lab" x="89" y="58">résumés, notes</text>
-    <path class="tie" d="M124 22 H171"/>
-    <rect class="node" x="175" y="0" width="170" height="44" rx="22"/><text class="num" x="199" y="26">01</text><text class="name" x="222" y="27">Intake</text>
-    <path class="tie" d="M345 22 H392"/><use href="#book" x="420" y="22"/><text class="lab" x="420" y="58">storybook</text>
-  </g>
-  <path class="flow" d="M260 128 V194" marker-end="url(#ar)"/>
-  <g transform="translate(0,196)">
-    <use href="#grid" x="98" y="22"/><text class="lab" x="98" y="58">job boards</text><path class="tie" d="M116 22 H171"/>
-    <rect class="node" x="175" y="0" width="170" height="44" rx="22"/><text class="num" x="199" y="26">02</text><text class="name" x="222" y="27">Discover</text>
-    <path class="tie" d="M345 22 H398"/><use href="#cards" x="420" y="22"/><text class="lab" x="420" y="58">postings</text>
-  </g>
-  <path class="flow" d="M260 240 V306" marker-end="url(#ar)"/>
-  <g transform="translate(0,308)">
-    <rect class="node" x="175" y="0" width="170" height="44" rx="22"/><text class="num" x="199" y="26">03</text><text class="name" x="222" y="27">Rank</text>
-    <path class="tie" d="M345 22 H398"/><use href="#bars" x="420" y="22"/><text class="lab" x="420" y="58">best fits</text>
-  </g>
-  <path class="flow" d="M260 352 V418" marker-end="url(#ar)"/>
-  <g transform="translate(0,420)">
-    <use href="#book" x="98" y="22"/><text class="lab" x="98" y="58">storybook</text><path class="tie" d="M116 22 H171"/>
-    <rect class="node" x="175" y="0" width="170" height="44" rx="22"/><text class="num" x="199" y="26">04</text><text class="name" x="222" y="27">Compose</text>
-    <path class="tie" d="M345 22 H404"/><use href="#page" x="420" y="22"/><text class="lab" x="420" y="58">1-page résumé</text>
-  </g>
-  <path class="flow" d="M260 464 V530" marker-end="url(#ar)"/>
-  <g transform="translate(0,532)">
-    <rect class="node" x="175" y="0" width="170" height="44" rx="22"/><text class="num" x="199" y="26">05</text><text class="name" x="222" y="27">Write</text>
-    <path class="tie" d="M345 22 H403"/><use href="#mail" x="420" y="22"/><text class="lab" x="420" y="58">answers, email</text>
-  </g>
-  <path class="flow" d="M260 576 V642" marker-end="url(#ar)"/>
-  <g transform="translate(0,644)">
-    <use href="#person" x="98" y="22"/><text class="lab" x="98" y="58">you</text><path class="tie" d="M116 22 H171"/>
-    <rect class="gate" x="175" y="0" width="170" height="44" rx="22"/><text class="num" x="199" y="26">06</text><text class="name" x="222" y="27">Review</text>
-    <path class="tie" d="M345 22 H405"/><use href="#check" x="420" y="22"/><text class="lab" x="420" y="58">approved</text>
-  </g>
-  <!-- reject loop back to Compose -->
-  <path class="loop" d="M175 666 H150 V442 H171" marker-end="url(#arg)"/>
-  <text class="lab" x="150" y="560" transform="rotate(-90 150 560)" style="fill:#4F7A5B">reject</text>
-  <path class="flow" d="M260 688 V754" marker-end="url(#ar)"/>
-  <g transform="translate(0,756)">
-    <rect class="node" x="175" y="0" width="170" height="44" rx="22"/><text class="num" x="199" y="26">07</text><text class="name" x="222" y="27">Apply</text>
-    <path class="tie" d="M345 22 H405"/><use href="#plane" x="420" y="22"/><text class="lab" x="420" y="58">sent</text>
-  </g>
+    <g id="tag"><path class="icf" d="M-12 -6 h14 l8 6 l-8 6 h-14 z"/><circle cx="-6" cy="0" r="2" fill="#1F1F1F"/></g></defs>
+<rect width="660" height="1086" fill="#FBFAF8"/>
+<text x="40" y="50" font-size="20" font-weight="700" fill="#1F1F1F">Job Hunting Agent</text>
+<text class="hd" x="105" y="112">INPUT</text><text class="hd" x="330" y="112">STEP · TOOLS</text><text class="hd" x="555" y="112">OUTPUT</text>
+<path stroke="#E6E4DF" stroke-width="1" d="M40 122 H620"/>
+<use href="#doc" x="89" y="177"/>
+<use href="#mic" x="121" y="177"/>
+<text class="lab" x="105" y="211">résumés, voice notes</text>
+<path class="tie" d="M141 177 H216" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<rect class="node" x="220" y="150" width="220" height="54" rx="14"/>
+<text class="num" x="236" y="173">01</text><text class="name" x="258" y="174">Intake</text>
+<text class="tool" x="258" y="192">file reader · LLM</text>
+<path class="tie" d="M444 177 H537" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<use href="#book" x="555" y="177"/>
+<text class="lab" x="555" y="211">storybook</text>
+<path class="flow" d="M330 204 V276" marker-end="url(#ar)"/>
+<use href="#grid" x="105" y="305"/>
+<text class="lab" x="105" y="339">job boards</text>
+<path class="tie" d="M125 305 H216" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<rect class="node" x="220" y="278" width="220" height="54" rx="14"/>
+<text class="num" x="236" y="301">02</text><text class="name" x="258" y="302">Discover</text>
+<text class="tool" x="258" y="320">ATS APIs · HN search</text>
+<path class="tie" d="M444 305 H537" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<use href="#cards" x="555" y="305"/>
+<text class="lab" x="555" y="339">postings</text>
+<path class="flow" d="M330 332 V404" marker-end="url(#ar)"/>
+<use href="#cards" x="105" y="433"/>
+<text class="lab" x="105" y="467">postings</text>
+<path class="tie" d="M125 433 H216" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<rect class="node" x="220" y="406" width="220" height="54" rx="14"/>
+<text class="num" x="236" y="429">03</text><text class="name" x="258" y="430">Rank</text>
+<text class="tool" x="258" y="448">Jev · LLM</text>
+<path class="tie" d="M444 433 H537" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<use href="#bars" x="555" y="433"/>
+<text class="lab" x="555" y="467">fit score, role</text>
+<path class="flow" d="M330 460 V486"/>
+<rect class="route" x="322" y="489" width="16" height="16" transform="rotate(45 330 497)"/>
+<path class="flow" d="M330 508 V532" marker-end="url(#ar)"/>
+<text class="rl" x="348" y="501">fit ≥ threshold</text>
+<path class="no" d="M442 497 H535" marker-end="url(#arr)"/><text class="rl" x="547" y="501" style="fill:#B54A3F">skip</text>
+<use href="#book" x="89" y="561"/>
+<use href="#tag" x="121" y="561"/>
+<text class="lab" x="105" y="595">storybook, role</text>
+<path class="tie" d="M141 561 H216" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<rect class="node" x="220" y="534" width="220" height="54" rx="14"/>
+<text class="num" x="236" y="557">04</text><text class="name" x="258" y="558">Compose</text>
+<text class="tool" x="258" y="576">selector · PDF render</text>
+<path class="tie" d="M444 561 H537" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<use href="#page" x="555" y="561"/>
+<text class="lab" x="555" y="595">1-page résumé</text>
+<path class="flow" d="M330 588 V660" marker-end="url(#ar)"/>
+<use href="#page" x="105" y="689"/>
+<text class="lab" x="105" y="723">posting, résumé</text>
+<path class="tie" d="M125 689 H216" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<rect class="node" x="220" y="662" width="220" height="54" rx="14"/>
+<text class="num" x="236" y="685">05</text><text class="name" x="258" y="686">Write</text>
+<text class="tool" x="258" y="704">LLM · writing check</text>
+<path class="tie" d="M444 689 H521" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<use href="#form" x="539" y="689"/>
+<use href="#mail" x="571" y="689"/>
+<text class="lab" x="555" y="723">answers, email</text>
+<path class="flow" d="M330 716 V788" marker-end="url(#ar)"/>
+<use href="#person" x="105" y="817"/>
+<text class="lab" x="105" y="851">you</text>
+<path class="tie" d="M125 817 H216" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<rect class="gate" x="220" y="790" width="220" height="54" rx="14"/>
+<text class="num" x="236" y="813">06</text><text class="name" x="258" y="814">Review</text>
+<text class="tool" x="258" y="832">checklist · dashboard</text>
+<path class="tie" d="M444 817 H537" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<use href="#check" x="555" y="817"/>
+<text class="lab" x="555" y="851">approved</text>
+<path class="flow" d="M330 844 V870"/>
+<rect class="route" x="322" y="873" width="16" height="16" transform="rotate(45 330 881)"/>
+<path class="flow" d="M330 892 V916" marker-end="url(#ar)"/>
+<text class="rl" x="348" y="885">approve</text>
+<path class="loop" d="M319 881 H188 V575 H218" marker-end="url(#arg)"/>
+<text class="rl" x="180" y="875" style="fill:#4F7A5B;text-anchor:end">reject</text>
+<use href="#check" x="105" y="945"/>
+<text class="lab" x="105" y="979">approved</text>
+<path class="tie" d="M125 945 H216" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<rect class="node" x="220" y="918" width="220" height="54" rx="14"/>
+<text class="num" x="236" y="941">07</text><text class="name" x="258" y="942">Apply</text>
+<text class="tool" x="258" y="960">Playwright · Gmail</text>
+<path class="tie" d="M444 945 H537" marker-end="url(#ar)" style="stroke:#C9C7C2"/>
+<use href="#plane" x="555" y="945"/>
+<text class="lab" x="555" y="979">submitted, sent</text>
+<text class="tool" x="40" y="1064">LLM = Anthropic API · open-source via OpenAI-compatible server · local Claude Code</text>
 </svg>

@@ -26,9 +26,31 @@ def read_any(path: Path) -> str:
         with zipfile.ZipFile(path) as z:
             xml = z.read("word/document.xml").decode("utf-8", "ignore")
         return re.sub(r"<[^>]+>", " ", xml.replace("</w:p>", "\n"))
+    if suf in (".m4a", ".mp3", ".wav", ".mp4", ".mov", ".webm"):
+        return transcribe(path)
     if suf in (".md", ".txt", ".vtt", ".srt", ".json", ".csv", ".html"):
         return path.read_text(encoding="utf-8", errors="ignore")
     return ""
+
+
+def transcribe(path: Path) -> str:
+    """Voice notes: talk through a job, a project, what you want next. Uses local whisper if installed."""
+    cached = path.with_suffix(path.suffix + ".txt")
+    if cached.exists():
+        return cached.read_text(encoding="utf-8")
+    try:
+        from faster_whisper import WhisperModel
+        segs, _ = WhisperModel("small", compute_type="int8").transcribe(str(path))
+        text = " ".join(s.text.strip() for s in segs)
+    except ImportError:
+        try:
+            import whisper
+            text = whisper.load_model("small").transcribe(str(path))["text"]
+        except ImportError:
+            print(f"  ! {path.name}: install faster-whisper (pip install faster-whisper) or drop a transcript next to it")
+            return ""
+    cached.write_text(text, encoding="utf-8")
+    return text
 
 
 class Line(BaseModel):
@@ -53,7 +75,8 @@ class Storybook(BaseModel):
 
 
 def run() -> Path | None:
-    files = [p for p in sorted(INBOX.glob("**/*")) if p.is_file() and not p.name.startswith(".")]
+    files = [p for p in sorted(INBOX.glob("**/*")) if p.is_file() and not p.name.startswith(".")
+             and not (p.suffix == ".txt" and p.with_suffix("").suffix in (".m4a", ".mp3", ".wav", ".mp4", ".mov", ".webm"))]
     if not files:
         return None
     corpus = "\n\n".join(f"<<<FILE {p.name}>>>\n{read_any(p)[:40000]}" for p in files)

@@ -1,6 +1,7 @@
 # personal data: never published
 .env
 profile/
+profiles/
 data/
 out/
 inbox/*
