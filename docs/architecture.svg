@@ -2,12 +2,12 @@
 <title>Job Hunting Agent · pipeline</title>
 <style>
   .node{fill:#fff;stroke:#1F1F1F;stroke-width:1.6}.gate{fill:#EDF3EC;stroke:#4F7A5B;stroke-width:1.6}
-  .num{font-size:10px;fill:#9B9A97;letter-spacing:.08em}.name{font-size:15px;font-weight:600;fill:#1F1F1F}
-  .tool{font-size:10.5px;fill:#787774;font-family:ui-monospace,Menlo,monospace}
-  .lab{font-size:10.5px;fill:#8A8984;text-anchor:middle}.hd{font-size:10px;fill:#9B9A97;letter-spacing:.14em;text-anchor:middle}
+  .num{font-size:10px;font-weight:700;fill:#37352F;letter-spacing:.08em}.name{font-size:15px;font-weight:600;fill:#1F1F1F}
+  .tool{font-size:10.5px;font-weight:700;fill:#2563EB;font-family:ui-monospace,Menlo,monospace}
+  .lab{font-size:10.5px;fill:#37352F;text-anchor:middle}.hd{font-size:11px;font-weight:700;fill:#D9730D;letter-spacing:.14em;text-anchor:middle}
   .ic{fill:none;stroke:#1F1F1F;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}.icf{fill:#F3EEE3;stroke:#1F1F1F;stroke-width:1.5;stroke-linejoin:round}
   .flow{stroke:#1F1F1F;stroke-width:1.5;fill:none}.tie{stroke:#C9C7C2;stroke-width:1.2;fill:none}
-  .route{fill:#fff;stroke:#1F1F1F;stroke-width:1.4}.rl{font-size:10.5px;fill:#5F5E5B}
+  .route{fill:#fff;stroke:#1F1F1F;stroke-width:1.4}.rl{font-size:10.5px;font-weight:700;fill:#2563EB}
   .no{stroke:#B54A3F;stroke-width:1.3;fill:none;stroke-dasharray:3 3}.loop{stroke:#4F7A5B;stroke-width:1.3;fill:none;stroke-dasharray:3 4}
 </style>
 <defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#1F1F1F"/></marker><marker id="arg" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4F7A5B"/></marker><marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#B54A3F"/></marker>
@@ -27,7 +27,7 @@
 <rect width="660" height="1086" fill="#FBFAF8"/>
 <text x="40" y="50" font-size="20" font-weight="700" fill="#1F1F1F">Job Hunting Agent</text>
 <text class="hd" x="105" y="112">INPUT</text><text class="hd" x="330" y="112">STEP · TOOLS</text><text class="hd" x="555" y="112">OUTPUT</text>
-<path stroke="#E6E4DF" stroke-width="1" d="M40 122 H620"/>
+<path stroke="#F0C9A4" stroke-width="1.2" d="M40 122 H620"/>
 <use href="#doc" x="89" y="177"/>
 <use href="#mic" x="121" y="177"/>
 <text class="lab" x="105" y="211">résumés, voice notes</text>
