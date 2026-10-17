@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ r.name }} resume</title>
+<style>
+  :root { --s: {{ scale }}; --ink:#111; --mute:#555; --rule:#ddd; }
+  @page { size: Letter; margin: 0.55in 0.6in; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink);
+         font-size: calc(10.2pt * var(--s)); line-height: 1.32; }
+  h1 { font-size: calc(19pt * var(--s)); margin:0; letter-spacing:-0.01em; font-weight:700; }
+  .head { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; border-bottom:1.2px solid var(--ink); padding-bottom: calc(6px * var(--s)); }
+  .headline { color: var(--mute); margin-top:2px; font-size: calc(10.5pt * var(--s)); }
+  .contact { text-align:right; font-size: calc(9pt * var(--s)); color: var(--mute); line-height:1.4; }
+  .contact div { white-space: nowrap; }
+  h2 { font-size: calc(8.6pt * var(--s)); text-transform: uppercase; letter-spacing: .12em; color: var(--mute);
+       margin: calc(11px * var(--s)) 0 calc(4px * var(--s)); border-bottom:1px solid var(--rule); padding-bottom:2px; font-weight:600; }
+  .summary { margin-top: calc(8px * var(--s)); }
+  .job { margin-bottom: calc(7px * var(--s)); }
+  .row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .org { font-weight:700; }
+  .role { font-weight:400; color:#222; }
+  .dates { color: var(--mute); font-size: calc(9pt * var(--s)); white-space:nowrap; }
+  ul { margin: 2px 0 0; padding-left: 14px; }
+  li { margin: 0 0 1.5px; }
+  .proj { margin-bottom: calc(4px * var(--s)); }
+  a { color: inherit; text-decoration: underline; text-decoration-color: #9aa; text-underline-offset: 2px; }
+  .contact a { text-decoration: none; }
+  .contact .hl a { text-decoration: underline; text-decoration-color: #9aa; text-underline-offset: 2px; color: var(--ink); }
+  .skills div { margin-bottom: 1.5px; }
+  .skills b { font-weight:600; }
+  .two { display:grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div>
+      <h1>{{ r.name }}</h1>
+      <div class="headline">{{ r.headline }}</div>
+    </div>
+    <div class="contact">
+      <div><a href="mailto:{{ r.email }}">{{ r.email }}</a>{% if r.phone %} · {{ r.phone }}{% endif %}</div>
+      {% if r.location %}<div>{{ r.location }}</div>{% endif %}
+      <div class="hl">{% for l in r.header_links %}<a href="{{ l.url | href }}">{{ l.label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+  </div>
+
+  {% if r.summary %}<p class="summary">{{ r.summary }}</p>{% endif %}
+
+  <h2>Experience</h2>
+  {% for e in r.experience %}
+  <div class="job">
+    <div class="row"><div><span class="org">{% if e.org_link %}<a href="{{ e.org_link | href }}">{{ e.org }}</a>{% else %}{{ e.org }}{% endif %}</span> · <span class="role">{{ e.role }}</span>{% if e.location %} <span class="dates">· {{ e.location }}</span>{% endif %}</div><div class="dates">{{ e.dates }}</div></div>
+    <ul>{% for b in e.bullets %}<li>{{ linkify(b.text, b.link_text or '', b.link or '') }}</li>{% endfor %}</ul>
+  </div>
+  {% endfor %}
+
+  {% if r.projects %}
+  <h2>Selected Projects</h2>
+  {% for p in r.projects %}
+  <div class="proj"><b>{% if p.link %}<a href="{{ p.link | href }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</b> · {{ p.blurb }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <h2>Education</h2>
+  {% for ed in r.education %}
+  <div class="row"><div><b>{{ ed.school }}</b>, {{ ed.degree }}</div><div class="dates">{{ ed.dates }}</div></div>
+  {% if ed.note %}<div class="dates" style="margin:-1px 0 3px">{{ ed.note }}</div>{% endif %}
+  {% endfor %}
+
+  <h2>Skills</h2>
+  <div class="skills">{% for g in r.skills %}<div><b>{{ g.label }}:</b> {{ g['items'] | join(', ') }}</div>{% endfor %}</div>
+</body>
+</html>

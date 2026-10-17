@@ -1,0 +1,42 @@
+# Role families = the lenses in profile/master/06-roles.md. Keep names identical to the lens names there.
+# `seniority_guard` tells the scorer which postings in a family to cap at 50 and queue as "maybe".
+families:
+  - name: ai_product
+    titles: ["AI Product Designer", "Product Designer, AI", "AI Experience Designer", "Applied AI Designer", "Forward Deployed Designer", "Founding Designer", "Design Lead"]
+    keywords: ["llm", "agent", "agentic", "multi-agent", "rag", "prompt", "evals", "claude", "gpt", "copilot", "ai-native", "human-in-the-loop"]
+    not: ["ml research scientist", "phd required"]
+  - name: product_design
+    titles: ["Product Designer", "UX Designer", "UX/UI Designer", "Interaction Designer", "Senior Product Designer", "Founding Designer"]
+    keywords: ["figma", "design system", "prototyping", "user flows", "usability", "b2b", "saas", "end-to-end"]
+    not: ["graphic designer only", "print only"]
+  - name: ux_research
+    titles: ["UX Researcher", "Design Researcher", "User Researcher", "Mixed-Methods Researcher", "Research Lead", "Insights"]
+    keywords: ["qualitative", "quantitative", "interviews", "usability", "synthesis", "personas", "jtbd", "mixed methods", "insights"]
+    not: ["market research analyst (quant only)", "data scientist"]
+  - name: design_engineer
+    titles: ["Design Engineer", "Creative Technologist", "UX Engineer", "Front-end Designer", "Prototyper", "Design Technologist"]
+    keywords: ["react", "typescript", "next.js", "tailwind", "prototyping", "design systems", "webgl", "three.js", "motion", "framer", "storybook"]
+    not: ["backend", "devops"]
+  - name: art_director
+    seniority_guard: "cap 50 for senior AD / ACD / 5+ yrs campaign; target digital/interactive, associate, junior AD"
+    titles: ["Digital Art Director", "Art Director", "Associate Art Director", "Visual Designer", "Brand Designer", "Digital Designer", "Interactive Designer", "Web Designer"]
+    keywords: ["art direction", "brand", "identity", "typography", "visual language", "web design", "interactive", "digital experience", "3d", "motion"]
+    not: ["copywriter"]
+  - name: motion
+    seniority_guard: "skip postings that require an After Effects / C4D broadcast reel; target real-time, web, interaction motion"
+    titles: ["Motion Designer", "Interaction Designer", "Creative Developer", "Real-time Designer", "Immersive Designer", "Prototyper"]
+    keywords: ["motion", "animation", "three.js", "webgl", "gsap", "rive", "lottie", "micro-interactions", "immersive", "xr", "real-time"]
+    not: ["3d character animator", "vfx compositor"]
+  - name: strategy
+    titles: ["Design Strategist", "Strategy Designer", "Innovation Consultant", "Service Designer", "Business Designer", "Strategy Analyst"]
+    keywords: ["strategy", "research", "roadmap", "service design", "business model", "stakeholder", "workshop", "foresight", "innovation"]
+    not: ["management consultant (finance only)"]
+  - name: brand_strategy
+    titles: ["Brand Strategist", "Creative Strategist", "Content Strategist", "Marketing Designer", "Brand & Content Designer"]
+    keywords: ["brand strategy", "positioning", "messaging", "narrative", "content strategy", "campaign", "storytelling", "brand system"]
+    not: ["media buyer", "performance marketing only", "seo specialist"]
+  - name: founders_office
+    seniority_guard: "early-stage only; skip quota-carrying enterprise sales roles"
+    titles: ["Founder's Associate", "Chief of Staff", "Business Development Associate", "Partnerships Associate", "Strategy & Operations Associate", "GTM Strategist"]
+    keywords: ["business development", "partnerships", "outreach", "gtm", "go-to-market", "fundraising", "pitch deck", "strategy and operations", "founder"]
+    not: ["account executive quota", "sdr cold calling"]

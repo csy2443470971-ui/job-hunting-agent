@@ -1,0 +1,36 @@
+# Hard and soft preferences. The scorer and the tailor read this file.
+# Fill in what applies; delete what doesn't.
+
+identity: {}   # contact details live in profile.yaml
+eligibility:
+  work_authorization: []
+  needs_sponsorship: null
+  # Standing answers the agent may fill in forms on the person's behalf (user-approved, 2026-10-17)
+  standing_answers: {}   # e.g. {"require visa sponsorship": "No"}
+  willing_to_relocate: [] # countries/cities
+  remote_ok: true
+  timezones_ok: []        # e.g. ["UTC-8..UTC-4", "UTC+0..UTC+2"]
+
+targets:
+  sector_weights:       # 1.0 = top priority, 0 = ignore
+    climate: 1.0
+    ai: 1.0
+    design_agency: 1.0
+    creative: 0.9
+    tech: 0.8
+    other: 0.3
+  seniority: []          # e.g. ["mid", "senior", "lead"]
+  employment_types: ["full-time", "contract"]
+  salary_floor: null     # number + currency, e.g. "90000 USD"
+  avoid_companies: []
+  avoid_keywords: []     # e.g. ["defense", "gambling", "crypto"]
+
+automation:
+  jev_min: 0.35          # Jev P(apply) below this = skipped before any Claude call
+  daily_score_limit: 60   # Claude scoring calls per daily run (ordered by Jev, else keyword relevance)
+  min_score_to_apply: 70
+  min_score_to_queue: 55
+  diy_max: 0.15          # share of résumé/answers content allowed to be invented
+  max_applications_per_day: 15
+  auto_approve_kinds: ["ats_web"]   # standard ATS applications: agent fills the form, you confirm the submit click
+  always_approve_kinds: ["email", "proposal", "social_mention"]  # need your click

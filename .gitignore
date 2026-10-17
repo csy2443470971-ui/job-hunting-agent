@@ -1,0 +1,16 @@
+# personal data: never published
+.env
+profile/
+data/
+out/
+inbox/*
+!inbox/.gitkeep
+docs/01-what-i-need-from-you.md
+docs/04-architecture.md
+docs/archive-*
+dashboard/static/live-editor.js
+# runtime
+__pycache__/
+*.pyc
+.DS_Store
+.claude/settings.local.json

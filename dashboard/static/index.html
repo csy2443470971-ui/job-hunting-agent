@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Hunting Agent</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<style>
+  :root { --bg:#FFFFFF; --side:#F7F6F3; --ink:#37352F; --mute:#787774; --faint:#9B9A97; --line:#EDECE9; --hover:#EFEEEB;
+          --ok:#4F7A5B; --okbg:#EDF3EC; --warn:#A5683A; --warnbg:#FBF3DB; --bad:#B54A3F; --badbg:#FDEBEC; --accent:#6E8B74; --code:#F7F6F3; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#191919; --side:#202020; --ink:#E6E5E2; --mute:#9B9A97; --faint:#6F6E6B;
+          --line:#2F2F2F; --hover:#2A2A2A; --okbg:#1F2A22; --warnbg:#2E2717; --badbg:#2F1C1B; --code:#252525; } }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font:14.5px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; display:flex; }
+  a { color:inherit; text-underline-offset:3px; text-decoration-color:var(--faint); }
+  /* sidebar */
+  aside { width:236px; flex:none; background:var(--side); border-right:1px solid var(--line); padding:14px 8px; display:flex; flex-direction:column; gap:2px; position:sticky; top:0; height:100vh; }
+  .brand { display:flex; align-items:center; gap:10px; padding:6px 10px 16px; font-weight:600; }
+  .brand img { width:26px; height:26px; }
+  .nav { all:unset; display:flex; justify-content:space-between; align-items:center; padding:5px 10px; border-radius:6px; color:var(--mute); cursor:pointer; font-size:14px; }
+  .nav:hover { background:var(--hover); } .nav.on { background:var(--hover); color:var(--ink); font-weight:500; }
+  .count { font-size:12px; color:var(--faint); }
+  .side-foot { margin-top:auto; padding:10px; font-size:12px; color:var(--faint); }
+  /* page */
+  main { flex:1; min-width:0; overflow:auto; }
+  .page { max-width:860px; margin:0 auto; padding:56px 40px 120px; }
+  h1 { font-size:32px; line-height:1.2; margin:0 0 6px; font-weight:700; letter-spacing:-0.01em; }
+  .sub { color:var(--mute); margin:0 0 28px; }
+  .empty { color:var(--faint); padding:40px 0; }
+  /* blocks */
+  .item { border-top:1px solid var(--line); padding:18px 0 14px; }
+  .item:first-of-type { border-top:0; }
+  .row { display:flex; gap:12px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+  .title { font-size:16px; font-weight:600; }
+  .meta { color:var(--mute); font-size:13px; }
+  .pill { display:inline-block; font-size:12px; padding:1px 8px; border-radius:4px; background:var(--hover); color:var(--mute); margin-right:4px; }
+  .pill.ok { background:var(--okbg); color:var(--ok); } .pill.warn { background:var(--warnbg); color:var(--warn); } .pill.bad { background:var(--badbg); color:var(--bad); }
+  .checks { list-style:none; padding:0; margin:12px 0 6px; display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:4px 18px; font-size:13.5px; }
+  .checks li { display:flex; gap:8px; align-items:flex-start; }
+  .tick { width:16px; height:16px; border-radius:4px; flex:none; margin-top:2px; display:grid; place-items:center; font-size:11px; color:#fff; }
+  .tick.y { background:var(--ok); } .tick.n { background:transparent; border:1.5px solid var(--faint); }
+  .checks small { color:var(--faint); display:block; }
+  .btn { all:unset; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:13.5px; border:1px solid var(--line); }
+  .btn:hover { background:var(--hover); }
+  .btn.primary { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .btn.primary:hover { opacity:.88; }
+  .btn[disabled] { opacity:.4; pointer-events:none; }
+  details { margin-top:6px; } summary { cursor:pointer; color:var(--mute); font-size:13.5px; padding:3px 0; list-style:none; }
+  summary::before { content:"▸"; display:inline-block; width:14px; transition:transform .15s; } details[open] > summary::before { transform:rotate(90deg); }
+  pre, textarea { white-space:pre-wrap; font:13px/1.55 ui-monospace, Menlo, monospace; background:var(--code); border:0; border-radius:6px; padding:12px 14px; width:100%; color:var(--ink); margin:6px 0; }
+  textarea { min-height:180px; resize:vertical; outline:none; }
+  input[type=text] { font:inherit; width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink); margin:3px 0; }
+  .qa { margin:10px 0; } .qa .q { color:var(--mute); font-size:13px; }
+  .callout { background:var(--warnbg); border-radius:6px; padding:10px 14px; margin:10px 0; font-size:13.5px; }
+  .callout ul { margin:4px 0 0; padding-left:18px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { text-align:left; font-weight:500; color:var(--mute); border-bottom:1px solid var(--line); padding:6px 8px; }
+  td { border-bottom:1px solid var(--line); padding:7px 8px; vertical-align:top; }
+  td.n { font-variant-numeric:tabular-nums; width:48px; color:var(--mute); }
+  .pb { display:grid; grid-template-columns:200px 1fr; gap:24px; }
+  .pb-list .nav { font-size:13.5px; }
+  .md h1 { font-size:24px; } .md h2 { font-size:18px; margin-top:28px; } .md table { margin:8px 0; } .md td, .md th { border:1px solid var(--line); }
+  .md mark { background:var(--warnbg); color:var(--warn); padding:0 3px; border-radius:3px; }
+  .log td:first-child { white-space:nowrap; color:var(--faint); width:130px; }
+  @media (max-width:760px) { body { display:block; } aside { position:static; width:auto; height:auto; flex-direction:row; flex-wrap:wrap; }
+    .side-foot { display:none; } .page { padding:28px 16px 80px; } .pb { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<aside data-lve-skip>
+  <div class="brand"><img src="/static/icon.svg" alt=""><span>Job Hunting Agent</span></div>
+  <button class="nav on" data-tab="review">Review <span class="count" id="c-review"></span></button>
+  <button class="nav" data-tab="apps">Applications <span class="count" id="c-apps"></span></button>
+  <button class="nav" data-tab="jobs">Jobs <span class="count" id="c-jobs"></span></button>
+  <button class="nav" data-tab="storybook">Storybook</button>
+  <button class="nav" data-tab="activity">Activity</button>
+  <div class="side-foot" id="lastrun"></div>
+</aside>
+<main><div class="page" id="page" data-lve-skip></div></main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const api = (p, o) => fetch(p, o).then(r => r.json());
+const post = (p, b) => api(p, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(b || {})});
+const day = s => s ? new Date(s).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : '';
+let tab = 'review', pbFile = null, pbMode = 'read';
+
+const KIND = {ats_web:'Application form', email:'Email', proposal:'Proposal', social_mention:'Reply to a post', manual:'Apply by hand'};
+const STATUS = {pending_approval:['Needs review','warn'], approved:['Approved','ok'], sent:['Sent','ok'], failed:['Failed','bad'], withdrawn:['Withdrawn',''], draft:['Draft','']};
+
+async function counts() {
+  const s = await api('/api/stats'); const a = s.applications || {}, j = s.jobs || {};
+  $('#c-review').textContent = a.pending_approval || '';
+  $('#c-apps').textContent = Object.values(a).reduce((x, y) => x + y, 0) || '';
+  $('#c-jobs').textContent = (j.queued || 0) + (j.new || 0) || '';
+  $('#lastrun').textContent = s.last_run ? 'Last run ' + day(s.last_run.started_at) : 'No daily run yet';
+}
+
+async function appBlock(a) {
+  const checks = await api(`/api/applications/${a.id}/checklist`);
+  const ready = checks.filter(c => c.label !== 'Approved by you').every(c => c.ok !== false);
+  const [st, cls] = STATUS[a.status] || [a.status, ''];
+  const aj = a.answers_json || {};
+  const who = a.job_company || a.company_name || 'Untitled', rawT = a.job_title || ''; const what = (rawT.includes('|') ? rawT.split('|')[1].trim() : rawT) || KIND[a.kind] || '';
+  let h = `<div class="item"><div class="row"><div><div class="title">${esc(who)}</div>
+    <div class="meta">${esc(what)} · ${KIND[a.kind] || a.kind}${a.job_score != null ? ' · fit ' + a.job_score : ''} · ${day(a.created_at)}</div></div>
+    <div><span class="pill ${cls}">${st}</span></div></div>
+    <ul class="checks">${checks.map(c => `<li><span class="tick ${c.ok ? 'y' : 'n'}">${c.ok ? '✓' : ''}</span><span>${esc(c.label)}${c.detail && !c.ok ? `<small>${esc(c.detail)}</small>` : ''}</span></li>`).join('')}</ul>`;
+  if ((aj.needs_human || []).length) h += `<div class="callout">Only you can answer these<ul>${aj.needs_human.map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`;
+  if (a.status === 'pending_approval') h += `<div class="row" style="justify-content:flex-start;gap:8px;margin:8px 0">
+      <button class="btn primary" ${ready ? '' : 'disabled title="Open items above"'} onclick="decide(${a.id},'approve')">Approve</button>
+      <button class="btn" onclick="decide(${a.id},'reject')">Reject</button>
+      ${a.job_url ? `<a class="btn" href="${esc(a.job_url)}" target="_blank">Posting</a>` : ''}</div>`;
+  if (a.resume_pdf) h += `<details><summary>Résumé</summary><p><a href="/resume/${a.id}" target="_blank">Open the PDF</a></p></details>`;
+  if (['email','proposal','social_mention'].includes(a.kind)) h += `<details ${a.status==='pending_approval'?'open':''}><summary>Email</summary>
+      <input type="text" id="to-${a.id}" value="${esc(a.email_to||'')}" placeholder="To">
+      <input type="text" id="subj-${a.id}" value="${esc(a.email_subject||'')}" placeholder="Subject">
+      <textarea id="body-${a.id}">${esc(a.email_body||'')}</textarea>
+      <button class="btn" onclick="saveEmail(${a.id}, this)">Save</button></details>`;
+  if ((aj.answers || []).length) h += `<details><summary>Form answers</summary>${aj.answers.filter(x => x.answer).map(x => `<div class="qa"><div class="q">${esc(x.question)}</div><pre>${esc(x.answer)}</pre></div>`).join('')}</details>`;
+  if ((a.sent_log || '').includes('screenshot:')) h += `<details><summary>Filled form</summary><img src="/screen/${a.id}" style="max-width:100%;border:1px solid var(--line);border-radius:6px"></details>`;
+  if (a.diy_notes) h += `<details><summary>Notes</summary><pre>${esc(a.diy_notes)}</pre></details>`;
+  return h + '</div>';
+}
+
+async function decide(id, what) { await post(`/api/applications/${id}/${what}`); render(); }
+async function saveEmail(id, b) {
+  await post(`/api/applications/${id}/edit`, {email_to: $(`#to-${id}`).value, email_subject: $(`#subj-${id}`).value, email_body: $(`#body-${id}`).value});
+  b.textContent = 'Saved'; setTimeout(() => b.textContent = 'Save', 1200);
+}
+
+async function renderStorybook(p) {
+  const files = (await api('/api/playbook')).filter(f => !f.name.startsWith('_'));
+  if (!pbFile && files.length) pbFile = files[0].name;
+  const doc = pbFile ? await api('/api/playbook/' + pbFile) : {text:''};
+  const open = (doc.text.match(/\[(fill|confirm)[^\]]*\]/g) || []).length;
+  const body = pbMode === 'edit' ? `<textarea id="pb-text" style="min-height:70vh">${esc(doc.text)}</textarea>`
+    : `<div class="md">${(window.marked ? marked.parse(doc.text) : '<pre>' + esc(doc.text) + '</pre>').replace(/\[(fill|confirm)([^\]]*)\]/g, '<mark>[$1$2]</mark>')}</div>`;
+  p.innerHTML = `<h1>Storybook</h1><p class="sub">Everything the agent knows about you. Résumés use only what is written here.</p>
+    <div class="pb"><div class="pb-list">${files.map(f => `<button class="nav ${f.name===pbFile?'on':''}" onclick="pbFile='${f.name}';render()">${esc(f.name.replace(/^\d+-/, '').replace('.md',''))} ${f.fill + f.confirm ? `<span class="count">${f.fill + f.confirm}</span>` : ''}</button>`).join('')}</div>
+    <div><div class="row" style="margin-bottom:8px"><span class="meta">${open} open item${open===1?'':'s'}</span><span>
+      <button class="btn" onclick="pbMode=pbMode==='edit'?'read':'edit';render()">${pbMode==='edit'?'Done':'Edit'}</button>
+      ${pbMode==='edit'?'<button class="btn primary" onclick="savePb(this)">Save</button>':''}</span></div>${body}</div></div>`;
+}
+async function savePb(b) { await api('/api/playbook/' + pbFile, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: $('#pb-text').value})}); b.textContent = 'Saved'; setTimeout(() => b.textContent = 'Save', 1200); }
+
+async function render() {
+  counts();
+  document.querySelectorAll('aside .nav').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  const p = $('#page');
+  if (tab === 'review') {
+    const apps = await api('/api/applications?status=pending_approval');
+    p.innerHTML = `<h1>Review</h1><p class="sub">Nothing is submitted or sent until you approve it. Approve unlocks when every check passes.</p>` +
+      (apps.length ? (await Promise.all(apps.map(appBlock))).join('') : '<div class="empty">Nothing waiting for you.</div>');
+  } else if (tab === 'apps') {
+    const apps = (await api('/api/applications')).filter(a => a.status !== 'pending_approval');
+    p.innerHTML = `<h1>Applications</h1><p class="sub">Approved, sent and closed, with exactly what was filled in.</p>` +
+      (apps.length ? (await Promise.all(apps.map(appBlock))).join('') : '<div class="empty">No applications yet.</div>');
+  } else if (tab === 'jobs') {
+    const jobs = await api('/api/jobs?limit=300');
+    p.innerHTML = `<h1>Jobs</h1><p class="sub">Scored postings, best fit first.</p><table><tr><th>Fit</th><th>Role</th><th>Status</th></tr>${jobs.map(j =>
+      `<tr><td class="n">${j.score ?? ''}</td><td><a href="${esc(j.url)}" target="_blank"><b>${esc(j.company)}</b></a> · ${esc(j.title)}<div class="meta">${esc(j.score_reason || '')}</div></td><td class="meta">${esc(j.status)}</td></tr>`).join('')}</table>`;
+  } else if (tab === 'storybook') {
+    await renderStorybook(p);
+  } else if (tab === 'activity') {
+    const ev = await api('/api/events');
+    p.innerHTML = `<h1>Activity</h1><p class="sub">Every step the agent took and every decision you made.</p>` + (ev.length ? `<table class="log">${ev.map(e =>
+      `<tr><td>${new Date(e.at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td><b>${esc(e.node)}</b> · ${esc(e.action)}<div class="meta">${esc(e.detail || '')}</div></td></tr>`).join('')}</table>` : '<div class="empty">No activity recorded yet.</div>');
+  }
+}
+document.querySelectorAll('aside .nav').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+render();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="/static/live-editor.js" defer></script>
+</body>
+</html>

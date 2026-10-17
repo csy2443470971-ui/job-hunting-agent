@@ -1,0 +1,197 @@
+"""All Claude calls live here: scoring, résumé tailoring, email/proposal drafting.
+
+Design rules (from the user):
+- Content must come from the master documents. Anything not traceable to them is
+  "DIY" and the share of DIY content must stay <= 15% (preferences.diy_max).
+- Voice must not read as machine-written. docs/02-writing-style-guide.md is loaded
+  into the system prompt when present and is the authority on voice.
+"""
+from __future__ import annotations
+import json
+from typing import Literal
+from pydantic import BaseModel, Field
+from . import config
+from .providers import structured  # anthropic | openai_compat | claude_code, see agent/providers.py
+
+
+def _brief() -> str:
+    return (config.DOCS_DIR / "00-house-rules.md").read_text(encoding="utf-8").replace("{name}", config.first_name())
+
+
+def _system(task: str = "") -> list[dict]:
+    """Stable, cached prefix: the writing brief, preferences, the master documents. Then a short task line."""
+    prefs = json.dumps(config.preferences(), ensure_ascii=False)
+    blocks = [{"type": "text", "text": _brief() + "\n\n## Preferences\n" + prefs + "\n\n## Master documents\n" + config.master_text(),
+               "cache_control": {"type": "ephemeral"}}]
+    if task:
+        blocks.append({"type": "text", "text": "## Task\n" + task})
+    return blocks
+
+
+# ---------------------------------------------------------------- scoring
+class JobScore(BaseModel):
+    score: int = Field(description="0-100 relevance of this posting to the person, considering role fit, sector priority, seniority and location/visa constraints")
+    role_family: str = Field(description="which of the person's role families this maps to, or 'none'")
+    sector: Literal["climate", "ai", "design_agency", "creative", "tech", "other"]
+    fit_reasons: list[str] = Field(description="3-5 concrete overlaps between the posting and the person's record")
+    gaps: list[str] = Field(description="requirements the person does not clearly meet")
+    hard_blockers: list[str] = Field(description="dealbreakers: wrong country without visa, clearance, >N years gap, etc. Empty if none")
+    action: Literal["apply", "maybe", "skip"]
+    one_line: str = Field(description="one plain sentence a human would say about this job, no hype")
+
+
+def score_job(job: dict) -> JobScore:
+    roles = config.roles()
+    posting = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\nLocation: {job.get('location')}\n"
+               f"Remote: {job.get('remote')}\nURL: {job.get('url')}\n\n{(job.get('description') or '')[:12000]}")
+    return structured(_system(f"Judge whether {config.first_name()} is a credible candidate for this posting, as a strict recruiter in that field would. "
+                       "Map it to one role family below; respect that family's seniority guard (cap at 50, action 'maybe'). "
+                       "Work authorisation is settled, so it is never a blocker. Role families: " + json.dumps(roles, ensure_ascii=False)), posting, JobScore, effort="low", max_tokens=2000, model=config.MODEL_SCORE)
+
+
+# ---------------------------------------------------------------- résumé
+class Bullet(BaseModel):
+    text: str
+    link_text: str = Field(default="", description="exact substring of text to make clickable, usually a project name like 'Cocut'; '' if none")
+    link: str = Field(default="", description="URL for link_text, copied from the master documents; '' if none")
+    provenance: Literal["master", "adapted", "new"] = Field(description="master = copied/condensed from the documents; adapted = reworded but same facts; new = not in the documents (counts as DIY)")
+
+
+class Experience(BaseModel):
+    org: str
+    org_link: str = Field(default="", description="URL for the org or project name if the master documents give one, else ''")
+    role: str
+    dates: str
+    location: str = ""
+    bullets: list[Bullet]
+
+
+class Project(BaseModel):
+    name: str
+    blurb: str
+    link: str = ""
+    provenance: Literal["master", "adapted", "new"] = "master"
+
+
+class Education(BaseModel):
+    school: str
+    degree: str
+    dates: str
+    note: str = ""
+
+
+class SkillGroup(BaseModel):
+    label: str
+    items: list[str]
+
+
+class ResumeContent(BaseModel):
+    name: str
+    headline: str = Field(description="ignored: the headline is set in code to a plain job title")
+    email: str
+    phone: str = ""
+    location: str = ""
+    links: list[str] = Field(description="portfolio, LinkedIn, GitHub - as bare domains/paths")
+    summary: str = Field(description="2-3 sentences max, specific, in the person's own phrasing. May be empty if the documents suggest they don't use one")
+    experience: list[Experience]
+    projects: list[Project] = []
+    education: list[Education]
+    skills: list[SkillGroup]
+    diy_ratio: float = Field(description="fraction of bullets/blurbs with provenance 'new' (0-1)")
+    diy_notes: list[str] = Field(description="every 'new' item and why it was needed")
+    tailoring_notes: list[str] = Field(description="what was emphasised or dropped for this posting, 3-6 items")
+
+
+def tailor_resume(job: dict, score: JobScore | None = None) -> ResumeContent:
+    diy_max = config.preferences().get("automation", {}).get("diy_max", 0.15)
+    task = (f"Build the one-page résumé content for this posting through the matching lens in 06-roles.md. "
+            f"Mark each item's provenance honestly; 'new' items must stay under {diy_max:.0%}. "
+            "Where a piece of work has a URL in the master documents, set link_text and link.")
+    posting = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\nLocation: {job.get('location')}\n\n{(job.get('description') or '')[:12000]}")
+    if score:
+        posting += "\n\n## SCORING NOTES\n" + score.model_dump_json(indent=1)
+    return structured(_system(task), "Build the one-page résumé content for this posting.\n\n" + posting, ResumeContent, effort="high", max_tokens=16000)
+
+
+# ---------------------------------------------------------------- answers
+class FormAnswer(BaseModel):
+    question: str
+    answer: str
+    provenance: Literal["master", "adapted", "new", "skipped"]
+    note: str = ""
+
+
+class FormAnswers(BaseModel):
+    answers: list[FormAnswer]
+    diy_ratio: float
+    needs_human: list[str] = Field(description="questions we must not answer on the person's behalf (salary, visa, legal attestations, EEO) or could not answer")
+
+
+def answer_form(job: dict, questions: list[dict]) -> FormAnswers:
+    """questions: [{label, required, type, options?}] extracted from the ATS form."""
+    task = f"Answer this application form. Anything only {config.first_name()} can answer goes in needs_human with a short reason."
+    body = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\n\n## QUESTIONS\n" +
+            json.dumps(questions, ensure_ascii=False, indent=1) + "\n\n## POSTING\n" + (job.get('description') or '')[:8000])
+    return structured(_system(task), body, FormAnswers, effort="medium", max_tokens=8000)
+
+
+# ---------------------------------------------------------------- email / proposal
+class EmailDraft(BaseModel):
+    to_guess: str = Field(description="best guess at recipient (name/role), or '' if unknown. Never invent an email address")
+    subject: str
+    body: str = Field(description="plain text, <= 160 words for applications, <= 260 for proposals; ends with a specific ask")
+    diy_ratio: float
+    diy_notes: list[str]
+    why_them: str = Field(description="one sentence: the specific thing about this company this email hinges on")
+
+
+def draft_email(kind: Literal["application", "proposal", "social_mention"], company: str, context: str,
+                problem_statement: str = "") -> EmailDraft:
+    task = (f"Write a {kind.replace('_', ' ')} email from {config.first_name()} to this company. Hinge it on one concrete thing in the context; "
+            "if the context is thin, write less rather than pad.")
+    body = f"Company: {company}\n\n## CONTEXT (posting / post / article)\n{context[:10000]}"
+    if problem_statement:
+        body += f"\n\n## THEIR STATED PROBLEM\n{problem_statement}\n\nPropose, in 2-3 sentences, what the person would do about it, grounded in what they have actually done."
+    return structured(_system(task), body, EmailDraft, effort="high", max_tokens=4000)
+
+
+# ---------------------------------------------------------------- voice repair
+class Repaired(BaseModel):
+    text: str = Field(description="the rewritten text, same facts, same length or shorter")
+
+
+def repair_text(text: str, problems: str, kind: str = "resume") -> str:
+    """Rewrite one bullet / answer / email so it passes the style guide's bans. Facts must not change."""
+    return structured(_system("Rewrite the text to fix the listed problems. Same facts, same or shorter length."), f"Kind: {kind}\nProblems:\n{problems}\n\nText:\n{text}", Repaired, effort="low", max_tokens=4000).text
+
+
+def clean_resume(content: "ResumeContent") -> list[str]:
+    """Lint every bullet and blurb; repair hard issues in place; return remaining issue notes."""
+    from .voicecheck import lint, report
+    left = []
+    def fix(s: str) -> str:
+        iss = [i for i in lint(s, "resume") if i.level == "hard"]
+        if not iss:
+            return s
+        s2 = repair_text(s, report(iss), "resume bullet")
+        rest = [i for i in lint(s2, "resume") if i.level == "hard"]
+        if rest:
+            left.append(f"still flagged after repair: {s2} :: {report(rest)}")
+        return s2
+    content.summary = fix(content.summary)
+    for e in content.experience:
+        for b in e.bullets:
+            b.text = fix(b.text)
+    for p in content.projects:
+        p.blurb = fix(p.blurb)
+    left += [f"[soft] {i.what}" for i in lint("\n".join([content.summary] + [b.text for e in content.experience for b in e.bullets]), "resume") if i.level == "soft"]
+    return left
+
+
+def clean_text(text: str, kind: str) -> tuple[str, list[str]]:
+    from .voicecheck import lint, report
+    hard = [i for i in lint(text, kind) if i.level == "hard"]
+    if hard:
+        text = repair_text(text, report(hard), kind)
+    rest = lint(text, kind)
+    return text, [f"[{i.level}] {i.what}" for i in rest]

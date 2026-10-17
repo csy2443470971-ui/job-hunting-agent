@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Job Hunting Agent">
+  <!-- Flat paper-plane icon, redrawn as vector from a Lovart concept (GPT Image 2.5, 2026-10-17) -->
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#F3EEE3"/>
+  <g stroke="#1F1F1F" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <g transform="rotate(-14 112 96)">
+      <path d="M70 52 h70 l18 18 v66 h-88 z" fill="#FFFDF8"/>
+      <path d="M140 52 v18 h18" fill="none"/>
+      <circle cx="94" cy="84" r="10" fill="#6E8B74" stroke="none"/>
+      <path d="M79 110 q15 -16 30 0" fill="#6E8B74" stroke="none"/>
+      <path d="M120 82 h24 M120 97 h24 M86 122 h56" fill="none"/>
+    </g>
+    <path d="M34 144 L222 76 L116 156 Z" fill="#7C9A82"/>
+    <path d="M116 156 L222 76 L136 208 Z" fill="#6E8B74"/>
+    <path d="M116 156 L136 208 L104 184 Z" fill="#4E6A55"/>
+    <path d="M28 190 h36 M40 212 h28" fill="none"/>
+  </g>
+</svg>

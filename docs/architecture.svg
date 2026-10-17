@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 470" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Job Hunting Agent · pipeline</title>
+  <style>
+    .box { fill:#FFFFFF; stroke:#1F1F1F; stroke-width:1.5; }
+    .gate { fill:#EDF3EC; stroke:#4F7A5B; stroke-width:1.5; }
+    .n { font-size:11px; fill:#9B9A97; letter-spacing:.06em; }
+    .t { font-size:15px; font-weight:600; fill:#1F1F1F; }
+    .c { font-size:12px; fill:#5F5E5B; }
+    .line { stroke:#1F1F1F; stroke-width:1.5; fill:none; }
+    .soft { stroke:#C9C7C2; stroke-width:1.2; fill:none; stroke-dasharray:3 4; }
+    .band { fill:#F7F6F3; }
+    .bt { font-size:12.5px; font-weight:600; fill:#37352F; }
+    .bc { font-size:12px; fill:#787774; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#1F1F1F"/></marker></defs>
+  <rect width="1240" height="470" fill="#FBFAF8"/>
+  <text x="40" y="52" font-size="22" font-weight="700" fill="#1F1F1F">Job Hunting Agent</text>
+  <text x="40" y="76" class="c">Seven steps from your material to a sent application. Nothing leaves without your approval.</text>
+
+  <!-- nodes: x = 40 + i*170, width 150 -->
+  <g>
+    <rect class="box" x="40" y="120" width="150" height="72" rx="10"/>
+    <text class="n" x="56" y="142">01</text><text class="t" x="56" y="166">Intake</text>
+    <text class="c" x="40" y="216">Old résumés, notes and</text><text class="c" x="40" y="232">transcripts become a</text><text class="c" x="40" y="248">storybook draft you check.</text>
+  </g>
+  <g>
+    <rect class="box" x="210" y="120" width="150" height="72" rx="10"/>
+    <text class="n" x="226" y="142">02</text><text class="t" x="226" y="166">Discover</text>
+    <text class="c" x="210" y="216">Company job boards,</text><text class="c" x="210" y="232">Hacker News, niche boards,</text><text class="c" x="210" y="248">posts that mention hiring.</text>
+  </g>
+  <g>
+    <rect class="box" x="380" y="120" width="150" height="72" rx="10"/>
+    <text class="n" x="396" y="142">03</text><text class="t" x="396" y="166">Rank</text>
+    <text class="c" x="380" y="216">Jev rates every posting;</text><text class="c" x="380" y="232">a model reviews the best</text><text class="c" x="380" y="248">and picks the role lens.</text>
+  </g>
+  <g>
+    <rect class="box" x="550" y="120" width="150" height="72" rx="10"/>
+    <text class="n" x="566" y="142">04</text><text class="t" x="566" y="166">Compose</text>
+    <text class="c" x="550" y="216">Matches storybook lines</text><text class="c" x="550" y="232">to the role. One-page</text><text class="c" x="550" y="248">PDF, links embedded.</text>
+  </g>
+  <g>
+    <rect class="box" x="720" y="120" width="150" height="72" rx="10"/>
+    <text class="n" x="736" y="142">05</text><text class="t" x="736" y="166">Write</text>
+    <text class="c" x="720" y="216">Form answers, cover</text><text class="c" x="720" y="232">letter, why this company.</text><text class="c" x="720" y="248">Draft prompts, still tuning.</text>
+  </g>
+  <g>
+    <rect class="gate" x="890" y="120" width="150" height="72" rx="10"/>
+    <text class="n" x="906" y="142">06</text><text class="t" x="906" y="166">Review</text>
+    <text class="c" x="890" y="216">A checklist must pass,</text><text class="c" x="890" y="232">then you approve or</text><text class="c" x="890" y="248">reject in the dashboard.</text>
+  </g>
+  <g>
+    <rect class="box" x="1060" y="120" width="140" height="72" rx="10"/>
+    <text class="n" x="1076" y="142">07</text><text class="t" x="1076" y="166">Apply</text>
+    <text class="c" x="1060" y="216">Fills the form or sends</text><text class="c" x="1060" y="232">the email. CAPTCHAs and</text><text class="c" x="1060" y="248">LinkedIn stay with you.</text>
+  </g>
+  <path class="line" d="M190 156 H206" marker-end="url(#a)"/>
+  <path class="line" d="M360 156 H376" marker-end="url(#a)"/>
+  <path class="line" d="M530 156 H546" marker-end="url(#a)"/>
+  <path class="line" d="M700 156 H716" marker-end="url(#a)"/>
+  <path class="line" d="M870 156 H886" marker-end="url(#a)"/>
+  <path class="line" d="M1040 156 H1056" marker-end="url(#a)"/>
+  <!-- reject loops back to compose -->
+  <path class="soft" d="M965 120 V100 H625 V116"/>
+  <text class="bc" x="740" y="94">rejected drafts go back with your edits</text>
+
+  <!-- shared layers -->
+  <rect class="band" x="40" y="290" width="1160" height="44" rx="8"/>
+  <text class="bt" x="58" y="317">Storybook</text>
+  <text class="bc" x="140" y="317">Your facts, written once. Résumé lines tagged by role. Compose and Write may only use what is here.</text>
+  <path class="soft" d="M115 248 V286"/><path class="soft" d="M625 290 V256"/><path class="soft" d="M795 290 V256"/>
+
+  <rect class="band" x="40" y="346" width="1160" height="44" rx="8"/>
+  <text class="bt" x="58" y="373">Activity log</text>
+  <text class="bc" x="152" y="373">Every step, approval, submission and email, with time and detail.</text>
+
+  <rect class="band" x="40" y="402" width="1160" height="44" rx="8"/>
+  <text class="bt" x="58" y="429">Models</text>
+  <text class="bc" x="122" y="429">Pluggable: Anthropic API · any OpenAI-compatible server (Ollama, vLLM, LM Studio) · local Claude Code. Jev for ranking.</text>
+</svg>

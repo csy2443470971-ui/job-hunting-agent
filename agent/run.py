@@ -1,0 +1,331 @@
+"""CLI entry point.
+
+  python -m agent.run discover            # pull new postings from every configured source
+  python -m agent.run score [--limit N]   # score unscored postings
+  python -m agent.run tailor JOB_ID       # build résumé + draft for one job -> application row
+  python -m agent.run probe SLUG          # find a company's ATS board token
+  python -m agent.run status              # counts
+  python -m agent.run daily               # discover + score + tailor top matches (what the scheduler runs)
+"""
+from __future__ import annotations
+import argparse
+import json
+import sys
+from . import config, db
+from .sources import ats, hn_hiring
+
+
+def discover(con) -> dict:
+    from .audit import log
+    counts = {}
+    for entry in config.companies():
+        try:
+            jobs = ats.fetch_company(entry)
+        except Exception as e:  # network hiccups should not kill the run
+            print(f"  ! {entry.get('name')}: {e}", file=sys.stderr)
+            continue
+        new = sum(db.upsert_job(con, j)[1] for j in jobs)
+        counts[entry["name"]] = (len(jobs), new)
+    try:
+        kws = [k for fam in config.roles().get("families", []) for k in fam.get("keywords", [])]
+        hn = hn_hiring.fetch(keywords=kws or None)
+        counts["HN who is hiring"] = (len(hn), sum(db.upsert_job(con, j)[1] for j in hn))
+    except Exception as e:
+        print(f"  ! hn: {e}", file=sys.stderr)
+    log(con, "discover", "run", json.dumps({k: v[1] for k, v in counts.items()}))
+    return counts
+
+
+def _patterns() -> tuple[list[str], list[str]]:
+    fams = config.roles().get("families", [])
+    titles = [t.lower() for f in fams for t in f.get("titles", [])]
+    kws = [k.lower() for f in fams for k in f.get("keywords", [])]
+    return titles, kws
+
+
+def prefilter(con) -> tuple[int, int]:
+    """Cheap keyword gate before any model call. A posting passes if its title contains a family title word,
+    or its description mentions >= 2 family keywords. Also drops avoid_keywords / avoid_companies."""
+    titles, kws = _patterns()
+    prefs = config.preferences().get("targets", {})
+    avoid_k = [a.lower() for a in prefs.get("avoid_keywords", [])]
+    avoid_c = [a.lower() for a in prefs.get("avoid_companies", [])]
+    title_words = {w for t in titles for w in t.replace("(", " ").replace(")", " ").replace(",", " ").split() if len(w) > 3 and w not in {"only", "focused"}}
+    kept = dropped = 0
+    for row in db.jobs_by_status(con, "new", 100000):
+        t = (row["title"] or "").lower(); d = (row["description"] or "").lower(); c = (row["company"] or "").lower()
+        bad = any(a in t or a in d for a in avoid_k) or any(a in c for a in avoid_c)
+        hit_title = any(w in t for w in title_words)
+        hit_kw = sum(1 for k in kws if k in d) >= 2
+        if bad or not (hit_title or hit_kw):
+            con.execute("UPDATE jobs SET status='skipped', score_reason='prefilter' WHERE id=?", (row["id"],)); dropped += 1
+        else:
+            kept += 1
+            import re as _re
+            exact = any(tt in t for tt in titles)
+            kw = (0.6 if exact else 0.35 if hit_title else 0.0) + min(0.3, 0.03 * sum(1 for k in kws if k in d))
+            if _re.search(r"\b(staff|principal|director|head of|vp|vice president|manager|lead)\b", t): kw -= 0.4
+            elif _re.search(r"\bsenior|\bsr\.?\b", t): kw -= 0.2
+            if not exact and _re.search(r"\b(software|backend|infrastructure|data|security|sales|account|recruit|finance|legal|mechanical|electrical|hardware|technician)\b", t): kw -= 0.5
+            if _re.search(r"\b(intern|associate|junior|jr\.?)\b", t): kw += 0.1
+            loc = (row["location"] or "").lower()
+            us_or_remote = bool(row["remote"]) or _re.search(r"\b(united states|usa|us\b|new york|nyc|ny\b|new jersey|brooklyn|san francisco|sf\b|seattle|los angeles|boston|chicago|austin|remote|north america|americas)", loc)
+            if loc and not us_or_remote: kw -= 0.35   # until eligibility in 01-bio.md says otherwise
+            kw = max(0.0, min(1.0, kw))
+            sector_w = config.preferences().get("targets", {}).get("sector_weights", {}).get(row["sector"] or "other", 0.5)
+            con.execute("UPDATE jobs SET kw_score=? WHERE id=?", (round(kw * (0.5 + 0.5 * sector_w), 3), row["id"]))
+    con.commit()
+    return kept, dropped
+
+
+def jev_pass(con, limit: int = 5000) -> tuple[int, int]:
+    """First pass: Jev P(apply) for every unscored posting. Postings under jev_min are skipped without a Claude call."""
+    from . import jev
+    if not jev.available():
+        print("  (no TYPESAFE_API_KEY: skipping the Jev pass, Claude scores everything)")
+        return 0, 0
+    jev_min = config.preferences().get("automation", {}).get("jev_min", 0.35)
+    rows = [dict(r) for r in con.execute("SELECT * FROM jobs WHERE status='new' AND jev_p IS NULL LIMIT ?", (limit,)).fetchall()]
+    ps = jev.score_batch(rows)
+    dropped = 0
+    for j, pr in zip(rows, ps):
+        if pr is None:
+            continue
+        con.execute("UPDATE jobs SET jev_p=? WHERE id=?", (pr, j["id"]))
+        if pr < jev_min:
+            con.execute("UPDATE jobs SET status='skipped', score_reason=? WHERE id=?", (f"jev {pr:.2f} < {jev_min}", j["id"]))
+            dropped += 1
+    con.commit()
+    return len(rows), dropped
+
+
+def score(con, limit: int = 200) -> int:
+    from . import llm
+    prefs = config.preferences().get("automation", {})
+    q_min = prefs.get("min_score_to_queue", 55)
+    n = 0
+    for row in con.execute("SELECT * FROM jobs WHERE status='new' ORDER BY COALESCE(jev_p, kw_score, 0) DESC, discovered_at DESC LIMIT ?", (limit,)).fetchall():
+        job = dict(row)
+        s = llm.score_job(job)
+        status = "queued" if (s.score >= q_min and s.action != "skip" and not s.hard_blockers) else "skipped"
+        db.set_score(con, job["id"], s.score, s.one_line, s.model_dump(), status)
+        from .audit import log
+        log(con, "rank", status, f"{s.score} {s.role_family}: {s.one_line}", job_id=job["id"])
+        con.execute("UPDATE jobs SET sector=COALESCE(sector, ?) WHERE id=?", (s.sector, job["id"]))
+        con.commit()
+        n += 1
+        print(f"  {s.score:3d} {status:8s} {job['company']} - {job['title']}")
+    return n
+
+
+def tailor(con, job_id: int) -> int:
+    from . import llm
+    from .resume.render import render_one_page
+    row = con.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
+    if not row:
+        raise SystemExit(f"no job {job_id}")
+    job = dict(row)
+    sc = llm.JobScore(**json.loads(job["score_json"])) if job.get("score_json") else None
+    content = llm.tailor_resume(job, sc)
+    voice_notes = llm.clean_resume(content)
+    from .voicecheck import lint_resume
+    voice_notes += [f"[page] {i.what}" for i in lint_resume(content.model_dump())]
+    pdf, rendered, scale = render_one_page(content.model_dump(), f"{config.file_stem()}_{job['company']}_{job_id}",
+                                           role_family=sc.role_family if sc else None, sector=job.get("sector") or (sc.sector if sc else None),
+                                           posting_title=job.get("title"))
+    prefs = config.preferences().get("automation", {})
+    kind = "ats_web" if job["source"] in ("greenhouse", "lever", "ashby") else "manual"
+    needs_approval = kind not in prefs.get("auto_approve_kinds", []) or content.diy_ratio > prefs.get("diy_max", 0.15)
+    app_id = db.create_application(
+        con, job_id=job_id, kind=kind, status="pending_approval", needs_approval=int(needs_approval),
+        resume_pdf=str(pdf), resume_json=json.dumps(rendered, ensure_ascii=False),
+        diy_ratio=content.diy_ratio, diy_notes="\n".join(content.diy_notes + ["--"] + content.tailoring_notes + (["-- voice check"] + voice_notes if voice_notes else [])),
+    )
+    con.execute("UPDATE jobs SET status='applied_draft' WHERE id=?", (job_id,))
+    from .audit import log
+    log(con, "compose", "resume", f"lens {sc.role_family if sc else '?'}, diy {content.diy_ratio:.0%}", job_id=job_id, app_id=app_id)
+    con.commit()
+    print(f"  application {app_id}: {pdf} (scale {scale}, diy {content.diy_ratio:.0%}, approval {'needed' if needs_approval else 'auto'})")
+    return app_id
+
+
+def submit_approved(con, headed: bool = True) -> None:
+    """Submit every approved ats_web application: re-check the posting, refill, click Submit in a visible browser.
+    CAPTCHAs are left to the person in that window."""
+    from .apply.fill import fill
+    from .apply.live import still_open
+    for a in con.execute("SELECT * FROM applications WHERE status='approved' AND kind='ats_web'").fetchall():
+        a = dict(a); j = dict(con.execute("SELECT * FROM jobs WHERE id=?", (a["job_id"],)).fetchone())
+        aj = json.loads(a["answers_json"] or "{}")
+        if aj.get("needs_human"):
+            print(f"  app {a['id']} {j['company']}: still has unanswered questions, skipped"); continue
+        if not still_open(j):
+            db.update_application(con, a["id"], status="failed", error="posting closed"); con.commit(); continue
+        shot = str(config.OUT_DIR / "screens" / f"app{a['id']}-submit.png")
+        ans = {x["question"]: x["answer"] for x in aj.get("answers", []) if x.get("answer")}
+        r = fill(j["apply_url"], ans, a["resume_pdf"], shot, submit=True, headed=headed)
+        status = "sent" if r.get("submitted") else "failed"
+        db.update_application(con, a["id"], status=status, sent_at=db.now() if status == "sent" else None,
+                              sent_log=(a["sent_log"] or "") + "\n--- submit ---\n" + "\n".join(r.get("log", [])) + f"\nscreenshot: {shot}",
+                              error=r.get("needs_person") or r.get("error"))
+        if status == "sent":
+            con.execute("UPDATE jobs SET status='applied' WHERE id=?", (j["id"],))
+        con.commit()
+        from .audit import log
+        log(con, "apply", "submit-" + status, r.get("needs_person") or "", job_id=j["id"], app_id=a["id"])
+        print(f"  app {a['id']} {j['company']}: {status} {r.get('needs_person') or ''}")
+
+
+EMAIL_RE = __import__("re").compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+
+def prepare(con, limit: int = 10) -> list[str]:
+    """Bring drafted applications to 'ready for your approval':
+    ATS posting -> read the live form, draft answers, fill it in a headless browser (never submits), screenshot.
+    HN / email-only posting -> draft the email to the address the posting itself gives."""
+    from . import llm
+    from .apply.inspect_form import inspect
+    from .apply.fill import fill
+    from .apply.live import still_open
+    done = []
+    rows = con.execute("SELECT a.* FROM applications a WHERE a.status IN ('draft','pending_approval') AND a.answers_json IS NULL "
+                       "AND a.kind IN ('ats_web','manual') LIMIT ?", (limit,)).fetchall()
+    for a in rows:
+        a = dict(a); j = dict(con.execute("SELECT * FROM jobs WHERE id=?", (a["job_id"],)).fetchone())
+        if not still_open(j):
+            db.update_application(con, a["id"], status="withdrawn", error="posting closed"); con.execute("UPDATE jobs SET status='closed' WHERE id=?", (j["id"],)); con.commit(); continue
+        if j["source"] in ("greenhouse", "lever", "ashby") and j.get("apply_url"):
+            fields = [f for f in inspect(j["apply_url"]) if "recaptcha" not in (f["label"] + f["name"]).lower() and f["label"]]
+            qs = [{"label": f["label"], "required": f["required"], "type": f["type"], "options": f["options"]} for f in fields]
+            fa = llm.answer_form(j, qs)
+            fa.needs_human = [q for q in fa.needs_human if not __import__("re").search(r"\b(resume|cv)\b.*(upload|file)|^(resume|cv)\b", q, __import__("re").I)]
+            for x in fa.answers:
+                if x.answer and len(x.answer.split()) > 25:
+                    x.answer, _ = llm.clean_text(x.answer, "answer")
+            shot = str(config.OUT_DIR / "screens" / f"app{a['id']}.png")
+            r = fill(j["apply_url"], {x.question: x.answer for x in fa.answers if x.answer}, a["resume_pdf"], shot)
+            db.update_application(con, a["id"], kind="ats_web", status="pending_approval", answers_json=json.dumps(fa.model_dump(), ensure_ascii=False),
+                                  sent_log="\n".join(r.get("log", [])) + f"\nscreenshot: {shot}", error=r.get("error"))
+            done.append(f"{j['company']} · {j['title']}: form filled, {len(fa.needs_human)} question(s) for you")
+        else:
+            emails = [e for e in EMAIL_RE.findall(j.get("description") or "") if not e.lower().endswith((".png", ".jpg"))]
+            if not emails:
+                db.update_application(con, a["id"], kind="manual", status="pending_approval", answers_json="{}",
+                                      error="no form or email found in the posting; apply by hand from the link"); con.commit(); continue
+            d = llm.draft_email("application", j["company"], (j.get("description") or "") + "\n\nFollow any application instructions in the posting exactly.")
+            body, vnotes = llm.clean_text(d.body, "email")
+            from .links import to_markdown_links
+            db.update_application(con, a["id"], kind="email", status="pending_approval", answers_json="{}", email_to=emails[0],
+                                  email_subject=d.subject, email_body=to_markdown_links(body),
+                                  diy_notes=(a["diy_notes"] or "") + "\n-- email\n" + "\n".join(d.diy_notes + vnotes))
+            done.append(f"{j['company']} · {j['title']}: email drafted to {emails[0]}")
+        con.commit()
+    return done
+
+
+def outbox(con) -> list[dict]:
+    """Approved email / proposal rows, ready for the Claude session to send through the Gmail connector.
+    Blocks anything with a placeholder or a raw URL left in the body."""
+    from .links import to_markdown_links, markdown_to_html, has_raw_url
+    out = []
+    for a in con.execute("SELECT * FROM applications WHERE status='approved' AND kind IN ('email','proposal','social_mention')").fetchall():
+        a = dict(a); body = to_markdown_links(a["email_body"] or "")
+        problems = []
+        if "[YOUR ANSWER" in body or "[fill" in body: problems.append("placeholder left in body")
+        if has_raw_url(body): problems.append("raw URL in body")
+        if not a["email_to"] or "@" not in a["email_to"]: problems.append("no verified recipient")
+        if problems:
+            db.update_application(con, a["id"], status="pending_approval", error="; ".join(problems)); con.commit(); continue
+        plain = __import__("re").sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", r"\1 (\2)", body)
+        out.append({"id": a["id"], "to": [a["email_to"]], "subject": a["email_subject"], "htmlBody": markdown_to_html(body),
+                    "body": plain, "attachment": a["resume_pdf"]})
+    return out
+
+
+def mark_sent(con, app_id: int, message_id: str) -> None:
+    db.update_application(con, app_id, status="sent", sent_at=db.now(), sent_log=f"gmail message {message_id}")
+    from .audit import log
+    log(con, "apply", "email-sent", message_id, app_id=app_id)
+    con.execute("UPDATE jobs SET status='applied' WHERE id=(SELECT job_id FROM applications WHERE id=?)", (app_id,)); con.commit()
+
+
+def status(con):
+    for t in ("jobs", "applications"):
+        rows = con.execute(f"SELECT status, COUNT(*) c FROM {t} GROUP BY status").fetchall()
+        print(t + ":", ", ".join(f"{r['status']}={r['c']}" for r in rows) or "empty")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("discover")
+    sub.add_parser("prefilter")
+    s = sub.add_parser("score"); s.add_argument("--limit", type=int, default=200)
+    sub.add_parser("jev")
+    t = sub.add_parser("tailor"); t.add_argument("job_id", type=int)
+    p = sub.add_parser("probe"); p.add_argument("slug")
+    sub.add_parser("status")
+    sub.add_parser("submit")
+    sub.add_parser("outbox")
+    sub.add_parser("intake")
+    cv = sub.add_parser("cover"); cv.add_argument("job_id", type=int)
+    pr = sub.add_parser("prepare"); pr.add_argument("--limit", type=int, default=10)
+    ms = sub.add_parser("mark-sent"); ms.add_argument("app_id", type=int); ms.add_argument("message_id")
+    d = sub.add_parser("daily"); d.add_argument("--max-tailor", type=int, default=10)
+    a = ap.parse_args(argv)
+
+    if a.cmd == "probe":
+        print(ats.probe_company(a.slug) or "nothing found; try another slug (company domain name, no spaces)")
+        return
+    with db.tx() as con:
+        if a.cmd == "discover":
+            for k, (tot, new) in discover(con).items():
+                print(f"  {k}: {tot} postings, {new} new")
+        elif a.cmd == "prefilter":
+            k, d = prefilter(con); print(f"kept {k}, dropped {d}")
+        elif a.cmd == "score":
+            prefilter(con)
+            seen, dropped = jev_pass(con)
+            print(f"jev: {seen} rated, {dropped} skipped")
+            print(f"scored {score(con, a.limit)}")
+        elif a.cmd == "jev":
+            prefilter(con)
+            seen, dropped = jev_pass(con)
+            print(f"jev: {seen} rated, {dropped} skipped")
+        elif a.cmd == "tailor":
+            tailor(con, a.job_id)
+        elif a.cmd == "status":
+            status(con)
+        elif a.cmd == "submit":
+            submit_approved(con)
+        elif a.cmd == "prepare":
+            print("\n".join(prepare(con, a.limit)) or "nothing to prepare")
+        elif a.cmd == "intake":
+            from .intake import run as intake_run
+            out = intake_run(); print(out or "inbox/ is empty")
+        elif a.cmd == "cover":
+            from .cover import draft
+            j = dict(con.execute("SELECT * FROM jobs WHERE id=?", (a.job_id,)).fetchone()); d = draft(j)
+            print(d.model_dump_json(indent=1))
+        elif a.cmd == "outbox":
+            print(json.dumps(outbox(con), ensure_ascii=False, indent=1))
+        elif a.cmd == "mark-sent":
+            mark_sent(con, a.app_id, a.message_id)
+        elif a.cmd == "daily":
+            run_id = con.execute("INSERT INTO runs(started_at) VALUES(?)", (db.now(),)).lastrowid
+            found = discover(con); con.commit()
+            kept, dropped = prefilter(con)
+            jev_seen, jev_dropped = jev_pass(con)
+            n = score(con, config.preferences().get("automation", {}).get("daily_score_limit", 60))
+            prefs = config.preferences().get("automation", {})
+            top = con.execute("SELECT id FROM jobs WHERE status='queued' AND score>=? ORDER BY score DESC LIMIT ?",
+                              (prefs.get("min_score_to_apply", 70), a.max_tailor)).fetchall()
+            made = [tailor(con, r["id"]) for r in top]
+            prepared = prepare(con, len(made) + 5)
+            summary = {"discovered": found, "prefilter": {"kept": kept, "dropped": dropped}, "jev": {"rated": jev_seen, "skipped": jev_dropped}, "scored": n, "applications_drafted": made, "prepared": prepared}
+            con.execute("UPDATE runs SET finished_at=?, summary=? WHERE id=?", (db.now(), json.dumps(summary), run_id))
+            print(json.dumps(summary, indent=1))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,50 @@
+# Watchlist. Verified 2026-10-13 that these board tokens respond.
+# ats: greenhouse | lever | ashby.  Add a company with `python -m agent.run probe <slug>`.
+companies:
+  # design agencies / studios
+  - {name: IDEO, ats: greenhouse, board_token: ideo, sector: design_agency}
+  - {name: Huge, ats: greenhouse, board_token: hugeinc, sector: design_agency}
+  - {name: R/GA, ats: greenhouse, board_token: rga, sector: design_agency}
+  - {name: Instrument, ats: lever, board_token: instrument, sector: design_agency}
+  - {name: Metalab, ats: greenhouse, board_token: metalab, sector: design_agency}
+  - {name: Fantasy, ats: lever, board_token: fantasy, sector: design_agency}
+  - {name: BASIC/DEPT, ats: greenhouse, board_token: basic, sector: design_agency}
+  # creative / interactive studios (added 2026-10-14 for the digital art director and motion lenses)
+  - {name: Active Theory, ats: lever, board_token: activetheory, sector: creative}
+  - {name: Hello Monday, ats: greenhouse, board_token: hellomonday, sector: creative}
+  - {name: Monks (Media.Monks), ats: greenhouse, board_token: monks, sector: creative}
+  - {name: ManvsMachine, ats: greenhouse, board_token: manvsmachine, sector: creative}
+  # ai
+  - {name: Anthropic, ats: greenhouse, board_token: anthropic, sector: ai}
+  - {name: OpenAI, ats: ashby, board_token: openai, sector: ai}
+  - {name: Cohere, ats: ashby, board_token: cohere, sector: ai}
+  - {name: Mistral, ats: lever, board_token: mistral, sector: ai}
+  - {name: Perplexity, ats: ashby, board_token: perplexity, sector: ai}
+  - {name: Scale AI, ats: greenhouse, board_token: scaleai, sector: ai}
+  - {name: Midjourney, ats: ashby, board_token: midjourney, sector: ai}
+  - {name: ElevenLabs, ats: ashby, board_token: elevenlabs, sector: ai}
+  - {name: Cursor, ats: ashby, board_token: cursor, sector: ai}
+  - {name: Replit, ats: ashby, board_token: replit, sector: ai}
+  - {name: Lovable, ats: ashby, board_token: lovable, sector: ai}
+  # climate
+  - {name: Watershed, ats: ashby, board_token: watershed, sector: climate}
+  - {name: Span, ats: ashby, board_token: span, sector: climate}
+  - {name: Crusoe, ats: ashby, board_token: crusoe, sector: climate}
+  - {name: Charm Industrial, ats: lever, board_token: charmindustrial, sector: climate}
+  - {name: Pachama, ats: lever, board_token: pachama, sector: climate}
+  - {name: Sylvera, ats: ashby, board_token: sylvera, sector: climate}
+  - {name: Patch, ats: greenhouse, board_token: patch, sector: climate}
+  - {name: Overstory, ats: ashby, board_token: overstory, sector: climate}
+  - {name: Form Energy, ats: ashby, board_token: formenergy, sector: climate}
+  - {name: Twelve, ats: ashby, board_token: twelve, sector: climate}
+  - {name: Helion, ats: ashby, board_token: helion, sector: climate}
+  - {name: Arcadia, ats: lever, board_token: arcadia, sector: climate}
+  # tech
+  - {name: Figma, ats: ashby, board_token: figma, sector: tech}
+  - {name: Notion, ats: ashby, board_token: notion, sector: tech}
+  - {name: Linear, ats: ashby, board_token: linear, sector: tech}
+  - {name: Vercel, ats: ashby, board_token: vercel, sector: tech}
+  - {name: Stripe, ats: greenhouse, board_token: stripe, sector: tech}
+  - {name: Airbnb, ats: greenhouse, board_token: airbnb, sector: tech}
+  - {name: Duolingo, ats: greenhouse, board_token: duolingo, sector: tech}
+  - {name: Webflow, ats: ashby, board_token: webflow, sector: tech}
