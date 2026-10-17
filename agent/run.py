@@ -268,6 +268,7 @@ def main(argv=None):
     sub.add_parser("submit")
     sub.add_parser("outbox")
     sub.add_parser("intake")
+    sub.add_parser("learn")
     cv = sub.add_parser("cover"); cv.add_argument("job_id", type=int)
     pr = sub.add_parser("prepare"); pr.add_argument("--limit", type=int, default=10)
     ms = sub.add_parser("mark-sent"); ms.add_argument("app_id", type=int); ms.add_argument("message_id")
@@ -300,6 +301,9 @@ def main(argv=None):
             submit_approved(con)
         elif a.cmd == "prepare":
             print("\n".join(prepare(con, a.limit)) or "nothing to prepare")
+        elif a.cmd == "learn":
+            from .learn import propose
+            print(f"{propose(con)} patch(es) proposed; review them on the dashboard's Learn page")
         elif a.cmd == "intake":
             from .intake import run as intake_run
             out = intake_run(); print(out or "inbox/ is empty")
@@ -322,7 +326,12 @@ def main(argv=None):
                               (prefs.get("min_score_to_apply", 70), a.max_tailor)).fetchall()
             made = [tailor(con, r["id"]) for r in top]
             prepared = prepare(con, len(made) + 5)
-            summary = {"discovered": found, "prefilter": {"kept": kept, "dropped": dropped}, "jev": {"rated": jev_seen, "skipped": jev_dropped}, "scored": n, "applications_drafted": made, "prepared": prepared}
+            try:
+                from .learn import propose
+                learned = propose(con)
+            except Exception as e:
+                learned = f"learn failed: {e}"
+            summary = {"discovered": found, "prefilter": {"kept": kept, "dropped": dropped}, "jev": {"rated": jev_seen, "skipped": jev_dropped}, "scored": n, "applications_drafted": made, "prepared": prepared, "learn_proposals": learned}
             con.execute("UPDATE runs SET finished_at=?, summary=? WHERE id=?", (db.now(), json.dumps(summary), run_id))
             print(json.dumps(summary, indent=1))
 

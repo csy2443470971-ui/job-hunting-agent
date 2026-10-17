@@ -9,19 +9,33 @@ one-page résumé from facts you approved, fills the form or drafts the email, a
 
 ![Pipeline](docs/architecture.svg)
 
-## The seven steps
+## Not autopilot
 
-| # | Step | Module | What happens |
-|---|---|---|---|
-| 01 | Intake | `agent/intake.py` | Old résumés, notes and transcripts in `inbox/` become a storybook draft. You review it; nothing is merged for you. |
-| 02 | Discover | `agent/sources/` | Company job boards (Greenhouse, Lever, Ashby), Hacker News "Who is hiring". More sources in `docs/03-job-sources-and-apis.md`. |
-| 03 | Rank | `agent/jev.py`, `agent/llm.py` | Jev (TypeSafe) rates every posting in batches; a model then reviews the best ones and picks the role lens. A keyword ranker covers the case with no key. |
-| 04 | Compose | `agent/assemble.py`, `agent/resume/` | Picks storybook lines tagged for the role, orders them, renders a one-page PDF with embedded links. Works with no model call; a model can tailor on top. |
-| 05 | Write | `agent/llm.py`, `agent/cover.py` | Form answers, emails, cover letter, why-this-company. Cover-letter prompts are a first version. |
-| 06 | Review | `agent/audit.py`, `dashboard/` | A checklist per application (one page, writing checks, invented content under the cap, all questions answered, posting still open). Approve unlocks only when it passes. |
-| 07 | Apply | `agent/apply/`, `agent/run.py` | Refills the form in a visible browser and submits, or hands an approved email to the sender. CAPTCHAs, LinkedIn and Indeed stay with you. |
+The agent runs on your judgement. Your storybook decides what can be said, your taste decides what goes out, and every
+application stops in the dashboard, where you approve it, edit it, or send it back with a note. Green in the diagram is you.
+
+## The steps
+
+| # | Step | Who | Module | What happens |
+|---|---|---|---|---|
+| 01 | Read your files | agent | `agent/intake.py` | Old résumés, notes and voice memos in `inbox/` become a storybook draft. You edit it; nothing is merged for you. |
+| 02 | Find public postings | agent | `agent/sources/` | Public job boards (Greenhouse, Lever, Ashby) and Hacker News; a keyword filter drops obvious misses. |
+| 03 | Score the fit | agent | `agent/jev.py`, `agent/llm.py` | Jev (TypeSafe) rates every posting; a model reviews the best and picks the role lens. Weak fits are skipped. |
+| 04 | Build the résumé | agent | `agent/assemble.py`, `agent/resume/` | Storybook lines tagged for the role, one page, links embedded. Failed wording checks get one rewrite. |
+| 05 | Draft answers, email | agent | `agent/llm.py`, `agent/cover.py` | Form answers or an email, routed by channel. Questions only you can answer, and AI-policy answers, come to you. |
+| 06 | Review and approve | you | `agent/audit.py`, `dashboard/` | A checklist per application; Approve unlocks when it passes. Reject with a note, or edit in place. |
+| 07 | Submit and send | agent | `agent/apply/`, `agent/run.py` | Fills and submits the form in a visible browser, or sends the email. CAPTCHAs, LinkedIn and Indeed stay with you. |
+| 08 | Learn from notes | agent → you | `agent/learn.py`, dashboard **Learn** page | Your notes and rejection reasons become proposed fixes: an example in the writing brief, a reworded storybook line, or a phrase for the writing check. You apply or dismiss each one; applied fixes can be reverted. |
 
 Every step writes to an activity log you can read in the dashboard.
+
+## Self-improvement, with you in charge
+
+The agent gets better from your feedback without rewriting its own code. `agent/learn.py` reads the notes you leave on
+applications and the reasons you give when rejecting drafts, and proposes small patches to three places: the writing brief
+(`docs/00-house-rules.md`, kept to one page), your storybook, and a learned list of phrases the writing check rejects
+(`profile/learned_patterns.yaml`). Patches wait on the dashboard's Learn page. Nothing changes until you apply one, and every
+applied patch keeps its before and after so it can be reverted. The daily run proposes patches automatically; `python -m agent.run learn` does it on demand.
 
 ## Writing rules
 

@@ -74,6 +74,7 @@
   <button class="nav" data-tab="apps">Applications <span class="count" id="c-apps"></span></button>
   <button class="nav" data-tab="jobs">Jobs <span class="count" id="c-jobs"></span></button>
   <button class="nav" data-tab="storybook">Storybook</button>
+  <button class="nav" data-tab="learn">Learn <span class="count" id="c-learn"></span></button>
   <button class="nav" data-tab="activity">Activity</button>
   <div class="side-foot" id="lastrun"></div>
 </aside>
@@ -95,6 +96,7 @@ async function counts() {
   $('#c-review').textContent = a.pending_approval || '';
   $('#c-apps').textContent = Object.values(a).reduce((x, y) => x + y, 0) || '';
   $('#c-jobs').textContent = (j.queued || 0) + (j.new || 0) || '';
+  try { const ps = await api('/api/proposals'); $('#c-learn').textContent = ps.filter(p => p.status === 'pending').length || ''; } catch (e) {}
   $('#lastrun').textContent = s.last_run ? 'Last run ' + day(s.last_run.started_at) : 'No daily run yet';
 }
 
@@ -111,7 +113,7 @@ async function appBlock(a) {
   if ((aj.needs_human || []).length) h += `<div class="callout">Only you can answer these<ul>${aj.needs_human.map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`;
   if (a.status === 'pending_approval') h += `<div class="row" style="justify-content:flex-start;gap:8px;margin:8px 0">
       <button class="btn primary" ${ready ? '' : 'disabled title="Open items above"'} onclick="decide(${a.id},'approve')">Approve</button>
-      <button class="btn" onclick="decide(${a.id},'reject')">Reject</button>
+      <button class="btn" onclick="rejectWithReason(${a.id})">Reject</button>
       ${a.job_url ? `<a class="btn" href="${esc(a.job_url)}" target="_blank">Posting</a>` : ''}</div>`;
   if (a.resume_pdf) h += `<details><summary>Résumé</summary><p><a href="/resume/${a.id}" target="_blank">Open the PDF</a></p></details>`;
   if (['email','proposal','social_mention'].includes(a.kind)) h += `<details ${a.status==='pending_approval'?'open':''}><summary>Email</summary>
@@ -121,11 +123,16 @@ async function appBlock(a) {
       <button class="btn" onclick="saveEmail(${a.id}, this)">Save</button></details>`;
   if ((aj.answers || []).length) h += `<details><summary>Form answers</summary>${aj.answers.filter(x => x.answer).map(x => `<div class="qa"><div class="q">${esc(x.question)}</div><pre>${esc(x.answer)}</pre></div>`).join('')}</details>`;
   if ((a.sent_log || '').includes('screenshot:')) h += `<details><summary>Filled form</summary><img src="/screen/${a.id}" style="max-width:100%;border:1px solid var(--line);border-radius:6px"></details>`;
-  if (a.diy_notes) h += `<details><summary>Notes</summary><pre>${esc(a.diy_notes)}</pre></details>`;
+  if (a.diy_notes) h += `<details><summary>Agent's notes</summary><pre>${esc(a.diy_notes)}</pre></details>`;
+  h += `<details><summary>Note to the agent</summary><textarea id="note-${a.id}" style="min-height:70px" placeholder="What should it do differently next time? e.g. 'Never write named, say defined the brand identity.'"></textarea><button class="btn" onclick="sendNote(${a.id}, this)">Send note</button></details>`;
   return h + '</div>';
 }
 
 async function decide(id, what) { await post(`/api/applications/${id}/${what}`); render(); }
+async function rejectWithReason(id) { const why = prompt('Why reject it? (optional, the agent learns from this)') ; if (why === null) return; await post(`/api/applications/${id}/reject`, {note: why}); render(); }
+async function sendNote(id, b) { const t = $(`#note-${id}`).value.trim(); if (!t) return; await post('/api/feedback', {text: t, app_id: id}); $(`#note-${id}`).value = ''; b.textContent = 'Sent'; setTimeout(() => b.textContent = 'Send note', 1200); }
+async function decideProposal(id, action) { const r = await post(`/api/proposals/${id}/${action}`); if (r && r.msg && !r.ok) alert(r.msg); render(); }
+const KINDLABEL = {brief_example: 'Writing brief · example', storybook_line: 'Storybook · line', ban_phrase: 'Writing check · banned phrase'};
 async function saveEmail(id, b) {
   await post(`/api/applications/${id}/edit`, {email_to: $(`#to-${id}`).value, email_subject: $(`#subj-${id}`).value, email_body: $(`#body-${id}`).value});
   b.textContent = 'Saved'; setTimeout(() => b.textContent = 'Save', 1200);
@@ -164,6 +171,17 @@ async function render() {
       `<tr><td class="n">${j.score ?? ''}</td><td><a href="${esc(j.url)}" target="_blank"><b>${esc(j.company)}</b></a> · ${esc(j.title)}<div class="meta">${esc(j.score_reason || '')}</div></td><td class="meta">${esc(j.status)}</td></tr>`).join('')}</table>`;
   } else if (tab === 'storybook') {
     await renderStorybook(p);
+  } else if (tab === 'learn') {
+    const ps = await api('/api/proposals');
+    const pend = ps.filter(p => p.status === 'pending'), done = ps.filter(p => p.status !== 'pending');
+    const card = p => `<div class="item"><div class="row"><div><div class="title">${esc(KINDLABEL[p.kind] || p.kind)}</div><div class="meta">${esc(p.reason)}</div></div><span class="pill ${p.status==='applied'?'ok':p.status==='pending'?'warn':''}">${esc(p.status)}</span></div>
+      ${p.before ? `<pre style="text-decoration:line-through;opacity:.7">${esc(p.before)}</pre>` : ''}<pre>${esc(p.after)}</pre>
+      <div class="meta">From your note: “${esc(p.source)}”</div>
+      ${p.status === 'pending' ? `<div class="row" style="justify-content:flex-start;gap:8px;margin-top:8px"><button class="btn primary" onclick="decideProposal(${p.id},'approve')">Apply</button><button class="btn" onclick="decideProposal(${p.id},'reject')">Dismiss</button></div>` : ''}
+      ${p.status === 'applied' ? `<button class="btn" style="margin-top:8px" onclick="decideProposal(${p.id},'revert')">Revert</button>` : ''}</div>`;
+    p.innerHTML = `<h1>Learn</h1><p class="sub">Your notes become small fixes to the agent's writing brief, your storybook, or its writing check. Nothing changes until you apply it, and every change can be reverted.</p>` +
+      (pend.length ? pend.map(card).join('') : '<div class="empty">No proposals yet. Leave a note on any application, then run <code>python -m agent.run learn</code> (the daily run does it too).</div>') +
+      (done.length ? '<h2 style="margin-top:40px;font-size:18px">History</h2>' + done.map(card).join('') : '');
   } else if (tab === 'activity') {
     const ev = await api('/api/events');
     p.innerHTML = `<h1>Activity</h1><p class="sub">Every step the agent took and every decision you made.</p>` + (ev.length ? `<table class="log">${ev.map(e =>

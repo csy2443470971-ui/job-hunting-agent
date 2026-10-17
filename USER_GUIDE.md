@@ -45,6 +45,13 @@ written by you. Those come to you, marked.
 5. **Send.** Approved forms: `python -m agent.run submit` opens a visible browser and submits. If a CAPTCHA appears,
    that one's yours. Approved emails go out through your Gmail on the next run.
 
+## Teach it
+
+Every application has a **Note to the agent** box, and Reject asks why. Write the note you'd give a new assistant:
+"Don't say *named*, say *defined the brand identity*." Overnight it turns notes into proposed fixes on the **Learn** page:
+a better example for its writing brief, a reworded line in your storybook, or a phrase to block. Click Apply on the ones
+you agree with. Changed your mind? Revert. It gets better, and it never edits itself behind your back.
+
 ## When you have to step in
 
 | You'll see | What to do |

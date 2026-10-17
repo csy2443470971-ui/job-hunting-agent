@@ -52,7 +52,12 @@ def lint(text: str, kind: str = "resume") -> list[Issue]:
     for w in SOFT_WORDS:
         if re.search(rf"(?<![\w-]){w}(?![\w-])", low):
             issues.append(Issue("soft", f"check '{w}' is literal, not filler"))
-    for ph in PHRASES:
+    try:
+        from .learn import learned_bans
+        extra = learned_bans()
+    except Exception:
+        extra = []
+    for ph in PHRASES + extra:
         if ph in low:
             issues.append(Issue("hard", f"banned phrase '{ph}'"))
     if re.search(r"\b(designer|engineer|strategist|researcher|director|technologist|builder|creative|maker|person|someone|thinker|generalist|storyteller|problem-solver)s? (who|that|which)\b", low):

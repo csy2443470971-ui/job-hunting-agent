@@ -87,9 +87,12 @@ def approve(app_id: int, d: Decision | None = None):
 @app.post("/api/applications/{app_id}/reject")
 def reject(app_id: int, d: Decision | None = None):
     from agent.audit import log
+    from agent.learn import add_feedback
     with db.tx() as con:
         db.update_application(con, app_id, status="withdrawn", error=(d.note if d else None))
         log(con, "review", "rejected", d.note if d else "", app_id=app_id)
+        if d and d.note:
+            add_feedback(con, "Rejected because: " + d.note, app_id)
     return {"ok": True}
 
 
@@ -101,6 +104,46 @@ def app_checklist(app_id: int):
         raise HTTPException(404)
     j = rows("SELECT * FROM jobs WHERE id=?", a[0]["job_id"]) if a[0].get("job_id") else []
     return checklist(a[0], j[0] if j else None)
+
+
+class Note(BaseModel):
+    text: str
+    app_id: int | None = None
+
+
+@app.post("/api/feedback")
+def feedback(n: Note):
+    from agent.learn import add_feedback
+    from agent.audit import log
+    with db.tx() as con:
+        add_feedback(con, n.text, n.app_id)
+        log(con, "review", "note", n.text[:200], app_id=n.app_id)
+    return {"ok": True}
+
+
+@app.get("/api/proposals")
+def proposals():
+    from agent.learn import init
+    with db.tx() as con:
+        init(con)
+        return [dict(r) for r in con.execute("SELECT * FROM proposals ORDER BY id DESC LIMIT 200").fetchall()]
+
+
+@app.post("/api/proposals/{pid}/{action}")
+def proposal_action(pid: int, action: str):
+    from agent import learn
+    with db.tx() as con:
+        learn.init(con)
+        if action == "approve":
+            try:
+                return {"ok": True, "msg": learn.apply(con, pid)}
+            except Exception as e:
+                return {"ok": False, "msg": str(e)}
+        if action == "reject":
+            con.execute("UPDATE proposals SET status='rejected', decided_at=? WHERE id=?", (db.now(), pid)); return {"ok": True}
+        if action == "revert":
+            return {"ok": True, "msg": learn.revert(con, pid)}
+    raise HTTPException(400)
 
 
 @app.get("/api/events")
