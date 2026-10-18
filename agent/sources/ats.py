@@ -4,6 +4,13 @@ from __future__ import annotations
 from .base import client, strip_html, looks_remote
 
 # ---- Greenhouse ---------------------------------------------------------
+def _gh_form(token: str, j: dict) -> str:
+    """Companies that embed Greenhouse on their own careers page get the hosted form instead,
+    so the form filler sees the application, not the company site (cookie banners, nav)."""
+    u = j.get("absolute_url") or ""
+    return u if "greenhouse.io" in u else f"https://job-boards.greenhouse.io/embed/job_app?for={token}&token={j['id']}"
+
+
 def greenhouse_jobs(token: str, company: str | None = None) -> list[dict]:
     r = client.get(f"https://boards-api.greenhouse.io/v1/boards/{token}/jobs", params={"content": "true"})
     if r.status_code != 200:
