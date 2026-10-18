@@ -76,9 +76,34 @@ class Decision(BaseModel):
     note: str = ""
 
 
+class Standing(BaseModel):
+    values: dict
+
+
+@app.get("/api/standing")
+def standing_get():
+    from agent import setup_answers as sa
+    v = sa.load()
+    return {"questions": [{"section": q[0], "key": q[1], "label": q[2], "kind": q[3], "options": q[4], "required": q[5], "hint": q[6]}
+                          for q in sa.QUESTIONS], "values": v, "missing": sa.missing(v)}
+
+
+@app.put("/api/standing")
+def standing_put(s: Standing):
+    from agent import setup_answers as sa
+    from agent.audit import log
+    v = sa.save(s.values)
+    with db.tx() as con:
+        log(con, "intake", "standing-answers", f"saved; {len(sa.missing(v))} required left")
+    return {"ok": True, "missing": sa.missing(v)}
+
+
 @app.post("/api/applications/{app_id}/approve")
 def approve(app_id: int, d: Decision | None = None):
     from agent.audit import log
+    from agent.setup_answers import missing
+    if missing():
+        return {"ok": False, "msg": "Finish your standing answers first (Storybook → Standing answers)."}
     with db.tx() as con:
         a = con.execute("SELECT kind, answers_json FROM applications WHERE id=?", (app_id,)).fetchone()
         if a and (json.loads(a["answers_json"] or "{}").get("needs_human")):
@@ -342,6 +367,9 @@ def job_description(job_id: int):
 def prepare_job(job_id: int):
     """Runs `python -m agent.run compose <id>` in its own process (browser automation and model CLIs stay out of the web server)."""
     import subprocess, sys
+    from agent.setup_answers import missing
+    if missing():
+        return {"ok": False, "msg": "Finish your standing answers first (Storybook → Standing answers)."}
     j = rows("SELECT * FROM jobs WHERE id=?", job_id)
     m = _match(dict(j[0]))[0] if j else None
     if m is not None and m < MIN_MATCH:

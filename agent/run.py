@@ -150,6 +150,8 @@ def tailor(con, job_id: int) -> int:
 
 
 def submit_approved(con, headed: bool = True, app_id: int | None = None) -> None:
+    from .setup_answers import require
+    require()
     """Submit every approved ats_web application: re-check the posting, refill, click Submit in a visible browser.
     CAPTCHAs are left to the person in that window."""
     from .apply.fill import fill
@@ -184,6 +186,8 @@ def prepare(con, limit: int = 10, app_id: int | None = None) -> list[str]:
     """Bring drafted applications to 'ready for your approval':
     ATS posting -> read the live form, draft answers, fill it in a headless browser (never submits), screenshot.
     HN / email-only posting -> draft the email to the address the posting itself gives."""
+    from .setup_answers import require
+    require()
     from . import llm
     from .apply.inspect_form import inspect
     from .apply.fill import fill
@@ -253,6 +257,8 @@ def mark_sent(con, app_id: int, message_id: str) -> None:
 
 def compose_job(con, job_id: int) -> int:
     """Not started → Waiting for review: résumé from storybook lines (no model), then fill the form or draft the email."""
+    from .setup_answers import require
+    require()
     from .assemble import assemble
     from .resume.render import render_one_page
     from .audit import log

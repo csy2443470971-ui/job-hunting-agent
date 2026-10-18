@@ -4,7 +4,15 @@ Five minutes. Then the agent does the tedious part and you keep the parts that m
 
 ![Pipeline](docs/architecture.svg)
 
-## Three things to know first
+## Four things to know first
+
+**0. Answer the standing questions first. It's required.**
+Every application form asks the same things: your legal name, whether you're authorized to work, whether you need
+sponsorship, whether you'd relocate (and where), how you want to work, your degree and GPA, and the voluntary
+self-identification questions (gender, race, Hispanic/Latino, veteran, disability). Open the dashboard → Storybook →
+*Standing answers*, answer them once, and the agent fills them everywhere. Every self-identification question has
+*Prefer not to say*; pick it and the agent chooses the form's decline option. Until the starred ones are done, the
+agent won't prepare or submit anything. Your answers stay in `profile/standing.yaml` on your computer.
 
 **1. Feed it everything. It reads, you decide.**
 Drop whatever you have into `inbox/`: old résumés, a LinkedIn PDF, portfolio text, cover letters you were proud of,

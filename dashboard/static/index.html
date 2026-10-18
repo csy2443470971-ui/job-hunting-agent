@@ -129,8 +129,8 @@
   .d-foot { display:flex; align-items:center; gap:8px; padding:14px 34px; border-top:1px solid var(--line); background:var(--surface); }
   .hint { font-size:13px; color:var(--mute); margin-left:6px; }
   .stamp { font-size:13.5px; color:var(--ink2); display:flex; align-items:center; gap:7px; } .stamp svg { color:var(--red); }
-  input[type=text], textarea { font:inherit; font-size:14px; width:100%; padding:8px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); transition:border-color .12s, box-shadow .12s; }
-  input[type=text]:focus, textarea:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px color-mix(in srgb, var(--orange) 18%, transparent); }
+  input[type=text], textarea, select { font:inherit; font-size:14px; width:100%; padding:8px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); transition:border-color .12s, box-shadow .12s; }
+  input[type=text]:focus, textarea:focus, select:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px color-mix(in srgb, var(--orange) 18%, transparent); }
   textarea { min-height:90px; resize:vertical; line-height:1.5; }
   .banner { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink2); padding:11px 14px; border:1px solid var(--line); border-left:3px solid var(--orange); border-radius:10px; background:var(--surface); margin-bottom:14px; }
   .banner code { font-family:var(--mono); font-size:12.5px; background:var(--sunk); padding:1px 5px; border-radius:4px; }
@@ -356,7 +356,10 @@ async function renderJobs(p) {
   const list = lists[sub];
   if (!list.some(c => keyOf(c) === sel[sub])) sel[sub] = list.length ? keyOf(list[0]) : null;
   const cur = list.find(c => keyOf(c) === sel[sub]);
-  const banner = sub === 'todo' && !cfg.jev ? `<div class="banner">${I.alert}<div>Jev isn't connected, so these are ranked by keyword match. Add <code>TYPESAFE_API_KEY</code> to <code>.env</code> to rate every posting with Jev.</div></div>` : '';
+  const sa = await api('/api/standing');
+  const setup = sa.missing.length ? `<div class="banner" style="border-left-color:var(--red)">${I.alert}<div><b>Before your agent applies anywhere:</b> answer the standing questions (name, work authorization, relocation, self-identification…). ${sa.missing.length} left.
+    <a class="lk" onclick="tab='storybook';pbFile='@standing';render()">Answer them now</a></div></div>` : '';
+  const banner = setup + (sub === 'todo' && !cfg.jev ? `<div class="banner">${I.alert}<div>Jev isn't connected, so these are ranked by keyword match. Add <code>TYPESAFE_API_KEY</code> to <code>.env</code> to rate every posting with Jev.</div></div>` : '');
   const empty = {review: 'Nothing is waiting for you.', todo: 'Nothing waiting to start.', applied: 'Nothing sent yet.'}[sub];
   const keepScroll = $('.queue') ? $('.queue').scrollTop : 0;
   p.innerHTML = `<div class="ph"><div><h1>Job applications</h1></div>
@@ -369,10 +372,35 @@ async function renderJobs(p) {
   if (td.some(x => x.preparing === 'running')) watchPrep();
 }
 
+function standingForm(sa) {
+  const v = sa.values || {}; let sec = '', html = '';
+  for (const q of sa.questions) {
+    if (q.section !== sec) { sec = q.section; html += `${html ? '</div>' : ''}<h3 style="margin:26px 0 10px">${esc(sec)}</h3><div class="fgrid">`; }
+    const val = v[q.key] || '';
+    const input = q.kind === 'select'
+      ? `<select data-k="${q.key}"><option value="">Choose…</option>${q.options.map(o => `<option ${o === val ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+      : `<input type="text" data-k="${q.key}" value="${esc(val)}" placeholder="${esc(q.hint || '')}">`;
+    html += `<div class="field ${q.kind === 'text' && q.hint && q.hint.length > 40 ? 'wide' : ''}"><label>${esc(q.label)}${q.required ? ' <span style="color:var(--red)">*</span>' : ''}</label>${input}
+      ${q.kind === 'select' && q.hint ? `<div style="font-size:12px;color:var(--mute);margin-top:4px">${esc(q.hint)}</div>` : ''}</div>`;
+  }
+  return `<h1 style="margin-top:0">Standing answers</h1>
+    <p>The questions almost every application asks. Answer them once; the agent fills them on every form and never asks again.
+    Starred ones are required: until they are done, the agent prepares and submits nothing. They stay on this computer.</p>
+    ${sa.missing.length ? `<div class="banner">${I.alert}<div><b>${sa.missing.length} left:</b> ${sa.missing.map(esc).join(', ')}</div></div>` : ''}
+    ${html}</div><div class="edit-f" style="margin-top:22px"><button class="btn primary" onclick="saveStanding(this)">${I.check}Save answers</button></div>`;
+}
+async function saveStanding(b) {
+  const values = {}; document.querySelectorAll('[data-k]').forEach(el => values[el.dataset.k] = el.value);
+  const r = await api('/api/standing', {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({values})});
+  toast(r.missing.length ? `Saved. ${r.missing.length} required left.` : 'Saved. Your agent can apply now.'); render();
+}
+
 async function renderStorybook(p) {
   const [files, vs, st, props, tell] = await Promise.all([api('/api/playbook'), api('/api/storybook/versions'), api('/api/storybook/learn-status'), api('/api/proposals'), api('/api/agent/tell-status')]);
-  const fs = files.filter(f => !f.name.startsWith('_')); if (!pbFile && fs.length) pbFile = fs[0].name;
-  const doc = pbFile ? await api('/api/playbook/' + pbFile) : {text: ''};
+  const fs = files.filter(f => !f.name.startsWith('_'));
+  const sa = await api('/api/standing');
+  if (!pbFile) pbFile = sa.missing.length ? '@standing' : (fs[0] && fs[0].name);
+  const doc = pbFile && pbFile !== '@standing' ? await api('/api/playbook/' + pbFile) : {text: ''};
   const pend = props.filter(x => x.status === 'pending');
   const running = st.state === 'running';
   const progress = st.state && st.state !== 'idle' ? `<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><b>${running ? 'Adjusting your storybook' : st.state === 'done' ? 'Storybook updated' : 'Stopped'}</b><span style="font-size:12.5px;color:var(--mute)">${esc(st.reference || '')}</span></div>
@@ -395,9 +423,12 @@ async function renderStorybook(p) {
     ${pend.length ? `<div class="sec">Suggested changes · ${pend.length}</div>${pend.map(x => `<div class="panel sugg"><div class="x"><div class="w">${esc(x.reason)}</div>${x.before ? `<s>${esc(x.before)}</s>` : ''}${esc(x.after)}</div>
         <div style="display:flex;gap:6px;flex:none"><button class="btn sm primary" onclick="prop(${x.id},'approve')">Apply</button><button class="btn sm quiet" onclick="prop(${x.id},'reject')">Dismiss</button></div></div>`).join('')}` : ''}
     <div class="reader">
-      <nav class="toc"><div class="h">Files</div>${fs.map(f => `<button class="${f.name === pbFile ? 'on' : ''}" onclick="pbFile='${f.name}';render()">${esc(label(f.name))}</button>`).join('')}
+      <nav class="toc"><div class="h">Required</div>
+        <button class="${pbFile === '@standing' ? 'on' : ''}" onclick="pbFile='@standing';render()" style="display:flex;align-items:center;gap:6px">Standing answers
+          ${sa.missing.length ? `<span class="badge" title="${sa.missing.length} left">${sa.missing.length}</span>` : `<span style="color:var(--green);margin-left:auto">${I.check}</span>`}</button>
+        <div class="h" style="margin-top:10px">Files</div>${fs.map(f => `<button class="${f.name === pbFile ? 'on' : ''}" onclick="pbFile='${f.name}';render()">${esc(label(f.name))}</button>`).join('')}
         <div class="back"><button ${vs.length ? '' : 'disabled'} onclick="back()" title="${vs.length ? vs.length + ' saved version(s)' : 'No earlier version yet'}">${I.undo}Back to previous version</button></div></nav>
-      <article class="md">${window.marked ? marked.parse(doc.text) : '<pre>' + esc(doc.text) + '</pre>'}</article>
+      <article class="md">${pbFile === '@standing' ? standingForm(sa) : (window.marked ? marked.parse(doc.text) : '<pre>' + esc(doc.text) + '</pre>')}</article>
     </div>`;
   const drop = $('#drop'), file = $('#file');
   drop.onclick = () => file.click();

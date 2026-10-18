@@ -55,6 +55,12 @@ python -m dashboard.app                # http://127.0.0.1:8765
 python -m agent.run submit             # submit what you approved, in a visible browser
 ```
 
+**First step, required: standing answers.** Open the dashboard → Storybook → *Standing answers* and answer the
+questions almost every form asks: legal and preferred name, contact, work authorization, sponsorship, relocation (and where),
+office preference, education, and the voluntary self-identification questions (each has *Prefer not to say*). The agent
+fills these on every form and never asks again. Until the required ones are answered it prepares and submits nothing.
+They are saved to `profile/standing.yaml` on your machine and never published.
+
 Several stories at once: keep one storybook per story under `profiles/` and pick it with `JHA_PROFILE=profiles/<story>`.
 Voice notes in `inbox/` are transcribed locally if `faster-whisper` is installed.
 
