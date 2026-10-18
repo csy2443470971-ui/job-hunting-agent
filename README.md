@@ -1,6 +1,6 @@
-<p align="center"><img src="docs/brand/icon.svg" width="88" alt=""></p>
+<p align="center"><img src="docs/brand/icon.png" width="96" alt=""></p>
 
-# Job Hunting Agent
+# Job Hunter Agent
 
 A personal agent that turns your own material into job applications: it finds postings, ranks them, writes a
 one-page résumé from facts you approved, fills the form or drafts the email, and waits for you to say yes.
@@ -58,7 +58,15 @@ python -m agent.run submit             # submit what you approved, in a visible 
 Several stories at once: keep one storybook per story under `profiles/` and pick it with `JHA_PROFILE=profiles/<story>`.
 Voice notes in `inbox/` are transcribed locally if `faster-whisper` is installed.
 
-Other commands: `intake`, `discover`, `score`, `tailor <job_id>`, `cover <job_id>`, `prepare`, `outbox`, `status`.
+On a Mac, `bash scripts/install_mac_app.sh` installs **Job Hunter Agent.app** in /Applications: click the icon and the
+dashboard starts in the background and opens in its own window. Approving an application in the dashboard submits it
+in a visible browser; CAPTCHAs are left to you.
+
+Try it without your own data: `JHA_PROFILE=profile.example JHA_DB=data/demo.sqlite python scripts/demo.py`, then start the
+dashboard with the same two variables (a fictional applicant and fictional companies).
+
+Other commands: `intake`, `discover`, `score`, `compose <job_id>`, `tailor <job_id>`, `cover <job_id>`, `prepare`,
+`submit --app <id>`, `outbox`, `status`.
 
 ## Models
 

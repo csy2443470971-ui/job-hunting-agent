@@ -5,6 +5,7 @@ Output: proposed patches, each small and reviewable:
   - brief_example   add or sharpen one Weak → Strong row in docs/00-house-rules.md (the brief stays one page)
   - storybook_line  replace one line in the storybook with a better-worded one (same facts)
   - ban_phrase      add a phrase to the writing check (profile/learned_patterns.yaml; code is never edited)
+  - preference      change one line of the application strategy in profile/preferences.yaml
 Nothing is applied until you approve it on the dashboard's Learn page. Every applied patch keeps its before/after,
 so it can be reverted.
 """
@@ -33,8 +34,8 @@ def add_feedback(con, text: str, app_id: int | None = None, job_id: int | None =
 
 
 class Patch(BaseModel):
-    kind: str = Field(description="brief_example | storybook_line | ban_phrase")
-    target: str = Field(description="file the patch applies to: docs/00-house-rules.md, profile/master/<file>.md, or learned_patterns")
+    kind: str = Field(description="brief_example | storybook_line | ban_phrase | preference")
+    target: str = Field(description="file the patch applies to: docs/00-house-rules.md, profile/master/<file>.md, learned_patterns, or profile/preferences.yaml")
     before: str = Field(description="exact existing text to replace; '' when adding a brief example row or a ban phrase")
     after: str = Field(description="new text: a full table row '| Weak | Strong | Why |', a replacement storybook line, or a phrase")
     reason: str = Field(description="one sentence linking the patch to the note it came from")
@@ -59,7 +60,8 @@ def propose(con) -> int:
             "\n\n## Current brief\n" + (config.DOCS_DIR / "00-house-rules.md").read_text(encoding="utf-8"))
     task = ("Propose the smallest patches that would have prevented each problem. Prefer one example row in the brief over a new rule; "
             "keep the brief to one page. Use storybook_line only to reword an existing line with the same facts, quoting it exactly in 'before'. "
-            "Use ban_phrase for a phrase that should never appear. Skip notes that need no change.")
+            "Use ban_phrase for a phrase that should never appear. Use preference for changes to what to apply for, where, or how often: replace one exact line of preferences.yaml in 'before' with the edited line in 'after'. Skip notes that need no change.")
+    body += "\n\n## Current preferences.yaml\n" + (config.PROFILE_DIR / "preferences.yaml").read_text(encoding="utf-8")
     res = structured(_system(task), body, Patches, effort="high", max_tokens=6000)
     for p in res.patches:
         con.execute("INSERT INTO proposals(at, kind, target, before, after, reason, source) VALUES (?,?,?,?,?,?,?)",
@@ -73,6 +75,9 @@ def apply(con, pid: int) -> str:
     """Apply one approved proposal. Returns a short description; raises if the target text is not found."""
     init(con)
     p = dict(con.execute("SELECT * FROM proposals WHERE id=?", (pid,)).fetchone())
+    if p["kind"] == "storybook_line":
+        from .storybook import snapshot
+        snapshot("before applying a fix from your notes")
     if p["kind"] == "brief_example":
         path = config.DOCS_DIR / "00-house-rules.md"; s = path.read_text(encoding="utf-8")
         anchor = "| I am excited to apply…"
@@ -86,6 +91,13 @@ def apply(con, pid: int) -> str:
         if not hits:
             raise ValueError("the line to replace was not found in the storybook")
         f = hits[0]; f.write_text(f.read_text(encoding="utf-8").replace(p["before"], p["after"], 1), encoding="utf-8")
+    elif p["kind"] == "preference":
+        import yaml
+        path = config.PROFILE_DIR / "preferences.yaml"; s = path.read_text(encoding="utf-8")
+        if not p["before"] or p["before"] not in s:
+            raise ValueError("the preference line to change was not found")
+        s = s.replace(p["before"], p["after"], 1); yaml.safe_load(s)  # refuse to write broken YAML
+        path.write_text(s, encoding="utf-8")
     elif p["kind"] == "ban_phrase":
         import yaml
         path = PATTERNS(); data = yaml.safe_load(path.read_text()) if path.exists() else {}
@@ -110,6 +122,9 @@ def revert(con, pid: int) -> str:
             t = f.read_text(encoding="utf-8")
             if p["after"] in t:
                 f.write_text(t.replace(p["after"], p["before"], 1), encoding="utf-8"); break
+    elif p["kind"] == "preference":
+        path = config.PROFILE_DIR / "preferences.yaml"
+        path.write_text(path.read_text(encoding="utf-8").replace(p["after"], p["before"], 1), encoding="utf-8")
     elif p["kind"] == "ban_phrase":
         import yaml
         path = PATTERNS(); data = yaml.safe_load(path.read_text()) or {}

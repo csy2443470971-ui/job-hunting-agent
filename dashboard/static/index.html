@@ -3,192 +3,450 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Job Hunting Agent</title>
-<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<title>Job Hunter Agent</title>
+<link rel="icon" href="/static/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#FFFFFF; --side:#F7F6F3; --ink:#37352F; --mute:#787774; --faint:#9B9A97; --line:#EDECE9; --hover:#EFEEEB;
-          --ok:#4F7A5B; --okbg:#EDF3EC; --warn:#A5683A; --warnbg:#FBF3DB; --bad:#B54A3F; --badbg:#FDEBEC; --accent:#6E8B74; --code:#F7F6F3; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#191919; --side:#202020; --ink:#E6E5E2; --mute:#9B9A97; --faint:#6F6E6B;
-          --line:#2F2F2F; --hover:#2A2A2A; --okbg:#1F2A22; --warnbg:#2E2717; --badbg:#2F1C1B; --code:#252525; } }
-  * { box-sizing:border-box; }
-  html, body { margin:0; height:100%; }
-  body { background:var(--bg); color:var(--ink); font:14.5px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; display:flex; }
-  a { color:inherit; text-underline-offset:3px; text-decoration-color:var(--faint); }
+  :root {
+    --page:#FAF9F7; --surface:#FFFFFF; --sunk:#F4F2EF; --hover:#F1EFEB;
+    --ink:#1C1917; --ink2:#44403C; --mute:#78716C; --faint:#A8A29E;
+    --line:#E7E4DF; --line2:#F0EDE9;
+    --green:#16A34A; --blue:#2563EB; --red:#E5372A; --red-strong:#C42A1E; --red-soft:#FDECEA; --orange:#F27420; --orange-soft:#FEF1E7;
+    --shadow:0 1px 2px rgba(28,25,23,.04), 0 1px 1px rgba(28,25,23,.03);
+    --shadow-lg:0 24px 60px -12px rgba(28,25,23,.28);
+    --sans:"Geist", ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono:"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --page:#141312; --surface:#1C1B19; --sunk:#232120; --hover:#2A2826; --ink:#F5F3F0; --ink2:#D6D3CE; --mute:#A39E98; --faint:#6F6A64;
+    --line:#2E2B28; --line2:#262422; --red-soft:#3A1D1A; --orange-soft:#3A2617; color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#141312; --surface:#1C1B19; --sunk:#232120; --hover:#2A2826; --ink:#F5F3F0; --ink2:#D6D3CE; --mute:#A39E98; --faint:#6F6A64;
+    --line:#2E2B28; --line2:#262422; --red-soft:#3A1D1A; --orange-soft:#3A2617; color-scheme:dark; }
+
+  * { box-sizing:border-box; } html, body { margin:0; height:100%; }
+  body { background:var(--page); color:var(--ink); font:14.5px/1.5 var(--sans); display:flex; -webkit-font-smoothing:antialiased; }
+  a { color:inherit; } button { font:inherit; }
+  svg.i { width:16px; height:16px; flex:none; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
   /* sidebar */
-  aside { width:236px; flex:none; background:var(--side); border-right:1px solid var(--line); padding:14px 8px; display:flex; flex-direction:column; gap:2px; position:sticky; top:0; height:100vh; }
-  .brand { display:flex; align-items:center; gap:10px; padding:6px 10px 16px; font-weight:600; }
-  .brand img { width:26px; height:26px; }
-  .nav { all:unset; display:flex; justify-content:space-between; align-items:center; padding:5px 10px; border-radius:6px; color:var(--mute); cursor:pointer; font-size:14px; }
-  .nav:hover { background:var(--hover); } .nav.on { background:var(--hover); color:var(--ink); font-weight:500; }
-  .count { font-size:12px; color:var(--faint); }
-  .side-foot { margin-top:auto; padding:10px; font-size:12px; color:var(--faint); }
+  aside { width:236px; flex:none; background:var(--surface); border-right:1px solid var(--line); padding:18px 12px; display:flex; flex-direction:column; gap:2px; position:sticky; top:0; height:100vh; }
+  .brand { display:flex; align-items:center; gap:10px; padding:4px 8px 22px; font-weight:600; font-size:14.5px; letter-spacing:-.01em; } .brand img { width:28px; height:28px; }
+  .nav { all:unset; display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; color:var(--ink2); cursor:pointer; font-weight:500; position:relative; }
+  .nav:hover { background:var(--hover); }
+  .nav.on { background:var(--sunk); color:var(--ink); } .nav.on svg.i { color:var(--red); }
+  .nav .badge { margin-left:auto; }
+  .badge { font:600 11.5px/1 var(--mono); color:#fff; background:var(--red); border-radius:999px; padding:4px 7px; }
+  .badge:empty { display:none; }
+
   /* page */
   main { flex:1; min-width:0; overflow:auto; }
-  .page { max-width:860px; margin:0 auto; padding:56px 40px 120px; }
-  h1 { font-size:32px; line-height:1.2; margin:0 0 6px; font-weight:700; letter-spacing:-0.01em; }
-  .sub { color:var(--mute); margin:0 0 28px; }
-  .empty { color:var(--faint); padding:40px 0; }
-  /* blocks */
-  .item { border-top:1px solid var(--line); padding:18px 0 14px; }
-  .item:first-of-type { border-top:0; }
-  .row { display:flex; gap:12px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
-  .title { font-size:16px; font-weight:600; }
-  .meta { color:var(--mute); font-size:13px; }
-  .pill { display:inline-block; font-size:12px; padding:1px 8px; border-radius:4px; background:var(--hover); color:var(--mute); margin-right:4px; }
-  .pill.ok { background:var(--okbg); color:var(--ok); } .pill.warn { background:var(--warnbg); color:var(--warn); } .pill.bad { background:var(--badbg); color:var(--bad); }
-  .checks { list-style:none; padding:0; margin:12px 0 6px; display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:4px 18px; font-size:13.5px; }
-  .checks li { display:flex; gap:8px; align-items:flex-start; }
-  .tick { width:16px; height:16px; border-radius:4px; flex:none; margin-top:2px; display:grid; place-items:center; font-size:11px; color:#fff; }
-  .tick.y { background:var(--ok); } .tick.n { background:transparent; border:1.5px solid var(--faint); }
-  .checks small { color:var(--faint); display:block; }
-  .btn { all:unset; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:13.5px; border:1px solid var(--line); }
+  .page { max-width:1100px; margin:0 auto; padding:44px 48px 120px; }
+  .ph { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; }
+  h1 { font-size:28px; line-height:1.15; margin:0; letter-spacing:-.025em; font-weight:650; }
+  .sub { color:var(--mute); margin:6px 0 0; }
+
+  .seg { display:inline-flex; max-width:100%; overflow-x:auto; gap:2px; padding:3px; background:var(--sunk); border-radius:10px; margin-bottom:20px; }
+  .seg button { all:unset; cursor:pointer; white-space:nowrap; padding:6px 12px; border-radius:8px; color:var(--mute); font-weight:500; display:flex; align-items:center; gap:8px; }
+  .seg button:hover { color:var(--ink); }
+  .seg button.on { background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(28,25,23,.08), 0 0 0 1px var(--line); }
+  .seg .n { font:500 12px/1 var(--mono); color:var(--faint); } .seg button.on .n { color:var(--red); }
+
+  /* buttons */
+  .btn { all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 14px; border-radius:9px; font-weight:500; font-size:14px;
+         border:1px solid var(--line); background:var(--surface); color:var(--ink); transition:background .12s, border-color .12s, box-shadow .12s; white-space:nowrap; }
   .btn:hover { background:var(--hover); }
-  .btn.primary { background:var(--ink); color:var(--bg); border-color:var(--ink); }
-  .btn.primary:hover { opacity:.88; }
-  .btn[disabled] { opacity:.4; pointer-events:none; }
-  details { margin-top:6px; } summary { cursor:pointer; color:var(--mute); font-size:13.5px; padding:3px 0; list-style:none; }
-  summary::before { content:"▸"; display:inline-block; width:14px; transition:transform .15s; } details[open] > summary::before { transform:rotate(90deg); }
-  pre, textarea { white-space:pre-wrap; font:13px/1.55 ui-monospace, Menlo, monospace; background:var(--code); border:0; border-radius:6px; padding:12px 14px; width:100%; color:var(--ink); margin:6px 0; }
-  textarea { min-height:180px; resize:vertical; outline:none; }
-  input[type=text] { font:inherit; width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink); margin:3px 0; }
-  .qa { margin:10px 0; } .qa .q { color:var(--mute); font-size:13px; }
-  .callout { background:var(--warnbg); border-radius:6px; padding:10px 14px; margin:10px 0; font-size:13.5px; }
-  .callout ul { margin:4px 0 0; padding-left:18px; }
-  table { width:100%; border-collapse:collapse; font-size:13.5px; }
-  th { text-align:left; font-weight:500; color:var(--mute); border-bottom:1px solid var(--line); padding:6px 8px; }
-  td { border-bottom:1px solid var(--line); padding:7px 8px; vertical-align:top; }
-  td.n { font-variant-numeric:tabular-nums; width:48px; color:var(--mute); }
-  .pb { display:grid; grid-template-columns:200px 1fr; gap:24px; }
-  .pb-list .nav { font-size:13.5px; }
-  .md h1 { font-size:24px; } .md h2 { font-size:18px; margin-top:28px; } .md table { margin:8px 0; } .md td, .md th { border:1px solid var(--line); }
-  .md mark { background:var(--warnbg); color:var(--warn); padding:0 3px; border-radius:3px; }
-  .log td:first-child { white-space:nowrap; color:var(--faint); width:130px; }
-  @media (max-width:760px) { body { display:block; } aside { position:static; width:auto; height:auto; flex-direction:row; flex-wrap:wrap; }
-    .side-foot { display:none; } .page { padding:28px 16px 80px; } .pb { grid-template-columns:1fr; } }
+  .btn.primary { background:var(--red); border-color:var(--red); color:#fff; box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 1px 2px rgba(196,42,30,.35); }
+  .btn.primary:hover { background:var(--red-strong); border-color:var(--red-strong); }
+  .btn.quiet { border-color:transparent; background:transparent; color:var(--ink2); } .btn.quiet:hover { background:var(--hover); }
+  .btn.danger:hover { color:var(--red); }
+  .btn.outline-red { color:var(--red); border-color:color-mix(in srgb, var(--red) 40%, var(--line)); } .btn.outline-red:hover { background:var(--red-soft); }
+  .btn[disabled] { pointer-events:none; background:var(--sunk); border-color:var(--line); color:var(--faint); box-shadow:none; }
+  .btn.sm { height:30px; padding:0 11px; font-size:13.5px; }
+  .iconbtn { all:unset; cursor:pointer; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; color:var(--mute); }
+  .iconbtn:hover { background:var(--hover); color:var(--ink); }
+
+  /* score ring */
+  .score { display:flex; flex-direction:column; align-items:center; gap:3px; flex:none; }
+  .ring { position:relative; width:48px; height:48px; } .ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+  .ring b { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:600 13px/1 var(--mono); letter-spacing:-.02em; }
+  .ring.sm { width:38px; height:38px; } .ring.sm b { font-size:11.5px; }
+  .score small { font-size:10.5px; color:var(--mute); text-transform:uppercase; letter-spacing:.06em; font-weight:500; }
+  .unrated { font-size:12px; color:var(--faint); border:1px dashed var(--line); border-radius:999px; padding:3px 9px; white-space:nowrap; }
+
+  /* review queue: list on the left, one job at a time on the right */
+  .split { display:grid; grid-template-columns:340px minmax(0,1fr); background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; height:calc(100vh - 196px); min-height:540px; }
+  .queue { border-right:1px solid var(--line); overflow:auto; background:color-mix(in srgb, var(--sunk) 35%, var(--surface)); }
+  .qi { all:unset; box-sizing:border-box; width:100%; display:flex; gap:12px; align-items:center; padding:14px 16px; border-bottom:1px solid var(--line2); cursor:pointer; }
+  .qi:hover { background:var(--hover); }
+  .qi.on { background:var(--surface); box-shadow:inset 3px 0 0 var(--red); }
+  .qi .t { flex:1; min-width:0; }
+  .qi .c { font-size:12.5px; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .qi .ti { font-weight:600; font-size:14.5px; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .qi .st { font-size:12px; margin-top:3px; color:var(--mute); display:flex; align-items:center; gap:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .qi .st > span:last-child, .qi .st { min-width:0; }
+  .qi .st.o { color:var(--orange); font-weight:500; } .qi .st.r { color:var(--red); }
+  .dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex:none; }
+  .mono { width:36px; height:36px; flex:none; border-radius:10px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-weight:650; font-size:15px; color:var(--ink2); }
+  .mono.lg { width:48px; height:48px; border-radius:12px; font-size:19px; background:var(--sunk); }
+
+  .detail { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  .d-scroll { flex:1; overflow:auto; padding:28px 34px 34px; }
+  .d-head { display:flex; gap:16px; align-items:flex-start; }
+  .d-head .tt { flex:1; min-width:0; }
+  .d-head .co { font-size:14px; color:var(--mute); font-weight:500; }
+  .d-head h2 { margin:2px 0 0; font-size:24px; line-height:1.2; letter-spacing:-.025em; font-weight:650; }
+  .back-m { display:none; }
+  .facts { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .fact { display:inline-flex; align-items:center; gap:7px; font-size:13px; padding:5px 11px; border:1px solid var(--line); border-radius:999px; color:var(--ink2); background:var(--surface); }
+  .fact svg.i { width:14px; height:14px; color:var(--mute); } .fact b { font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .links { display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:14px; font-size:13.5px; }
+  .lk { color:var(--red); text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:4px; cursor:pointer; } .lk:hover { text-decoration:underline; text-underline-offset:3px; }
+  .lk svg.i { width:13px; height:13px; }
+
+  .section { margin-top:30px; }
+  .sh { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--line2); }
+  .sh h4 { margin:0; font-size:12px; text-transform:uppercase; letter-spacing:.07em; font-weight:600; color:var(--mute); display:flex; align-items:center; gap:7px; }
+  .sh h4 .n { font-family:var(--mono); color:var(--faint); letter-spacing:0; }
+  .section.ask .sh h4 { color:var(--orange); } .section.ask .sh h4 .n { color:var(--orange); }
+  .docs { display:flex; gap:16px; }
+  .doc { all:unset; cursor:zoom-in; display:block; width:136px; }
+  .doc .pv { width:136px; height:176px; border-radius:8px; border:1px solid var(--line); background:#fff; overflow:hidden; transition:transform .15s, box-shadow .15s; }
+  .doc:hover .pv { transform:translateY(-2px); box-shadow:0 10px 24px -10px rgba(28,25,23,.3); }
+  .doc img { width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+  .doc .lb { font-size:12.5px; color:var(--ink2); margin-top:8px; font-weight:500; } .doc .lb span { color:var(--mute); font-weight:400; }
+  .doc .mail { font-size:6.5px; line-height:1.4; white-space:pre-wrap; padding:9px; color:#333; }
+  .doc .none { height:100%; display:flex; align-items:center; justify-content:center; text-align:center; font-size:12px; color:var(--faint); padding:12px; background:var(--sunk); }
+  .qa { display:flex; flex-direction:column; gap:14px; }
+  .field label { display:block; font-size:13.5px; color:var(--ink); margin-bottom:6px; line-height:1.4; font-weight:500; }
+  .kv { display:grid; grid-template-columns:minmax(140px, 34%) minmax(0,1fr); }
+  .kv > div { padding:10px 0; border-bottom:1px solid var(--line2); font-size:13.5px; overflow-wrap:anywhere; }
+  .kv > div:nth-last-child(-n+2) { border-bottom:0; }
+  .kv .k { color:var(--mute); padding-right:18px; } .kv .v { color:var(--ink); white-space:pre-wrap; }
+  .kv .v input, .kv .v textarea { margin:-4px 0; }
+  .why-box { font-size:14px; color:var(--ink2); line-height:1.6; }
+  .jd { white-space:pre-wrap; font-size:14px; line-height:1.65; color:var(--ink2); }
+  .d-foot { display:flex; align-items:center; gap:8px; padding:14px 34px; border-top:1px solid var(--line); background:var(--surface); }
+  .hint { font-size:13px; color:var(--mute); margin-left:6px; }
+  .stamp { font-size:13.5px; color:var(--ink2); display:flex; align-items:center; gap:7px; } .stamp svg { color:var(--red); }
+  input[type=text], textarea { font:inherit; font-size:14px; width:100%; padding:8px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); transition:border-color .12s, box-shadow .12s; }
+  input[type=text]:focus, textarea:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px color-mix(in srgb, var(--orange) 18%, transparent); }
+  textarea { min-height:90px; resize:vertical; line-height:1.5; }
+  .banner { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink2); padding:11px 14px; border:1px solid var(--line); border-left:3px solid var(--orange); border-radius:10px; background:var(--surface); margin-bottom:14px; }
+  .banner code { font-family:var(--mono); font-size:12.5px; background:var(--sunk); padding:1px 5px; border-radius:4px; }
+  .err { font-size:12.5px; color:var(--red); }
+  .empty { text-align:center; color:var(--mute); padding:64px 20px; background:var(--surface); border:1px dashed var(--line); border-radius:16px; }
+  @media (max-width:760px) {
+    .split { grid-template-columns:1fr; height:auto; min-height:0; } .detail { display:none; } .queue { border-right:0; }
+    .split.open .detail { display:flex; } .split.open .queue { display:none; }
+    .back-m { display:inline-flex; margin:-6px 0 12px -8px; } .d-scroll { padding:20px 18px; } .d-foot { padding:12px 18px; flex-wrap:wrap; }
+    .kv { grid-template-columns:1fr; } .kv .k { padding:10px 0 0; border-bottom:0 !important; } .kv .v { padding-top:2px; }
+  }
+
+  /* storybook */
+  .tell { display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:14px; margin-bottom:26px; }
+  .composer { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:18px 18px 12px; display:flex; flex-direction:column; transition:border-color .12s, box-shadow .12s; }
+  .composer:focus-within { border-color:color-mix(in srgb, var(--orange) 55%, var(--line)); box-shadow:0 0 0 4px color-mix(in srgb, var(--orange) 12%, transparent); }
+  .composer h2 { margin:0 0 4px; font-size:18px; letter-spacing:-.015em; font-weight:620; }
+  .composer textarea { border:0; padding:6px 0; min-height:92px; box-shadow:none !important; font-size:15px; resize:none; background:transparent; }
+  .composer .try { display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 12px; }
+  .pill { all:unset; cursor:pointer; font-size:13px; padding:5px 11px; border:1px solid var(--line); border-radius:999px; color:var(--ink2); background:var(--surface); transition:all .12s; }
+  .pill:hover { border-color:var(--orange); color:var(--orange); background:var(--orange-soft); }
+  .composer .bar { display:flex; align-items:center; gap:8px; border-top:1px solid var(--line2); padding-top:10px; }
+  .attached { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--ink2); background:var(--sunk); border-radius:8px; padding:4px 6px 4px 9px; max-width:260px; }
+  .attached span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .attached button { all:unset; cursor:pointer; color:var(--mute); display:flex; } .attached button:hover { color:var(--red); }
+  .mic { all:unset; cursor:pointer; width:34px; height:34px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:var(--ink2); border:1px solid var(--line); margin-left:auto; }
+  .mic:hover { color:var(--red); border-color:color-mix(in srgb, var(--red) 40%, var(--line)); }
+  .mic.on { background:var(--red); color:#fff; border-color:var(--red); animation:pulse 1.3s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(229,55,42,.35); } 60% { box-shadow:0 0 0 8px rgba(229,55,42,0); } }
+  .drop { border:1.5px dashed var(--line); border-radius:16px; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:8px; padding:18px; cursor:pointer; color:var(--mute); font-size:13px; transition:all .15s; }
+  .drop .di { width:42px; height:42px; border-radius:12px; background:var(--sunk); display:flex; align-items:center; justify-content:center; color:var(--ink2); }
+  .drop b { color:var(--ink); font-size:14px; font-weight:600; }
+  .drop:hover, .drop.over { border-color:var(--orange); color:var(--ink2); } .drop.over { background:var(--orange-soft); } .drop.over .di, .drop:hover .di { color:var(--orange); }
+  .status { display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--ink2); margin:-12px 0 20px; }
+  .spin { width:14px; height:14px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--red); animation:sp .8s linear infinite; } @keyframes sp { to { transform:rotate(360deg); } }
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:18px 20px; margin-bottom:16px; }
+  .progress { height:5px; background:var(--sunk); border-radius:5px; overflow:hidden; margin:12px 0 8px; } .progress i { display:block; height:100%; background:linear-gradient(90deg, var(--orange), var(--red)); border-radius:5px; transition:width .4s; }
+  .change { font-size:13.5px; padding:10px 0; border-top:1px solid var(--line2); } .change s { color:var(--faint); } .change .w { font-size:12px; color:var(--mute); margin-bottom:3px; }
+  .sec { font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; font-weight:600; color:var(--mute); margin:28px 0 10px; }
+  .sugg { display:flex; gap:16px; align-items:flex-start; } .sugg .x { flex:1; min-width:0; font-size:14px; } .sugg .x .w { font-size:12.5px; color:var(--mute); margin-bottom:4px; }
+  .sugg s { color:var(--faint); display:block; font-size:13px; }
+
+  .reader { display:grid; grid-template-columns:200px minmax(0,1fr); background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; min-height:420px; }
+  .toc { border-right:1px solid var(--line2); padding:14px 10px; display:flex; flex-direction:column; gap:1px; background:color-mix(in srgb, var(--sunk) 40%, var(--surface)); }
+  .toc .h { font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; font-weight:600; color:var(--mute); padding:4px 10px 8px; }
+  .toc button { all:unset; cursor:pointer; padding:7px 10px; border-radius:8px; font-size:13.5px; color:var(--ink2); text-transform:capitalize; }
+  .toc button:hover { background:var(--hover); } .toc button.on { background:var(--surface); color:var(--ink); font-weight:550; box-shadow:inset 2px 0 0 var(--red), 0 0 0 1px var(--line); }
+  .toc .back { margin-top:auto; padding-top:12px; border-top:1px solid var(--line2); }
+  .toc .back button { display:flex; white-space:nowrap; font-size:13px; align-items:center; gap:7px; color:var(--mute); text-transform:none; } .toc .back button:hover { color:var(--ink); }
+  .toc .back button[disabled] { opacity:.45; pointer-events:none; }
+  .md { padding:26px 34px 40px; line-height:1.65; font-size:14.5px; max-width:760px; overflow-wrap:anywhere; }
+  .md h1 { font-size:22px; } .md h2 { font-size:17px; margin:30px 0 8px; letter-spacing:-.01em; } .md h3 { font-size:15px; margin:22px 0 6px; }
+  .md hr { border:0; border-top:1px solid var(--line2); margin:26px 0; } .md code { font-family:var(--mono); font-size:12.5px; background:var(--sunk); padding:1px 5px; border-radius:4px; }
+  .md table { border-collapse:collapse; font-size:13.5px; display:block; overflow-x:auto; } .md td, .md th { border:1px solid var(--line); padding:6px 10px; text-align:left; vertical-align:top; }
+  .md a { color:var(--red); }
+
+  /* activity */
+  .feed { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); }
+  .ev { display:grid; grid-template-columns:110px 92px minmax(0,1fr); gap:14px; padding:12px 18px; border-bottom:1px solid var(--line2); font-size:13.5px; align-items:baseline; }
+  .ev:last-child { border-bottom:0; }
+  .ev time { font:500 12px var(--mono); color:var(--mute); }
+  .node { justify-self:start; font:500 11.5px/1 var(--mono); padding:4px 7px; border-radius:6px; background:var(--sunk); color:var(--ink2); }
+  .node.apply, .node.review { background:var(--red-soft); color:var(--red-strong); } .node.learn, .node.storybook { background:var(--orange-soft); color:#B4530F; }
+  .ev .d { color:var(--mute); font-size:13px; margin-top:2px; overflow-wrap:anywhere; }
+
+  .toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:var(--ink); color:var(--page); padding:10px 16px; border-radius:10px; font-size:13.5px; box-shadow:var(--shadow-lg); z-index:60; }
+  /* modal */
+  .modal { position:fixed; inset:0; background:rgba(20,18,16,.42); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:28px; z-index:50; animation:fade .14s ease-out; }
+  @keyframes fade { from { opacity:0; } }
+  .win { background:var(--surface); border-radius:16px; width:min(760px,100%); max-height:86vh; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); animation:rise .18s ease-out; }
+  @keyframes rise { from { transform:translateY(8px); opacity:.6; } }
+  .win-h { display:flex; align-items:flex-start; gap:14px; padding:18px 20px; border-bottom:1px solid var(--line2); }
+  .job-t { flex:1; min-width:0; } .job-co { font-size:13px; color:var(--mute); font-weight:500; } .job-t h3 { margin:1px 0 0; font-size:17px; letter-spacing:-.015em; font-weight:620; }
+  .win-b { padding:20px 24px 28px; overflow:auto; white-space:pre-wrap; font-size:14px; line-height:1.65; color:var(--ink2); }
+  .win.img { width:auto; max-width:min(900px,100%); } .win.img .win-b { padding:16px; background:var(--sunk); white-space:normal; } .win.img img { display:block; max-width:100%; height:auto; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.1); margin:0 auto; }
+
+  @media (max-width:760px) {
+    body { display:block; } aside { position:static; width:auto; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; padding:10px 12px; border-right:0; border-bottom:1px solid var(--line); }
+    .brand { padding:4px 10px 4px 4px; } .page { padding:24px 16px 80px; }
+    .tell { grid-template-columns:1fr; } .drop { min-height:120px; }
+    .reader { grid-template-columns:1fr; } .toc { flex-direction:row; flex-wrap:wrap; border-right:0; border-bottom:1px solid var(--line2); } .toc .h { display:none; } .toc .back { margin:0; border:0; padding:0; }
+    .md { padding:20px 18px 30px; } .fgrid { grid-template-columns:1fr; } .ev { grid-template-columns:1fr; gap:4px; } .li { flex-wrap:wrap; }
+  }
 </style>
 </head>
 <body>
 <aside data-lve-skip>
-  <div class="brand"><img src="/static/icon.svg" alt=""><span>Job Hunting Agent</span></div>
-  <button class="nav on" data-tab="review">Review <span class="count" id="c-review"></span></button>
-  <button class="nav" data-tab="apps">Applications <span class="count" id="c-apps"></span></button>
-  <button class="nav" data-tab="jobs">Jobs <span class="count" id="c-jobs"></span></button>
-  <button class="nav" data-tab="storybook">Storybook</button>
-  <button class="nav" data-tab="learn">Learn <span class="count" id="c-learn"></span></button>
-  <button class="nav" data-tab="activity">Activity</button>
-  <div class="side-foot" id="lastrun"></div>
+  <div class="brand"><img src="/static/icon.png" alt=""><span>Job Hunter Agent</span></div>
+  <button class="nav on" data-tab="jobs"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>Job applications <span class="badge" id="c-jobs"></span></button>
+  <button class="nav" data-tab="storybook"><svg class="i" viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2.5Z"/><path d="M4 19.5A2 2 0 0 0 6 21h13M9 7h6"/></svg>Storybook</button>
+  <button class="nav" data-tab="activity"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</button>
 </aside>
 <main><div class="page" id="page" data-lve-skip></div></main>
-
 <script>
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const api = (p, o) => fetch(p, o).then(r => r.json());
 const post = (p, b) => api(p, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(b || {})});
 const day = s => s ? new Date(s).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : '';
-let tab = 'review', pbFile = null, pbMode = 'read';
+let tab = 'jobs', sub = 'review', pbFile = null, poll = null;
 
-const KIND = {ats_web:'Application form', email:'Email', proposal:'Proposal', social_mention:'Reply to a post', manual:'Apply by hand'};
-const STATUS = {pending_approval:['Needs review','warn'], approved:['Approved','ok'], sent:['Sent','ok'], failed:['Failed','bad'], withdrawn:['Withdrawn',''], draft:['Draft','']};
+const I = {
+  ext: '<svg class="i" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+  check: '<svg class="i" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></svg>',
+  x: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  pen: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>',
+  mic: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  up: '<svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>',
+  clip: '<svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="m20 11-8.5 8.5a5 5 0 0 1-7-7L13 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L14 7"/></svg>',
+  undo: '<svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+  alert: '<svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>',
+  send: '<svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+};
+const SRC = {Jev: 'Jev', model: 'Fit', keyword: 'Keyword'};
+const SRC_TIP = {Jev: 'Jev match probability', model: 'Model fit score (Jev not connected)', keyword: 'Keyword match against your roles (not yet model-scored)'};
+let gid = 0;
+// your scale: 90+ green, 80+ blue, 50+ orange; under 50 is never applied to
+const tier = v => v >= 90 ? 'var(--green)' : v >= 80 ? 'var(--blue)' : v >= 50 ? 'var(--orange)' : 'var(--faint)';
+function ring(c, small) {
+  if (c.match == null) return '<span class="unrated" title="Not rated yet">Not rated</span>';
+  const r = 20, C = 2 * Math.PI * r, v = Math.max(0, Math.min(100, c.match)), col = tier(v);
+  return `<div class="score" title="${SRC_TIP[c.match_src] || ''}"><div class="ring ${small ? 'sm' : ''}"><svg viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="${r}" stroke="var(--sunk)" stroke-width="4" fill="none"/><circle cx="24" cy="24" r="${r}" stroke="${col}" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="${C * v / 100} ${C}"/></svg><b style="color:${col}">${v}</b></div>${small ? '' : `<small>${SRC[c.match_src] || ''}</small>`}</div>`;
+}
+const mono = name => `<div class="mono">${esc((name || '?').trim()[0] || '?').toUpperCase()}</div>`;
 
-async function counts() {
-  const s = await api('/api/stats'); const a = s.applications || {}, j = s.jobs || {};
-  $('#c-review').textContent = a.pending_approval || '';
-  $('#c-apps').textContent = Object.values(a).reduce((x, y) => x + y, 0) || '';
-  $('#c-jobs').textContent = (j.queued || 0) + (j.new || 0) || '';
-  try { const ps = await api('/api/proposals'); $('#c-learn').textContent = ps.filter(p => p.status === 'pending').length || ''; } catch (e) {}
-  $('#lastrun').textContent = s.last_run ? 'Last run ' + day(s.last_run.started_at) : 'No daily run yet';
+function modal(head, bodyHtml, cls = '') {
+  const m = document.createElement('div'); m.className = 'modal'; m.setAttribute('data-lve-skip', '');
+  m.innerHTML = `<div class="win ${cls}"><div class="win-h">${head}<button class="iconbtn" aria-label="Close">${I.x}</button></div><div class="win-b">${bodyHtml}</div></div>`;
+  const close = () => { m.remove(); document.removeEventListener('keydown', k); };
+  const k = e => { if (e.key === 'Escape') close(); };
+  m.onclick = e => { if (e.target === m || e.target.closest('.iconbtn')) close(); };
+  document.addEventListener('keydown', k); document.body.appendChild(m);
+}
+async function showJD(id) {
+  const d = await api(`/api/jobs/${id}/description`);
+  modal(`${mono(d.company)}<div class="job-t"><div class="job-co">${esc(d.company)}${d.location ? ' · ' + esc(d.location) : ''}</div><h3>${esc(d.title)}</h3></div>${d.url ? `<a class="btn sm" href="${esc(d.url)}" target="_blank">Open posting${I.ext}</a>` : ''}`,
+    esc(d.text || 'No description saved for this posting.'));
+}
+function showImg(src, company, label, open) {
+  modal(`<div class="job-t"><div class="job-co">${esc(company)}</div><h3>${esc(label)}</h3></div><a class="btn sm" href="${open}" target="_blank">Open full size${I.ext}</a>`, `<img src="${src}" alt="">`, 'img');
+}
+async function decide(id, what) { const r = await post(`/api/applications/${id}/${what}`); if (r && r.msg) toast(r.msg); sel[sub] = null; render(); }
+function toast(m) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 5000); }
+async function reject(id) { const why = prompt('Why not? (optional; the agent learns from it)'); if (why === null) return; await post(`/api/applications/${id}/reject`, {note: why}); sel[sub] = null; render(); }
+async function saveAnswers(id, isEmail, b) {
+  const box = $('#detail');
+  if (isEmail) await post(`/api/applications/${id}/edit`, {email_to: box.querySelector('[data-k=to]').value, email_subject: box.querySelector('[data-k=subject]').value, email_body: box.querySelector('[data-k=body]').value});
+  else await post(`/api/applications/${id}/answers`, {answers: [...box.querySelectorAll('[data-q]')].map(i => ({q: i.dataset.q, a: i.value})).filter(x => x.a.trim())});
+  b.innerHTML = I.check + 'Saved'; editing = false; setTimeout(() => render(), 400);
+}
+async function prep(id, b) { b.innerHTML = '<span class="spin"></span>Preparing…'; b.disabled = true; const r = await post(`/api/jobs/${id}/prepare`); if (r && r.ok === false) { alert(r.msg); return render(); } watchPrep(); }
+async function skip(id) { await post(`/api/jobs/${id}/skip`); sel[sub] = null; render(); }
+function watchPrep() { clearInterval(poll); poll = setInterval(async () => { const t = await api('/api/board?tab=todo'); if (!t.some(x => x.preparing === 'running')) { clearInterval(poll); render(); } }, 3000); }
+
+let sel = {review: null, todo: null, applied: null}, editing = false, mobileOpen = false;
+const keyOf = c => sub === 'todo' ? c.job_id : c.app_id;
+const PIN = '<svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+const CASH = '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
+const CAL = '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+
+function queueItem(c) {
+  const needs = (c.needs || []).length;
+  const st = sub === 'review' ? (needs ? `<div class="st o"><span class="dot"></span>${needs} ${needs === 1 ? 'question' : 'questions'} for you</div>` : `<div class="st r"><span class="dot"></span>Ready to approve</div>`)
+    : sub === 'applied' ? `<div class="st">${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}</div>`
+    : c.preparing === 'running' ? `<div class="st o"><span class="spin"></span>Preparing…</div>` : (c.location ? `<div class="st" style="display:block">${esc(c.location)}</div>` : '');
+  return `<button class="qi ${keyOf(c) === sel[sub] ? 'on' : ''}" onclick="pickJob(${keyOf(c)})">${mono(c.company)}<div class="t"><div class="c">${esc(c.company)}</div><div class="ti">${esc(c.title)}</div>${st}</div>${ring(c, true)}</button>`;
+}
+function pickJob(k) { sel[sub] = k; editing = false; mobileOpen = true; render(); }
+
+function header(c) {
+  const facts = [c.location && `<span class="fact">${PIN}${esc(c.location)}</span>`, c.salary && `<span class="fact">${CASH}<b>${esc(c.salary)}</b></span>`, c.start && `<span class="fact">${CAL}Starts ${esc(c.start)}</span>`].filter(Boolean).join('');
+  const links = [c.url && `<a class="lk" href="${esc(c.url)}" target="_blank">Job posting${I.ext}</a>`, sub !== 'todo' && `<a class="lk" onclick="showJD(${c.job_id})">Read the description</a>`,
+    c.email_to ? `<span style="color:var(--mute)">Send to ${esc(c.email_to)}</span>` : c.apply_url && sub !== 'todo' ? `<a class="lk" href="${esc(c.apply_url)}" target="_blank">Application form${I.ext}</a>` : ''].filter(Boolean).join('');
+  return `<button class="btn quiet sm back-m" onclick="mobileOpen=false;render()">← All jobs</button>
+    <div class="d-head">${mono(c.company).replace('class="mono"', 'class="mono lg"')}<div class="tt"><div class="co">${esc(c.company)}</div><h2>${esc(c.title)}</h2></div>${ring(c)}</div>
+    ${facts ? `<div class="facts">${facts}</div>` : ''}<div class="links">${links}</div>`;
 }
 
-async function appBlock(a) {
-  const checks = await api(`/api/applications/${a.id}/checklist`);
-  const ready = checks.filter(c => c.label !== 'Approved by you').every(c => c.ok !== false);
-  const [st, cls] = STATUS[a.status] || [a.status, ''];
-  const aj = a.answers_json || {};
-  const who = a.job_company || a.company_name || 'Untitled', rawT = a.job_title || ''; const what = (rawT.includes('|') ? rawT.split('|')[1].trim() : rawT) || KIND[a.kind] || '';
-  let h = `<div class="item"><div class="row"><div><div class="title">${esc(who)}</div>
-    <div class="meta">${esc(what)} · ${KIND[a.kind] || a.kind}${a.job_score != null ? ' · fit ' + a.job_score : ''} · ${day(a.created_at)}</div></div>
-    <div><span class="pill ${cls}">${st}</span></div></div>
-    <ul class="checks">${checks.map(c => `<li><span class="tick ${c.ok ? 'y' : 'n'}">${c.ok ? '✓' : ''}</span><span>${esc(c.label)}${c.detail && !c.ok ? `<small>${esc(c.detail)}</small>` : ''}</span></li>`).join('')}</ul>`;
-  if ((aj.needs_human || []).length) h += `<div class="callout">Only you can answer these<ul>${aj.needs_human.map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`;
-  if (a.status === 'pending_approval') h += `<div class="row" style="justify-content:flex-start;gap:8px;margin:8px 0">
-      <button class="btn primary" ${ready ? '' : 'disabled title="Open items above"'} onclick="decide(${a.id},'approve')">Approve</button>
-      <button class="btn" onclick="rejectWithReason(${a.id})">Reject</button>
-      ${a.job_url ? `<a class="btn" href="${esc(a.job_url)}" target="_blank">Posting</a>` : ''}</div>`;
-  if (a.resume_pdf) h += `<details><summary>Résumé</summary><p><a href="/resume/${a.id}" target="_blank">Open the PDF</a></p></details>`;
-  if (['email','proposal','social_mention'].includes(a.kind)) h += `<details ${a.status==='pending_approval'?'open':''}><summary>Email</summary>
-      <input type="text" id="to-${a.id}" value="${esc(a.email_to||'')}" placeholder="To">
-      <input type="text" id="subj-${a.id}" value="${esc(a.email_subject||'')}" placeholder="Subject">
-      <textarea id="body-${a.id}">${esc(a.email_body||'')}</textarea>
-      <button class="btn" onclick="saveEmail(${a.id}, this)">Save</button></details>`;
-  if ((aj.answers || []).length) h += `<details><summary>Form answers</summary>${aj.answers.filter(x => x.answer).map(x => `<div class="qa"><div class="q">${esc(x.question)}</div><pre>${esc(x.answer)}</pre></div>`).join('')}</details>`;
-  if ((a.sent_log || '').includes('screenshot:')) h += `<details><summary>Filled form</summary><img src="/screen/${a.id}" style="max-width:100%;border:1px solid var(--line);border-radius:6px"></details>`;
-  if (a.diy_notes) h += `<details><summary>Agent's notes</summary><pre>${esc(a.diy_notes)}</pre></details>`;
-  h += `<details><summary>Note to the agent</summary><textarea id="note-${a.id}" style="min-height:70px" placeholder="What should it do differently next time? e.g. 'Never write named, say defined the brand identity.'"></textarea><button class="btn" onclick="sendNote(${a.id}, this)">Send note</button></details>`;
-  return h + '</div>';
+function detailApp(c, done) {
+  const needs = c.needs || [];
+  const shot = c.has_shot
+    ? `<button class="doc" onclick="showImg('/screen/${c.app_id}', ${esc(JSON.stringify(c.company))}, 'Application', '/screen/${c.app_id}')"><div class="pv"><img src="/screen/${c.app_id}" alt=""></div><div class="lb">Application <span>· filled form</span></div></button>`
+    : c.email_body ? `<div class="doc" style="cursor:default"><div class="pv"><div class="mail"><b>${esc(c.email_subject || '')}</b>\n\n${esc(c.email_body)}</div></div><div class="lb">Email <span>· draft</span></div></div>`
+    : `<div class="doc" style="cursor:default"><div class="pv"><div class="none">No form captured</div></div><div class="lb">Application</div></div>`;
+  const ask = needs.length && !done ? `<div class="section ask"><div class="sh"><h4>${I.alert}Questions for you <span class="n">${needs.length}</span></h4></div>
+      <div class="qa">${needs.map(q => `<div class="field"><label>${esc(q)}</label><input type="text" data-q="${esc(q)}" placeholder="Your answer"></div>`).join('')}</div>
+      <div style="margin-top:14px"><button class="btn primary sm" onclick="saveAnswers(${c.app_id}, false, this)">Save answers</button></div></div>` : '';
+  const ed = editing && !done;
+  const filled = c.email_body
+    ? `<div class="kv"><div class="k">To</div><div class="v">${ed ? `<input type="text" data-k="to" value="${esc(c.email_to || '')}">` : esc(c.email_to || '')}</div>
+        <div class="k">Subject</div><div class="v">${ed ? `<input type="text" data-k="subject" value="${esc(c.email_subject || '')}">` : esc(c.email_subject || '')}</div>
+        <div class="k">Message</div><div class="v">${ed ? `<textarea data-k="body" style="min-height:240px">${esc(c.email_body)}</textarea>` : esc(c.email_body)}</div></div>`
+    : `<div class="kv">${c.fields.map(f => `<div class="k">${esc(f.q)}</div><div class="v">${ed ? (f.a.length > 80 ? `<textarea data-q="${esc(f.q)}">${esc(f.a)}</textarea>` : `<input type="text" data-q="${esc(f.q)}" value="${esc(f.a)}">`) : esc(f.a)}</div>`).join('')}</div>`;
+  return `<div class="d-scroll">${header(c)}
+      <div class="section"><div class="sh"><h4>Documents</h4></div><div class="docs">
+        <button class="doc" onclick="showImg('/resume-png/${c.app_id}', ${esc(JSON.stringify(c.company))}, 'Résumé', '/resume/${c.app_id}')"><div class="pv"><img src="/resume-png/${c.app_id}" alt=""></div><div class="lb">Résumé <span>· 1 page</span></div></button>${shot}</div></div>
+      ${ask}
+      <div class="section"><div class="sh"><h4>${c.email_body ? 'Email' : 'Filled by the agent'} <span class="n">${c.email_body ? '' : c.fields.length}</span></h4>
+        ${done ? '' : ed ? `<span style="display:flex;gap:6px"><button class="btn sm quiet" onclick="editing=false;render()">Cancel</button><button class="btn sm primary" onclick="saveAnswers(${c.app_id}, ${!!c.email_body}, this)">Save</button></span>` : `<button class="btn sm quiet" onclick="editing=true;render()">${I.pen}Edit</button>`}</div>${filled}</div>
+    </div>
+    <div class="d-foot">${done ? `<span class="stamp">${I.check}${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}</span>` : `
+      <button class="btn primary" ${needs.length ? 'disabled' : ''} onclick="decide(${c.app_id},'approve')">${I.check}Approve</button>
+      <button class="btn danger" onclick="reject(${c.app_id})">Reject</button>
+      <span class="hint">${needs.length ? `Answer the ${needs.length === 1 ? 'question' : needs.length + ' questions'} above to approve.` : (c.email_body ? 'Approving queues the email; it goes out with the next send.' : 'Approving submits it in a browser window. Nothing goes out before.')}</span>`}</div>`;
 }
 
-async function decide(id, what) { await post(`/api/applications/${id}/${what}`); render(); }
-async function rejectWithReason(id) { const why = prompt('Why reject it? (optional, the agent learns from this)') ; if (why === null) return; await post(`/api/applications/${id}/reject`, {note: why}); render(); }
-async function sendNote(id, b) { const t = $(`#note-${id}`).value.trim(); if (!t) return; await post('/api/feedback', {text: t, app_id: id}); $(`#note-${id}`).value = ''; b.textContent = 'Sent'; setTimeout(() => b.textContent = 'Send note', 1200); }
-async function decideProposal(id, action) { const r = await post(`/api/proposals/${id}/${action}`); if (r && r.msg && !r.ok) alert(r.msg); render(); }
-const KINDLABEL = {brief_example: 'Writing brief · example', storybook_line: 'Storybook · line', ban_phrase: 'Writing check · banned phrase'};
-async function saveEmail(id, b) {
-  await post(`/api/applications/${id}/edit`, {email_to: $(`#to-${id}`).value, email_subject: $(`#subj-${id}`).value, email_body: $(`#body-${id}`).value});
-  b.textContent = 'Saved'; setTimeout(() => b.textContent = 'Save', 1200);
+function detailTodo(c) {
+  return `<div class="d-scroll">${header(c)}
+      ${c.why ? `<div class="section"><div class="sh"><h4>Why it fits</h4></div><div class="why-box">${esc(c.why)}</div></div>` : ''}
+      ${c.preparing && c.preparing.startsWith('error') ? `<div class="section"><div class="err">${esc(c.preparing)}</div></div>` : ''}
+      <div class="section"><div class="sh"><h4>Job description</h4></div><div class="jd" id="jd">Loading…</div></div>
+    </div>
+    <div class="d-foot"><button class="btn primary" ${c.preparing === 'running' ? 'disabled' : ''} onclick="prep(${c.job_id}, this)">${c.preparing === 'running' ? '<span class="spin"></span>Preparing…' : 'Prepare application'}</button>
+      <button class="btn" onclick="skip(${c.job_id})">Skip</button><span class="hint">Prepare writes the résumé and fills the form. It comes back here for review.</span></div>`;
+}
+
+async function renderJobs(p) {
+  const [rv, td, ap, cfg] = await Promise.all([...['review', 'todo', 'applied'].map(t => api('/api/board?tab=' + t)), api('/api/config')]);
+  $('#c-jobs').textContent = rv.length || '';
+  const lists = {review: rv, todo: td, applied: ap};
+  const names = {review: 'Waiting for review', todo: 'Not started', applied: 'Applied'};
+  const list = lists[sub];
+  if (!list.some(c => keyOf(c) === sel[sub])) sel[sub] = list.length ? keyOf(list[0]) : null;
+  const cur = list.find(c => keyOf(c) === sel[sub]);
+  const banner = sub === 'todo' && !cfg.jev ? `<div class="banner">${I.alert}<div>Jev isn't connected, so these are ranked by keyword match. Add <code>TYPESAFE_API_KEY</code> to <code>.env</code> to rate every posting with Jev.</div></div>` : '';
+  const empty = {review: 'Nothing is waiting for you.', todo: 'Nothing waiting to start.', applied: 'Nothing sent yet.'}[sub];
+  const keepScroll = $('.queue') ? $('.queue').scrollTop : 0;
+  p.innerHTML = `<div class="ph"><div><h1>Job applications</h1></div>
+      <div class="seg" style="margin:0">${Object.keys(names).map(k => `<button class="${k === sub ? 'on' : ''}" onclick="sub='${k}';editing=false;mobileOpen=false;render()">${names[k]}<span class="n">${lists[k].length}</span></button>`).join('')}</div></div>
+    ${banner}
+    ${list.length ? `<div class="split ${mobileOpen ? 'open' : ''}"><div class="queue">${list.map(queueItem).join('')}</div>
+      <section class="detail" id="detail">${cur ? (sub === 'todo' ? detailTodo(cur) : detailApp(cur, sub === 'applied')) : ''}</section></div>` : `<div class="empty">${empty}</div>`}`;
+  if ($('.queue')) $('.queue').scrollTop = keepScroll;
+  if (sub === 'todo' && cur) api(`/api/jobs/${cur.job_id}/description`).then(d => { const el = $('#jd'); if (el) el.textContent = d.text || 'No description saved.'; });
+  if (td.some(x => x.preparing === 'running')) watchPrep();
 }
 
 async function renderStorybook(p) {
-  const files = (await api('/api/playbook')).filter(f => !f.name.startsWith('_'));
-  if (!pbFile && files.length) pbFile = files[0].name;
-  const doc = pbFile ? await api('/api/playbook/' + pbFile) : {text:''};
-  const open = (doc.text.match(/\[(fill|confirm)[^\]]*\]/g) || []).length;
-  const body = pbMode === 'edit' ? `<textarea id="pb-text" style="min-height:70vh">${esc(doc.text)}</textarea>`
-    : `<div class="md">${(window.marked ? marked.parse(doc.text) : '<pre>' + esc(doc.text) + '</pre>').replace(/\[(fill|confirm)([^\]]*)\]/g, '<mark>[$1$2]</mark>')}</div>`;
-  p.innerHTML = `<h1>Storybook</h1><p class="sub">Everything the agent knows about you. Résumés use only what is written here.</p>
-    <div class="pb"><div class="pb-list">${files.map(f => `<button class="nav ${f.name===pbFile?'on':''}" onclick="pbFile='${f.name}';render()">${esc(f.name.replace(/^\d+-/, '').replace('.md',''))} ${f.fill + f.confirm ? `<span class="count">${f.fill + f.confirm}</span>` : ''}</button>`).join('')}</div>
-    <div><div class="row" style="margin-bottom:8px"><span class="meta">${open} open item${open===1?'':'s'}</span><span>
-      <button class="btn" onclick="pbMode=pbMode==='edit'?'read':'edit';render()">${pbMode==='edit'?'Done':'Edit'}</button>
-      ${pbMode==='edit'?'<button class="btn primary" onclick="savePb(this)">Save</button>':''}</span></div>${body}</div></div>`;
+  const [files, vs, st, props, tell] = await Promise.all([api('/api/playbook'), api('/api/storybook/versions'), api('/api/storybook/learn-status'), api('/api/proposals'), api('/api/agent/tell-status')]);
+  const fs = files.filter(f => !f.name.startsWith('_')); if (!pbFile && fs.length) pbFile = fs[0].name;
+  const doc = pbFile ? await api('/api/playbook/' + pbFile) : {text: ''};
+  const pend = props.filter(x => x.status === 'pending');
+  const running = st.state === 'running';
+  const progress = st.state && st.state !== 'idle' ? `<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><b>${running ? 'Adjusting your storybook' : st.state === 'done' ? 'Storybook updated' : 'Stopped'}</b><span style="font-size:12.5px;color:var(--mute)">${esc(st.reference || '')}</span></div>
+      <div class="progress"><i style="width:${st.total ? Math.round(100 * st.done / st.total) : 0}%"></i></div><div style="font-size:12.5px;color:var(--mute)">${running ? 'Now: ' + esc(st.current) : ''} ${st.error ? esc(st.error) : ''}</div>
+      ${(st.changes || []).slice(-8).reverse().map(c => `<div class="change"><div class="w">${esc(c.where)} · ${esc(c.why)}</div><s>${esc(c.before)}</s><div>${esc(c.after)}</div></div>`).join('')}</div>` : '';
+  const examples = ['Improve my storybook', 'Change how my résumé is written', 'Change my application strategy'];
+  const label = f => f.replace(/^\d+-/, '').replace(/\.md$/, '').replace(/-/g, ' ').replace(/^readme$/i, 'Sources');
+  p.innerHTML = `<div class="ph"><div><h1>Storybook</h1><p class="sub">Everything your agent knows about you. Tell it what to change.</p></div></div>
+    <div class="tell">
+      <div class="composer"><h2>What should your agent know?</h2>
+        <textarea id="ask" placeholder="Type, or tap the mic and talk."></textarea>
+        <div class="try">${examples.map(x => `<button class="pill" onclick="useEx('${x}')">${x}?</button>`).join('')}</div>
+        <div class="bar">${picked ? `<span class="attached">${I.clip}<span>${esc(picked.name)}</span><button onclick="picked=null;render()" title="Remove">${I.x}</button></span>` : ''}
+          <button class="mic" id="mic" title="Speak" onclick="speak()">${I.mic}</button>
+          <button class="btn primary" ${running ? 'disabled' : ''} onclick="tellAgent()">Send${I.send}</button></div></div>
+      <div class="drop" id="drop"><div class="di">${I.up}</div><b>Drop a file</b><span>Any file: a résumé you like, notes, a portfolio<br>or <u>browse</u></span><input type="file" id="file" hidden></div>
+    </div>
+    ${tell.thinking ? '<div class="status"><span class="spin"></span>Thinking about what you said…</div>' : ''}
+    ${progress}
+    ${pend.length ? `<div class="sec">Suggested changes · ${pend.length}</div>${pend.map(x => `<div class="panel sugg"><div class="x"><div class="w">${esc(x.reason)}</div>${x.before ? `<s>${esc(x.before)}</s>` : ''}${esc(x.after)}</div>
+        <div style="display:flex;gap:6px;flex:none"><button class="btn sm primary" onclick="prop(${x.id},'approve')">Apply</button><button class="btn sm quiet" onclick="prop(${x.id},'reject')">Dismiss</button></div></div>`).join('')}` : ''}
+    <div class="reader">
+      <nav class="toc"><div class="h">Files</div>${fs.map(f => `<button class="${f.name === pbFile ? 'on' : ''}" onclick="pbFile='${f.name}';render()">${esc(label(f.name))}</button>`).join('')}
+        <div class="back"><button ${vs.length ? '' : 'disabled'} onclick="back()" title="${vs.length ? vs.length + ' saved version(s)' : 'No earlier version yet'}">${I.undo}Back to previous version</button></div></nav>
+      <article class="md">${window.marked ? marked.parse(doc.text) : '<pre>' + esc(doc.text) + '</pre>'}</article>
+    </div>`;
+  const drop = $('#drop'), file = $('#file');
+  drop.onclick = () => file.click();
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave = () => drop.classList.remove('over');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); };
+  file.onchange = () => pick(file.files[0]);
+  if (draft) $('#ask').value = draft;
+  $('#ask').oninput = e => { draft = e.target.value; };
+  if (tell.thinking) { clearInterval(poll); poll = setInterval(async () => { const t = await api('/api/agent/tell-status'); if (!t.thinking) { clearInterval(poll); if (tab === 'storybook') render(); } }, 3000); }
+  if (running) { clearInterval(poll); poll = setInterval(async () => { const s = await api('/api/storybook/learn-status'); if (s.state !== 'running' || tab !== 'storybook') clearInterval(poll); if (tab === 'storybook') render(); }, 2500); }
 }
-async function savePb(b) { await api('/api/playbook/' + pbFile, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: $('#pb-text').value})}); b.textContent = 'Saved'; setTimeout(() => b.textContent = 'Save', 1200); }
+let picked = null, draft = '';
+function useEx(x) { const a = $('#ask'); a.value = x + ': '; draft = a.value; a.focus(); }
+function pick(f) { if (!f) return; const r = new FileReader(); r.onload = () => { picked = {name: f.name, data_b64: r.result}; render(); }; r.readAsDataURL(f); }
+async function tellAgent() {
+  const text = $('#ask').value.trim(); if (!text && !picked) return;
+  const res = await post('/api/agent/tell', {text, ...(picked || {})}); picked = null; draft = '';
+  if (res && res.ok === false) alert(res.msg); render();
+}
+let rec = null;
+function speak() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return alert('Voice input needs Chrome or Safari.');
+  if (rec) { rec.stop(); return; }
+  rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = navigator.language || 'en-US';
+  const box = $('#ask'), start = box.value ? box.value + ' ' : '';
+  rec.onresult = e => { box.value = start + Array.from(e.results).map(r => r[0].transcript).join(''); draft = box.value; };
+  rec.onend = () => { rec = null; $('#mic') && $('#mic').classList.remove('on'); };
+  $('#mic').classList.add('on'); rec.start();
+}
+async function back() { await post('/api/storybook/back'); render(); }
+async function prop(id, a) { const r = await post(`/api/proposals/${id}/${a}`); if (r && r.ok === false) alert(r.msg); render(); }
+
+async function renderActivity(p) {
+  const ev = await api('/api/events');
+  const t = s => new Date(s).toLocaleString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  p.innerHTML = `<div class="ph"><div><h1>Activity</h1><p class="sub">Everything the agent did, newest first.</p></div></div>` + (ev.length
+    ? `<div class="feed">${ev.map(e => `<div class="ev"><time>${t(e.at)}</time><span class="node ${esc(e.node)}">${esc(e.node)}</span><div><div>${esc(e.action)}</div>${e.detail ? `<div class="d">${esc(e.detail)}</div>` : ''}</div></div>`).join('')}</div>`
+    : '<div class="empty">Nothing yet.</div>');
+}
 
 async function render() {
-  counts();
   document.querySelectorAll('aside .nav').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   const p = $('#page');
-  if (tab === 'review') {
-    const apps = await api('/api/applications?status=pending_approval');
-    p.innerHTML = `<h1>Review</h1><p class="sub">Nothing is submitted or sent until you approve it. Approve unlocks when every check passes.</p>` +
-      (apps.length ? (await Promise.all(apps.map(appBlock))).join('') : '<div class="empty">Nothing waiting for you.</div>');
-  } else if (tab === 'apps') {
-    const apps = (await api('/api/applications')).filter(a => a.status !== 'pending_approval');
-    p.innerHTML = `<h1>Applications</h1><p class="sub">Approved, sent and closed, with exactly what was filled in.</p>` +
-      (apps.length ? (await Promise.all(apps.map(appBlock))).join('') : '<div class="empty">No applications yet.</div>');
-  } else if (tab === 'jobs') {
-    const jobs = await api('/api/jobs?limit=300');
-    p.innerHTML = `<h1>Jobs</h1><p class="sub">Scored postings, best fit first.</p><table><tr><th>Fit</th><th>Role</th><th>Status</th></tr>${jobs.map(j =>
-      `<tr><td class="n">${j.score ?? ''}</td><td><a href="${esc(j.url)}" target="_blank"><b>${esc(j.company)}</b></a> · ${esc(j.title)}<div class="meta">${esc(j.score_reason || '')}</div></td><td class="meta">${esc(j.status)}</td></tr>`).join('')}</table>`;
-  } else if (tab === 'storybook') {
-    await renderStorybook(p);
-  } else if (tab === 'learn') {
-    const ps = await api('/api/proposals');
-    const pend = ps.filter(p => p.status === 'pending'), done = ps.filter(p => p.status !== 'pending');
-    const card = p => `<div class="item"><div class="row"><div><div class="title">${esc(KINDLABEL[p.kind] || p.kind)}</div><div class="meta">${esc(p.reason)}</div></div><span class="pill ${p.status==='applied'?'ok':p.status==='pending'?'warn':''}">${esc(p.status)}</span></div>
-      ${p.before ? `<pre style="text-decoration:line-through;opacity:.7">${esc(p.before)}</pre>` : ''}<pre>${esc(p.after)}</pre>
-      <div class="meta">From your note: “${esc(p.source)}”</div>
-      ${p.status === 'pending' ? `<div class="row" style="justify-content:flex-start;gap:8px;margin-top:8px"><button class="btn primary" onclick="decideProposal(${p.id},'approve')">Apply</button><button class="btn" onclick="decideProposal(${p.id},'reject')">Dismiss</button></div>` : ''}
-      ${p.status === 'applied' ? `<button class="btn" style="margin-top:8px" onclick="decideProposal(${p.id},'revert')">Revert</button>` : ''}</div>`;
-    p.innerHTML = `<h1>Learn</h1><p class="sub">Your notes become small fixes to the agent's writing brief, your storybook, or its writing check. Nothing changes until you apply it, and every change can be reverted.</p>` +
-      (pend.length ? pend.map(card).join('') : '<div class="empty">No proposals yet. Leave a note on any application, then run <code>python -m agent.run learn</code> (the daily run does it too).</div>') +
-      (done.length ? '<h2 style="margin-top:40px;font-size:18px">History</h2>' + done.map(card).join('') : '');
-  } else if (tab === 'activity') {
-    const ev = await api('/api/events');
-    p.innerHTML = `<h1>Activity</h1><p class="sub">Every step the agent took and every decision you made.</p>` + (ev.length ? `<table class="log">${ev.map(e =>
-      `<tr><td>${new Date(e.at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td><b>${esc(e.node)}</b> · ${esc(e.action)}<div class="meta">${esc(e.detail || '')}</div></td></tr>`).join('')}</table>` : '<div class="empty">No activity recorded yet.</div>');
-  }
+  if (tab === 'jobs') await renderJobs(p);
+  else if (tab === 'storybook') await renderStorybook(p);
+  else await renderActivity(p);
 }
-document.querySelectorAll('aside .nav').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+document.querySelectorAll('aside .nav').forEach(b => b.onclick = () => { tab = b.dataset.tab; clearInterval(poll); render(); });
 render();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>

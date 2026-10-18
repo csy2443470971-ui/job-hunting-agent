@@ -27,7 +27,7 @@ it won't show up on a résumé. That's the point.
 
 **3. Nothing leaves without your yes.**
 The agent can find, rank, write and fill. It cannot submit or send until you click Approve. It also won't touch
-CAPTCHAs, LinkedIn Easy Apply, salary questions, demographic questions, or any answer an employer says must be
+CAPTCHAs, LinkedIn Easy Apply, salary questions, demographic questions you haven't given standing answers for, or any answer an employer says must be
 written by you. Those come to you, marked.
 
 ## A normal day

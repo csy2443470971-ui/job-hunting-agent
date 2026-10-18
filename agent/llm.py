@@ -8,6 +8,7 @@ Design rules (from the user):
 """
 from __future__ import annotations
 import json
+import re
 from typing import Literal
 from pydantic import BaseModel, Field
 from . import config
@@ -127,14 +128,44 @@ class FormAnswers(BaseModel):
     needs_human: list[str] = Field(description="questions we must not answer on the person's behalf (salary, visa, legal attestations, EEO) or could not answer")
 
 
+WHY_US = re.compile(r"\bwhy\b.*\b(us|join|interest|company|here)|interested in|excit|what (draws|attracts)|most interesting aspects|motivat", re.I)
+WHY_US_RULE = ("For a why-us question (why this company, what excites you about us): open with the company's mission in a sentence, "
+               "in their words or close to them; then why it matters to the candidate as a person: character, habits, what they "
+               "love doing (07-voice.md); experience last, one light touch at most. Never open with the candidate. "
+               "A little American warmth and energy is welcome; hype words are not.")
+
+
 def answer_form(job: dict, questions: list[dict]) -> FormAnswers:
     """questions: [{label, required, type, options?}] extracted from the ATS form."""
     task = f"Answer this application form. Anything only {config.first_name()} can answer goes in needs_human with a short reason."
     body = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\n\n## QUESTIONS\n" +
             json.dumps(questions, ensure_ascii=False, indent=1) + "\n\n## POSTING\n" + (job.get('description') or '')[:8000])
+    if any(WHY_US.search(q.get("label") or "") for q in questions):
+        from . import db as _db
+        from .mission import mission
+        with _db.tx() as con:
+            m = mission(con, job.get("company") or "", job.get("description") or "")
+        body += ("\n\n## COMPANY MISSION (their own words)\n" + ("\n".join(f"- {x}" for x in m) if m else
+                 "- none found: open with what the company says it is building, never invent a mission"))
+        task += " " + WHY_US_RULE
     fa = structured(_system(task), body, FormAnswers, effort="medium", max_tokens=8000)
     from .apply.identity import identity_answer
+    from .apply.standing import standing_answer
+    opts = {q.get("label"): q.get("options") for q in questions}
+    have = {a.question for a in fa.answers}
+    from .apply.standing import SKIP_NEED
+    fa.needs_human = [q for q in fa.needs_human if not SKIP_NEED.search(q)]
+    for q in list(fa.needs_human):
+        v = standing_answer(q, opts.get(q))
+        if v is not None:
+            fa.needs_human.remove(q)
+            if q not in have:
+                fa.answers.append(FormAnswer(question=q, answer=v, provenance="master", note="standing answer"))
     for a in fa.answers:
+        v = standing_answer(a.question, opts.get(a.question))
+        if v is not None:
+            a.answer, a.provenance, a.note = v, "master", "standing answer"
+            continue
         v = identity_answer(a.question)
         if v is not None:
             a.answer, a.provenance, a.note = v, "master", "identity rule: legal name first"

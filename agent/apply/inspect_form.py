@@ -22,7 +22,8 @@ JS = r"""
     let options = [];
     if (el.tagName === 'SELECT') options = [...el.options].map(o => o.text.trim()).filter(Boolean);
     if (el.type === 'radio' || el.type === 'checkbox') { const l = el.closest('label') || (el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`)); options = [l ? l.innerText.trim() : el.value]; }
-    out.push({ label, tag: el.tagName.toLowerCase(), type: el.type || el.getAttribute('role'), name: el.name || '', id: el.id || '',
+    const fp = el.closest('[data-field-path]');
+    out.push({ label, tag: el.tagName.toLowerCase(), type: el.type || el.getAttribute('role'), name: el.name || '', id: el.id || '', path: fp ? fp.getAttribute('data-field-path') : '',
                required: el.required || el.getAttribute('aria-required') === 'true' || /\*\s*$/.test(label), options });
   });
   return out;

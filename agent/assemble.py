@@ -36,7 +36,14 @@ def _linkify(text: str) -> tuple[str, str]:
     return "", ""
 
 
-def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_projects: int = 3, posting_text: str = "") -> dict:
+_STOP = set("the and for with that this from your you our are will have has into across about their they them what when where which while who how its it's not but all can more most one two own any each".split())
+
+
+def _words(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z][a-z\-]{3,}", (text or "").lower()) if w not in _STOP}
+
+
+def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_projects: int = 4, posting_text: str = "") -> dict:
     prof = _p(); ENTRIES = prof.get("entries", {}); PROJECT_LINKS = prof.get("project_links", {})
     PINNED = [n for n, m in ENTRIES.items() if m.get("pinned")]
     exp = _sections(config.MASTER_DIR / "02-experience.md", set(ENTRIES))
@@ -75,11 +82,34 @@ def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_project
         m = ENTRIES[n]
         experience.append({"org": n, "org_link": m["link"], "role": m["role"], "dates": m["dates"], "location": m["location"], "bullets": bullets})
     used = " ".join(b["text"] for e in experience for b in e["bullets"])
+    # Projects: lens tags first, then what the posting itself talks about (so a climate-data SaaS role
+    # doesn't get a game just because the game has one product-design line).
+    also = set()
+    if re.search(r"\b(AI|LLM|agents?|machine learning|ML)\b", posting_text):
+        also.add("ai_product")
+    if re.search(r"climate|sustainab|carbon|decarboni|ESG|energy", posting_text, re.I):
+        also.add("climate")
+    also -= want
+    post_words = _words(posting_text)
+    from .links import CREATIVE_FAMILIES, CREATIVE_SECTORS
+    creative_only = set(prof.get("creative_only_projects") or [])
+    creative_role = lens in CREATIVE_FAMILIES or sector in CREATIVE_SECTORS or bool(
+        re.search(r"creative|game|art director|motion|technologist|illustrat|visual|brand|graphic|interactive|3d", posting_text[:200], re.I))
+
+    priority = set(prof.get("creative_priority_projects") or []) if creative_role else set()
+
+    def relevance(lines):
+        tags = sum(2 if t & want else (1 if t & also else 0) for _, t in lines)
+        overlap = len(post_words & _words(" ".join(x for x, _ in lines)))
+        return tags + 0.35 * min(overlap, 12)
+
     projects = []
-    for name, lines in sorted(proj.items(), key=lambda kv: -rank(kv[1])):
-        if name.startswith("Talks") or name in used or not any(t & want for _, t in lines):
+    for name, lines in sorted(proj.items(), key=lambda kv: (kv[0] not in priority, -relevance(kv[1]))):
+        if name.startswith("Talks") or name in used or not any(t & (want | also) for _, t in lines):
             continue
-        matching = [(t, tags) for t, tags in lines if tags & want]
+        if name in creative_only and not creative_role:
+            continue  # game-design projects go only on creative résumés
+        matching = [(t, tags) for t, tags in lines if tags & want] or [(t, tags) for t, tags in lines if tags & also]
         text = sorted(matching, key=lambda x: verbs[x[0].split()[0]])[0][0]
         verbs[text.split()[0]] += 1
         projects.append({"name": name, "blurb": text, "link": PROJECT_LINKS.get(name, ""), "provenance": "master"})

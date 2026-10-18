@@ -76,6 +76,8 @@ def render_one_page(content: dict, basename: str, role_family: str | None = None
                     page.set_content(_html(content, scale), wait_until="load")
                     page.pdf(path=str(out), format="Letter", print_background=True, prefer_css_page_size=True)
                     if _pages(out) == 1:
+                        page.set_viewport_size({"width": 816, "height": 1056})
+                        page.screenshot(path=str(out.with_suffix(".png")), clip={"x": 0, "y": 0, "width": 816, "height": 1056})
                         return out, content, scale
                 if not _trim(content):
                     raise RuntimeError("could not fit résumé on one page even after trimming")

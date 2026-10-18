@@ -30,13 +30,15 @@ numbers, and say each thing once. In emails, borrow tone from {name}'s own writi
 | Helped with research | Ran 20+ stakeholder interviews across three continents | Who did what, how much |
 | Skills: particle systems, SDF, scroll-driven animation | Creative coding: Three.js, p5.js, WebGL | Skills name tools and disciplines; techniques roll up under them (list techniques only for roles that ask, e.g. generative art) |
 | Built… Built… Designed and built… Designed… (one page) | Architected, shipped, conducted, established, authored | Vary the opening verb; pick the one the field uses for that act |
-| I am excited to apply… | (Start with the one specific reason this company, then the evidence) | Openers carry information |
+| Selected work | Selected Projects | The section is projects, so name it with the field's word |
+| I am excited to apply… / At Acme I designed… so I want to join Northwind | Northwind's mission is to make the grid run on clean power. I love that it's a mission about plumbing, not slogans… | Why-us answers open with their mission, then why it matters to {name} as a person; experience last, lightly |
 
 ## Shape
 
 - Résumé: one page, reverse-chronological, 2-4 bullets per role, each bullet one achievement: action, object, method or result.
   Choose and order material by the role lens in 06-roles.md; the same project reads differently for each role.
 - Form answers: answer the question asked, 90-150 words for open questions, no URLs in text boxes.
+- Why-us answers: mission first, then personality (what {name} loves doing, how {name} works), experience last. Experience shows fit for the role; the company wants to know fit with them. Warm, a little American energy.
 - Emails: under 120 words (more only if the employer asks for write-ups), one specific reason, one piece of evidence,
   one clear ask. Links are words, written as [words](url).
 
@@ -44,7 +46,7 @@ Notes, reasons and one-liners written for {name} address them as "you". Never as
 
 ## Boundaries
 
-Some questions only {name} can answer: salary, demographics, legal attestations, and open answers where the employer requires the
+Some questions only {name} can answer: salary, disability status, legal attestations, and open answers where the employer requires the
 candidate's own first draft (e.g. Anthropic). Put those in needs_human. {name}'s standing answers in preferences may be used as given.
 
 Headlines, header links, link formatting, per-entry titles, page fitting and approvals are handled in code. Don't work around them.

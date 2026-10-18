@@ -62,7 +62,7 @@ def lint(text: str, kind: str = "resume") -> list[Issue]:
             issues.append(Issue("hard", f"banned phrase '{ph}'"))
     if re.search(r"\b(designer|engineer|strategist|researcher|director|technologist|builder|creative|maker|person|someone|thinker|generalist|storyteller|problem-solver)s? (who|that|which)\b", low):
         issues.append(Issue("hard", "self-description with a relative clause ('designer who ...'); use a plain title or a plain statement"))
-    if kind in ("resume", "answer"):
+    if kind in ("resume", "answer"):   # not "why_us": those answers are meant to sound like a person
         for pat in CASUAL:
             m = re.search(pat, low)
             if m:

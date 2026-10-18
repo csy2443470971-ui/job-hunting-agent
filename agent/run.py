@@ -149,12 +149,13 @@ def tailor(con, job_id: int) -> int:
     return app_id
 
 
-def submit_approved(con, headed: bool = True) -> None:
+def submit_approved(con, headed: bool = True, app_id: int | None = None) -> None:
     """Submit every approved ats_web application: re-check the posting, refill, click Submit in a visible browser.
     CAPTCHAs are left to the person in that window."""
     from .apply.fill import fill
     from .apply.live import still_open
-    for a in con.execute("SELECT * FROM applications WHERE status='approved' AND kind='ats_web'").fetchall():
+    q = "SELECT * FROM applications WHERE status='approved' AND kind='ats_web'" + (" AND id=?" if app_id else "")
+    for a in con.execute(q, (app_id,) if app_id else ()).fetchall():
         a = dict(a); j = dict(con.execute("SELECT * FROM jobs WHERE id=?", (a["job_id"],)).fetchone())
         aj = json.loads(a["answers_json"] or "{}")
         if aj.get("needs_human"):
@@ -179,7 +180,7 @@ def submit_approved(con, headed: bool = True) -> None:
 EMAIL_RE = __import__("re").compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 
-def prepare(con, limit: int = 10) -> list[str]:
+def prepare(con, limit: int = 10, app_id: int | None = None) -> list[str]:
     """Bring drafted applications to 'ready for your approval':
     ATS posting -> read the live form, draft answers, fill it in a headless browser (never submits), screenshot.
     HN / email-only posting -> draft the email to the address the posting itself gives."""
@@ -189,7 +190,8 @@ def prepare(con, limit: int = 10) -> list[str]:
     from .apply.live import still_open
     done = []
     rows = con.execute("SELECT a.* FROM applications a WHERE a.status IN ('draft','pending_approval') AND a.answers_json IS NULL "
-                       "AND a.kind IN ('ats_web','manual') LIMIT ?", (limit,)).fetchall()
+                       "AND a.kind IN ('ats_web','manual')" + (" AND a.id=?" if app_id else "") + " ORDER BY a.id DESC LIMIT ?",
+                       ((app_id, limit) if app_id else (limit,))).fetchall()
     for a in rows:
         a = dict(a); j = dict(con.execute("SELECT * FROM jobs WHERE id=?", (a["job_id"],)).fetchone())
         if not still_open(j):
@@ -201,7 +203,7 @@ def prepare(con, limit: int = 10) -> list[str]:
             fa.needs_human = [q for q in fa.needs_human if not __import__("re").search(r"\b(resume|cv)\b.*(upload|file)|^(resume|cv)\b", q, __import__("re").I)]
             for x in fa.answers:
                 if x.answer and len(x.answer.split()) > 25:
-                    x.answer, _ = llm.clean_text(x.answer, "answer")
+                    x.answer, _ = llm.clean_text(x.answer, "why_us" if llm.WHY_US.search(x.question) else "answer")
             shot = str(config.OUT_DIR / "screens" / f"app{a['id']}.png")
             r = fill(j["apply_url"], {x.question: x.answer for x in fa.answers if x.answer}, a["resume_pdf"], shot)
             db.update_application(con, a["id"], kind="ats_web", status="pending_approval", answers_json=json.dumps(fa.model_dump(), ensure_ascii=False),
@@ -249,6 +251,30 @@ def mark_sent(con, app_id: int, message_id: str) -> None:
     con.execute("UPDATE jobs SET status='applied' WHERE id=(SELECT job_id FROM applications WHERE id=?)", (app_id,)); con.commit()
 
 
+def compose_job(con, job_id: int) -> int:
+    """Not started → Waiting for review: résumé from storybook lines (no model), then fill the form or draft the email."""
+    from .assemble import assemble
+    from .resume.render import render_one_page
+    from .audit import log
+    job = dict(con.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone())
+    m = job["jev_p"] * 100 if job.get("jev_p") is not None else (job["score"] if job.get("score") is not None else
+                                                                  (job["kw_score"] * 100 if job.get("kw_score") is not None else None))
+    if m is not None and m < 50:
+        raise SystemExit(f"match {m:.0f}% is below 50%: not applying (your rule)")
+    sc = json.loads(job["score_json"]) if job.get("score_json") else {}
+    lens = sc.get("role_family") or "product_design"
+    content = assemble(lens, job.get("sector"), posting_text=(job.get("title") or "") + " " + (job.get("description") or ""))
+    pdf, rendered, scale = render_one_page(content, f"{config.file_stem()}_{job['company']}_{job_id}", role_family=lens,
+                                           sector=job.get("sector"), posting_title=job.get("title"))
+    app_id = db.create_application(con, job_id=job_id, kind="ats_web" if job["source"] in ("greenhouse", "lever", "ashby") else "manual",
+                                   status="draft", needs_approval=1, resume_pdf=str(pdf), resume_json=json.dumps(rendered, ensure_ascii=False),
+                                   diy_ratio=0.0, diy_notes=f"assembled from storybook lines; lens {lens}")
+    con.execute("UPDATE jobs SET status='applied_draft' WHERE id=?", (job_id,)); con.commit()
+    log(con, "compose", "resume", f"lens {lens}", job_id=job_id, app_id=app_id)
+    prepare(con, 1, app_id=app_id)
+    return app_id
+
+
 def status(con):
     for t in ("jobs", "applications"):
         rows = con.execute(f"SELECT status, COUNT(*) c FROM {t} GROUP BY status").fetchall()
@@ -265,9 +291,10 @@ def main(argv=None):
     t = sub.add_parser("tailor"); t.add_argument("job_id", type=int)
     p = sub.add_parser("probe"); p.add_argument("slug")
     sub.add_parser("status")
-    sub.add_parser("submit")
+    sb = sub.add_parser("submit"); sb.add_argument("--app", type=int)
     sub.add_parser("outbox")
     sub.add_parser("intake")
+    cj = sub.add_parser("compose"); cj.add_argument("job_id", type=int)
     sub.add_parser("learn")
     cv = sub.add_parser("cover"); cv.add_argument("job_id", type=int)
     pr = sub.add_parser("prepare"); pr.add_argument("--limit", type=int, default=10)
@@ -298,9 +325,11 @@ def main(argv=None):
         elif a.cmd == "status":
             status(con)
         elif a.cmd == "submit":
-            submit_approved(con)
+            submit_approved(con, app_id=a.app)
         elif a.cmd == "prepare":
             print("\n".join(prepare(con, a.limit)) or "nothing to prepare")
+        elif a.cmd == "compose":
+            print("application", compose_job(con, a.job_id))
         elif a.cmd == "learn":
             from .learn import propose
             print(f"{propose(con)} patch(es) proposed; review them on the dashboard's Learn page")

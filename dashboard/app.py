@@ -1,6 +1,7 @@
 """Local review dashboard.  python -m dashboard.app  ->  http://127.0.0.1:8765"""
 from __future__ import annotations
 import json
+import re
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
@@ -9,7 +10,7 @@ from pydantic import BaseModel
 from agent import db
 
 HERE = Path(__file__).parent
-app = FastAPI(title="Job hunting agent")
+app = FastAPI(title="Job Hunter Agent")
 
 
 def rows(q, *args):
@@ -79,9 +80,17 @@ class Decision(BaseModel):
 def approve(app_id: int, d: Decision | None = None):
     from agent.audit import log
     with db.tx() as con:
+        a = con.execute("SELECT kind, answers_json FROM applications WHERE id=?", (app_id,)).fetchone()
+        if a and (json.loads(a["answers_json"] or "{}").get("needs_human")):
+            return {"ok": False, "msg": "Answer the open questions first."}
         db.update_application(con, app_id, status="approved", approved_at=db.now())
         log(con, "review", "approved", d.note if d else "", app_id=app_id)
-    return {"ok": True}
+    if a and a["kind"] == "ats_web":
+        import subprocess, sys
+        subprocess.Popen([sys.executable, "-m", "agent.run", "submit", "--app", str(app_id)], cwd=str(HERE.parent),
+                         stdout=open(HERE.parent / "data" / f"submit-{app_id}.log", "w"), stderr=subprocess.STDOUT)
+        return {"ok": True, "msg": "Submitting in a browser window. If a CAPTCHA appears, finish it there."}
+    return {"ok": True, "msg": "Approved. The email goes out with the next send."}
 
 
 @app.post("/api/applications/{app_id}/reject")
@@ -225,12 +234,256 @@ class Text(BaseModel):
 @app.put("/api/playbook/{name}")
 def playbook_put(name: str, t: Text):
     f = _safe(name)
+    if f.exists() and f.read_text(encoding="utf-8") != t.text:
+        from agent.storybook import snapshot
+        snapshot(f"before your edit to {name}")
     f.write_text(t.text, encoding="utf-8")
     return {"ok": True, "words": len(t.text.split())}
+
+
+# ---- simple board: Waiting for review / Not started / Applied ------------------
+import threading as _th
+PREP: dict = {}
+
+
+MIN_MATCH = 50  # your rule: never apply below a 50% match
+
+
+def _match(j):
+    if j.get("jev_p") is not None:
+        return round(j["jev_p"] * 100), "Jev"
+    if j.get("score") is not None:
+        return round(j["score"]), "model"
+    return (round(j["kw_score"] * 100) if j.get("kw_score") is not None else None), "keyword"
+
+
+_MONEY = re.compile(r"(?:US)?\$\s?\d[\d,.]*\s?[kK]?(?:\s?(?:-|–|—|to)\s?(?:US)?\$?\s?\d[\d,.]*\s?[kK]?)?(?:\s?(?:/|per\s)(?:hour|hr|year|yr))?")
+_START = re.compile(r"(?:start(?:ing)?\s+date|start(?:s|ing)?\s+(?:in|on|by)|available\s+to\s+start)[:\s]+([^.\n<]{3,40})", re.I)
+
+
+def _facts(j):
+    """Salary and start date as the posting states them; None when it doesn't say."""
+    raw = json.loads(j.get("raw") or "{}") if (j.get("raw") or "").startswith("{") else {}
+    comp = raw.get("compensation") or {}
+    salary = comp.get("scrapeableCompensationSalarySummary") or comp.get("compensationTierSummary")
+    import html as _h
+    text = _h.unescape(re.sub(r"<[^>]+>", " ", _h.unescape(j.get("description") or "")))
+    if not salary:
+        hits = [m.group(0).strip() for m in _MONEY.finditer(text) if any(x in m.group(0) for x in "-–—to") or "/" in m.group(0)]
+        salary = hits[0] if hits else None
+    m = _START.search(text)
+    return {"salary": salary, "start": m.group(1).strip() if m else None}
+
+
+def _title(t):
+    t = t or ""
+    return t.split("|")[1].strip() if "|" in t else t
+
+
+@app.get("/api/config")
+def ui_config():
+    import os
+    return {"jev": bool(os.getenv("TYPESAFE_API_KEY"))}
+
+
+@app.get("/api/board")
+def board(tab: str = "review"):
+    out = []
+    with db.tx() as con:
+        if tab == "todo":
+            busy = [k for k in list(PREP) if _prep_state(k) == "running"]
+            rows_ = [con.execute("SELECT * FROM jobs WHERE id=?", (k,)).fetchone() for k in busy]
+            rows_ += con.execute("SELECT * FROM jobs WHERE status='queued' ORDER BY COALESCE(jev_p*100, score) DESC LIMIT 200").fetchall()
+            rows_ += con.execute("SELECT * FROM jobs WHERE status='new' AND (jev_p IS NOT NULL OR kw_score >= 0.6) "
+                                 "ORDER BY COALESCE(jev_p, -1) DESC, kw_score DESC LIMIT 60").fetchall()
+            seen = set()
+            for j in rows_:
+                if j is None or j["id"] in seen:
+                    continue
+                seen.add(j["id"]); j = dict(j); m, src = _match(j)
+                if m is not None and m < MIN_MATCH and _prep_state(j["id"]) != "running":
+                    continue  # below 50: not worth applying, never listed
+                out.append({**_facts(j), "apply_url": j.get("apply_url"), "job_id": j["id"], "company": j["company"], "title": _title(j["title"]), "url": j["url"], "match": m, "match_src": src, "location": j.get("location") or "",
+                            "why": j.get("score_reason") or "", "preparing": _prep_state(j["id"])})
+            out.sort(key=lambda c: (c["preparing"] != "running", -(c["match"] if c["match"] is not None else -1)))
+            return out
+        statuses = ("pending_approval",) if tab == "review" else ("approved", "sent")
+        q = f"SELECT a.*, j.company, j.title jt, j.url, j.apply_url, j.location, j.remote, j.score, j.jev_p, j.kw_score, j.raw, j.description FROM applications a JOIN jobs j ON j.id=a.job_id WHERE a.status IN ({','.join('?'*len(statuses))}) ORDER BY a.id DESC"
+        for a in con.execute(q, statuses).fetchall():
+            a = dict(a); m, src = _match(a)
+            aj = json.loads(a["answers_json"]) if a.get("answers_json") else {}
+            fields = [{"q": x["question"], "a": x["answer"]} for x in aj.get("answers", []) if x.get("answer")]
+            out.append({**_facts(a), "apply_url": a.get("apply_url"), "location": (a.get("location") or "") + (" · Remote" if a.get("remote") and not re.search("remote|hybrid", (a.get("location") or ""), re.I) else ""),
+                        "app_id": a["id"], "job_id": a["job_id"], "company": a["company"], "title": _title(a["jt"]), "url": a["url"],
+                        "kind": a["kind"], "status": a["status"], "match": m, "match_src": src, "fields": fields,
+                        "needs": aj.get("needs_human") or [], "has_shot": "screenshot:" in (a.get("sent_log") or ""),
+                        "email_to": a.get("email_to"), "email_subject": a.get("email_subject"), "email_body": a.get("email_body"),
+                        "sent_at": a.get("sent_at") or a.get("approved_at")})
+    if tab == "review":
+        out.sort(key=lambda c: -(c["match"] if c["match"] is not None else -1))
+    return out
+
+
+@app.get("/api/jobs/{job_id}/description")
+def job_description(job_id: int):
+    """The full posting as readable text, for the dashboard's View window."""
+    import html as _h
+    with db.tx() as con:
+        j = con.execute("SELECT company, title, location, url, description FROM jobs WHERE id=?", (job_id,)).fetchone()
+    if not j:
+        raise HTTPException(404)
+    t = _h.unescape(j["description"] or "")
+    t = re.sub(r"(?i)<br\s*/?>|</(p|div|li|h\d)>", "\n", t); t = re.sub(r"(?i)<li[^>]*>", "• ", t)
+    t = _h.unescape(re.sub(r"<[^>]+>", "", t)); t = re.sub(r"\n\s*\n\s*\n+", "\n\n", t).strip()
+    return {"company": j["company"], "title": _title(j["title"]), "location": j["location"], "url": j["url"], "text": t}
+
+
+@app.post("/api/jobs/{job_id}/prepare")
+def prepare_job(job_id: int):
+    """Runs `python -m agent.run compose <id>` in its own process (browser automation and model CLIs stay out of the web server)."""
+    import subprocess, sys
+    j = rows("SELECT * FROM jobs WHERE id=?", job_id)
+    m = _match(dict(j[0]))[0] if j else None
+    if m is not None and m < MIN_MATCH:
+        return {"ok": False, "msg": f"Match {m}% is below {MIN_MATCH}%; jobs under that are not applied to."}
+    proc = PREP.get(job_id)
+    if isinstance(proc, subprocess.Popen) and proc.poll() is None:
+        return {"ok": True}
+    log = HERE.parent / "data" / f"prepare-{job_id}.log"
+    PREP[job_id] = subprocess.Popen([sys.executable, "-m", "agent.run", "compose", str(job_id)], cwd=str(HERE.parent),
+                                    stdout=open(log, "w"), stderr=subprocess.STDOUT)
+    return {"ok": True}
+
+
+def _prep_state(job_id):
+    proc = PREP.get(job_id)
+    if proc is None or not hasattr(proc, "poll"):
+        return None
+    rc = proc.poll()
+    return "running" if rc is None else ("done" if rc == 0 else f"error: see data/prepare-{job_id}.log")
+
+
+@app.post("/api/jobs/{job_id}/skip")
+def skip_job(job_id: int):
+    from agent.audit import log
+    with db.tx() as con:
+        con.execute("UPDATE jobs SET status='skipped', score_reason=COALESCE(score_reason,'')||' (skipped by you)' WHERE id=?", (job_id,))
+        log(con, "review", "skipped", "", job_id=job_id)
+    return {"ok": True}
+
+
+class Answers(BaseModel):
+    answers: list[dict]
+
+
+@app.post("/api/applications/{app_id}/answers")
+def save_answers(app_id: int, body: Answers):
+    with db.tx() as con:
+        a = dict(con.execute("SELECT answers_json FROM applications WHERE id=?", (app_id,)).fetchone())
+        aj = json.loads(a["answers_json"] or "{}")
+        new = {x["q"]: x["a"] for x in body.answers}
+        for x in aj.get("answers", []):
+            if x["question"] in new:
+                x["answer"] = new.pop(x["question"]); x["provenance"] = "you"
+        # questions the agent left for you: answering one moves it out of "needs you"
+        for q, ans in new.items():
+            if ans.strip() and q in (aj.get("needs_human") or []):
+                aj.setdefault("answers", []).append({"question": q, "answer": ans, "provenance": "you"})
+        answered = {x["question"] for x in aj.get("answers", []) if (x.get("answer") or "").strip()}
+        aj["needs_human"] = [q for q in (aj.get("needs_human") or []) if q not in answered]
+        db.update_application(con, app_id, answers_json=json.dumps(aj, ensure_ascii=False))
+    return {"ok": True}
+
+
+@app.get("/resume-png/{app_id}")
+def resume_png(app_id: int):
+    r = rows("SELECT resume_pdf FROM applications WHERE id=?", app_id)
+    png = Path(r[0]["resume_pdf"]).with_suffix(".png") if r and r[0]["resume_pdf"] else None
+    if not png or not png.exists():
+        raise HTTPException(404)
+    return FileResponse(png, media_type="image/png")
+
+
+# ---- storybook: versions and learning from a résumé you like -------------------
+class Reference(BaseModel):
+    name: str
+    data_b64: str
+    prompt: str
+
+
+@app.post("/api/storybook/learn-from")
+def learn_from(ref: Reference):
+    import base64, re as _r
+    from agent.storybook import start_learn_from
+    from agent.intake import read_any
+    folder = Path("inbox/reference"); folder.mkdir(parents=True, exist_ok=True)
+    path = folder / _r.sub(r"[^A-Za-z0-9._-]+", "_", ref.name)[:80]
+    path.write_bytes(base64.b64decode(ref.data_b64.split(",")[-1]))
+    text = read_any(path)
+    if not text.strip():
+        return {"ok": False, "msg": "Couldn't read text from that file. Try a PDF, DOCX or text file."}
+    return {"ok": start_learn_from(text, path.name, ref.prompt), "msg": "started"}
+
+
+class Tell(BaseModel):
+    text: str = ""
+    name: str = ""
+    data_b64: str = ""
+
+
+TELL = {}
+
+
+@app.post("/api/agent/tell")
+def tell(t: Tell):
+    """The Storybook chat box. With a file: learn from it (prompt = the message). Without: save the note and
+    propose patches in a separate process; they come back as suggested changes to approve."""
+    import subprocess, sys
+    if t.data_b64:
+        return learn_from(Reference(name=t.name or "reference.txt", data_b64=t.data_b64, prompt=t.text))
+    if not t.text.strip():
+        return {"ok": False, "msg": "Write something first."}
+    from agent.learn import add_feedback
+    with db.tx() as con:
+        add_feedback(con, t.text)
+    proc = TELL.get("proc")
+    if not (proc and proc.poll() is None):
+        TELL["proc"] = subprocess.Popen([sys.executable, "-m", "agent.run", "learn"], cwd=str(HERE.parent),
+                                        stdout=open(HERE.parent / "data" / "learn.log", "w"), stderr=subprocess.STDOUT)
+    return {"ok": True, "msg": "thinking"}
+
+
+@app.get("/api/agent/tell-status")
+def tell_status():
+    proc = TELL.get("proc")
+    return {"thinking": bool(proc and proc.poll() is None)}
+
+
+@app.get("/api/storybook/learn-status")
+def learn_status():
+    from agent.storybook import STATUS
+    return STATUS
+
+
+@app.get("/api/storybook/versions")
+def sb_versions():
+    from agent.storybook import versions
+    return versions()
+
+
+@app.post("/api/storybook/back")
+def sb_back():
+    from agent.storybook import restore_previous
+    from agent.audit import log
+    r = restore_previous()
+    with db.tx() as con:
+        log(con, "storybook", "restored", r or "")
+    return {"ok": r is not None, "restored": r}
 
 
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("dashboard.app:app", host="127.0.0.1", port=8765, reload=False)
+    import os
+    uvicorn.run("dashboard.app:app", host="127.0.0.1", port=int(os.getenv("JHA_PORT", "8765")), reload=False)

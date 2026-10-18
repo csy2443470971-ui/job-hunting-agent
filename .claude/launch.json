@@ -1,6 +1,27 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "dashboard", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "dashboard.app"], "port": 8765 }
+    {
+      "name": "dashboard",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "dashboard.app"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "dashboard-demo",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "JHA_PROFILE=profile.example",
+        "JHA_DB=data/demo.sqlite",
+        "JHA_PORT=8766",
+        "python3",
+        "-m",
+        "dashboard.app"
+      ],
+      "port": 8766
+    }
   ]
 }

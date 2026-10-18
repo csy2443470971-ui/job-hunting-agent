@@ -15,7 +15,7 @@ def greenhouse_jobs(token: str, company: str | None = None) -> list[dict]:
         out.append({
             "source": "greenhouse", "external_id": str(j["id"]), "company": company or token,
             "title": j.get("title"), "location": loc, "remote": looks_remote(loc, j.get("title")),
-            "url": j.get("absolute_url"), "apply_url": j.get("absolute_url"),
+            "url": j.get("absolute_url"), "apply_url": _gh_form(token, j),
             "description": desc, "posted_at": j.get("updated_at"),
             "raw": {"board_token": token, "id": j["id"], "departments": j.get("departments"), "offices": j.get("offices")},
         })
