@@ -27,6 +27,7 @@ def base_title(posting_title: str) -> str | None:
     if "|" in pt:  # HN style "Company | Title | Location | ..."
         segs = [x.strip() for x in pt.split("|")]
         pt = next((x for x in segs[1:] if re.search(TARGET_WORDS, x, re.I)), segs[1] if len(segs) > 1 else "")
+    pt = re.sub(r"\[[^\]]*\]|\([^)]*\b20\d\d\b[^)]*\)", " ", pt)   # "[2027] …", "(2027 Start)" are tags, not the title
     t = re.split(r"[,(\-–/]", pt)[0]
     t = re.sub(SENIORITY, "", t, flags=re.I)
     t = re.sub(r"^[\s.,&-]+|[\s.,&-]+$", "", re.sub(r"\s+", " ", t)).strip()

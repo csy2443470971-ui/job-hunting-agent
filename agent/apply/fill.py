@@ -17,6 +17,59 @@ def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
 
 
+def _lookup(answers: dict, lab: str):
+    """The answer whose question best fits this label: exact first, else the longest question contained in it,
+    and only if it covers most of the label (so 'Country' never answers '...authorized to work in the country...')."""
+    best = None
+    for k, v in answers.items():
+        nk = _norm(k)
+        if nk and (nk == lab or (nk in lab and len(nk) >= 0.6 * len(lab)) or (lab in nk and len(lab) >= 0.6 * len(nk))):
+            if best is None or len(nk) > best[0]:
+                best = (len(nk), v)
+    return best[1] if best else None
+
+
+def best_option(val: str, options: list[str]) -> str | None:
+    """Map a free-text answer onto a dropdown's options: exact or contained text first, then dates to
+    terms ("06/2027" -> "Spring 2027"), New York-area places to an NYC option, yes/no."""
+    v = _norm(val); opts = [o for o in options if o.strip()]
+    if re.match(r"\s*(ms|msc|ma|mfa|mba|master)", val, re.I):
+        v = "master s degree" if not re.match(r"\s*mba", val, re.I) else v
+    elif re.match(r"\s*(ba|bs|bsc|bfa|bachelor)", val, re.I):
+        v = "bachelor s degree"
+    for o in opts:
+        if _norm(o) == v:
+            return o
+    for o in opts:
+        if v and (v in _norm(o) or _norm(o) in v) and len(_norm(o)) > 2:
+            return o
+    m = re.search(r"\b(\d{1,2})[/-](20\d\d)\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(20\d\d)", val, re.I)
+    if m:
+        month = int(m.group(1)) if m.group(1) else ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].index(m.group(3).lower()[:3]) + 1
+        year = m.group(2) or m.group(4); term = "spring" if month <= 6 else "fall"
+        hit = next((o for o in opts if term in o.lower() and year in o), None) or next((o for o in opts if year in o), None)
+        if hit:
+            return hit
+    if re.search(r"new york|\bnyc\b|brooklyn|queens|hoboken|\bnj\b|\bny\b", val, re.I):
+        hit = next((o for o in opts if re.search(r"\bnyc\b|new york", o, re.I)), None)
+        if hit:
+            return hit
+    if v in ("yes", "no"):
+        return next((o for o in opts if _norm(o).startswith(v)), None)
+    words = {w for w in v.split() if len(w) > 3}
+    scored = sorted(((len(words & {w for w in _norm(o).split() if len(w) > 3}), o) for o in opts), reverse=True)
+    if scored and scored[0][0] >= 2 or (scored and scored[0][0] == 1 and len(words) == 1):
+        return scored[0][1]
+    return None
+
+
+def _search_terms(val: str) -> list[str]:
+    parts = [re.sub(r"^\s*the\s+", "", x, flags=re.I).strip() for x in re.split(r"[,;]", re.sub(r"\(.*?\)", "", val))]
+    parts = [x for x in parts if len(x) > 3][:3]
+    words = [w for w in re.findall(r"[A-Za-z][A-Za-z'&.-]+", parts[0] if parts else val) if len(w) > 3 and w.lower() not in ("school", "university", "college", "design")]
+    return list(dict.fromkeys(parts + words[:2]))
+
+
 def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: str, submit: bool = False,
          headed: bool = False) -> dict:
     log = []
@@ -46,7 +99,7 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
                 continue
             if f["type"] == "checkbox" and pg.locator(sel).first.locator("xpath=..").locator("button[data-option]").count():
                 # Ashby yes/no: two buttons next to a hidden checkbox
-                ans = next((v for k, v in answers.items() if _norm(k) and _norm(k) in lab), None) or standing_answer(f["label"])
+                ans = _lookup(answers, lab) or standing_answer(f["label"])
                 if ans is not None:
                     choice = "yes" if str(ans).strip().lower() in ("yes", "on", "true", "y") else "no"
                     try:
@@ -61,8 +114,8 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
                 # one element per option: tick it when the group's answer names this option,
                 # or when the option itself is a standing answer (a demographic choice or a "not a veteran" line)
                 opt = (f.get("options") or [""])[0]
-                grp = next((v for k, v in answers.items() if _norm(k) and _norm(k) in lab), None) or standing_answer(f["label"])
-                own = standing_answer(opt)
+                grp = _lookup(answers, lab) or standing_answer(f["label"])
+                own = standing_answer(opt, as_option=True)
                 tick = (own == "Yes") if own in ("Yes", "No") else bool(grp and _norm(opt) and (_norm(opt) == _norm(grp) or _norm(opt) in _norm(grp)))
                 if tick:
                     try:
@@ -82,7 +135,7 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
             if val is None:
                 val = standing_answer(f["label"], f.get("options"))
             if val is None:
-                val = next((v for k, v in answers.items() if _norm(k) and _norm(k) in lab), None)
+                val = _lookup(answers, lab)
             if val is None:
                 if f["required"]: log.append(f"UNFILLED required: {f['label']}")
                 continue
@@ -94,17 +147,35 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
                     if loc.get_attribute("role") == "combobox" or loc.get_attribute("aria-autocomplete"):
                         # custom dropdowns (Greenhouse react-select): type, then pick the matching option
                         loc.click(timeout=5000); loc.fill(val, timeout=5000); pg.wait_for_timeout(500)
-                        opt = pg.get_by_role("option", name=re.compile(rf"^\s*{re.escape(val)}", re.I)).first
+                        opt = pg.get_by_role("option", name=re.compile(r"^\s*" + re.escape(val).replace("/", r"\/"), re.I)).first
                         if not opt.count() and "," in val:   # "Brooklyn, NY" vs "Brooklyn, New York, United States"
                             loc.fill(val.split(",")[0], timeout=5000); pg.wait_for_timeout(1200)
-                            opt = pg.get_by_role("option", name=re.compile(re.escape(val.split(",")[0]), re.I)).first
-                        (opt.click(timeout=3000) if opt.count() else pg.keyboard.press("Enter"))
+                            opt = pg.get_by_role("option", name=re.compile(re.escape(val.split(",")[0]).replace("/", r"\/"), re.I)).first
+                        if not opt.count():   # fixed list: read every option and map the answer onto one
+                            read = lambda: [o.inner_text().strip() for o in pg.get_by_role("option").all()]
+                            loc.press("Meta+A"); loc.press("Backspace"); pg.wait_for_timeout(600)
+                            names = read()
+                            if not names:
+                                loc.click(timeout=3000); pg.wait_for_timeout(600); names = read()
+                            pick = best_option(val, names)
+                            for term in ([] if pick else _search_terms(val)):   # long lists load as you type
+                                loc.fill(term, timeout=3000); pg.wait_for_timeout(1800)
+                                pick = best_option(val, read())
+                                if pick:
+                                    break
+                            if pick:
+                                pg.get_by_role("option", name=pick, exact=True).first.click(timeout=3000)
+                                log.append(f"chose {pick[:30]} → {f['label'][:50]}")
+                            else:
+                                pg.keyboard.press("Escape"); log.append(f"UNFILLED (no matching option for '{val[:30]}'): {f['label']}")
+                            continue
+                        opt.click(timeout=3000)
                         log.append(f"chose {val[:30]} → {f['label'][:50]}")
                     else:
                         pg.fill(sel, val, timeout=5000); loc.press("Tab"); log.append(f"filled {f['label'][:60]}")
                         typed.append((sel, val, f["label"]))
                 except Exception as e:
-                    log.append(f"could not fill {f['label'][:40]}: {e.__class__.__name__}")
+                    log.append(f"could not fill {f['label'][:40]}: {e.__class__.__name__}: {str(e).splitlines()[0][:160]}")
             elif f["tag"] == "select":
                 pick = next((o for o in f.get("options") or [] if _norm(o) == _norm(val)), None) or next((o for o in f.get("options") or [] if _norm(val) and _norm(val) in _norm(o)), None)
                 if pick:

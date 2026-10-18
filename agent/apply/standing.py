@@ -30,7 +30,7 @@ def _is(value: str | None, text: str) -> bool:
 
 
 SKIP_NEED = re.compile(r"\boptional\b|opt-?in|text messages?|sms|marketing|newsletter|pronounce|pronoun|cover letter|"
-                       r"\(file upload|upload handled|handled outside", re.I)
+                       r"\(file upload|upload handled|handled outside|additional file|^attach\b|legal name|if the form adds", re.I)
 
 
 def simple_answer(label: str) -> str | None:
@@ -43,11 +43,13 @@ def simple_answer(label: str) -> str | None:
     return None
 
 
-def standing_answer(label: str, options: list[str] | None = None) -> str | None:
+def standing_answer(label: str, options: list[str] | None = None, as_option: bool = False) -> str | None:
+    """as_option=True: `label` is one choice of a checkbox/radio group, so only the per-option demographic rules apply;
+    question rules (relocation, sponsorship, simple answers) must never tick an option because it shares a word."""
     s, l = _sid(), (label or "").strip().lower()
     if not l:
         return None
-    v = simple_answer(label)
+    v = None if as_option else simple_answer(label)
     if v is not None:
         return _pick(options, "^" + re.escape(v)) or v if options else v
     o = re.sub(r"\s*\(.*?\)", "", l).strip()   # "White (Not Hispanic or Latino)" -> "white"
@@ -64,6 +66,8 @@ def standing_answer(label: str, options: list[str] | None = None) -> str | None:
         return "No" if re.search(r"not", s["veteran"], re.I) else "Yes"
     if s["veteran"] and re.search(r"i am not a (protected )?veteran", l):
         return "Yes" if re.search(r"not", s["veteran"], re.I) else "No"
+    if as_option:
+        return None
     # whole questions
     if s["relocate"] and re.search(r"address|where .*work from|city", l) and re.search(r"relocat", l):
         return "Relocating" if _is(s["relocate"], "yes") else None
