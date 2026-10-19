@@ -55,7 +55,13 @@ def best_option(val: str, options: list[str]) -> str | None:
         if hit:
             return hit
     if v in ("yes", "no"):
-        return next((o for o in opts if _norm(o).startswith(v)), None)
+        return (next((o for o in opts if _norm(o).startswith(v)), None) or
+                (next((o for o in opts if re.match(r"\s*i (acknowledge|agree|consent|confirm)", o, re.I)), None) if v == "yes" else None) or
+                (opts[0] if v == "yes" and len(opts) == 1 else None))
+    if re.search(r"company (website|site)|careers? (site|page)", val, re.I):
+        hit = next((o for o in opts if re.search(r"careers? (site|page)|company (website|site)|website", o, re.I)), None)
+        if hit:
+            return hit
     words = {w for w in v.split() if len(w) > 3}
     scored = sorted(((len(words & {w for w in _norm(o).split() if len(w) > 3}), o) for o in opts), reverse=True)
     if scored and scored[0][0] >= 2 or (scored and scored[0][0] == 1 and len(words) == 1):
@@ -169,6 +175,9 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
                             if not names:
                                 loc.click(timeout=3000); pg.wait_for_timeout(600); names = read()
                             pick = best_option(val, names)
+                            if not pick and names:   # the form words it differently: decide again with its real options
+                                again = standing_answer(f["label"], names)
+                                pick = again if again in names else best_option(again or "", names)
                             for term in ([] if pick else _search_terms(val)):   # long lists load as you type
                                 loc.fill(term, timeout=3000); pg.wait_for_timeout(1800)
                                 pick = best_option(val, read())

@@ -1,6 +1,6 @@
 """Read an application form's fields from the live page (Ashby / Greenhouse job-boards), without submitting anything."""
 from __future__ import annotations
-import json, sys
+import json, re, sys
 from playwright.sync_api import sync_playwright
 
 JS = r"""
@@ -40,7 +40,23 @@ def inspect(url: str) -> list[dict]:
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page(viewport={"width": 1280, "height": 1600})
         pg.goto(url, wait_until="networkidle", timeout=60000); pg.wait_for_timeout(1500)
-        fields = pg.evaluate(JS); b.close()
+        fields = pg.evaluate(JS)
+        # custom dropdowns keep their options hidden until opened: open each once and read them
+        for f in fields:
+            if f["type"] == "combobox" and not f["options"] and f["id"] and len(f["options"]) == 0:
+                try:
+                    loc = pg.locator(f'[id="{f["id"]}"]').first
+                    if not loc.is_visible():
+                        continue
+                    loc.scroll_into_view_if_needed(timeout=3000); loc.click(timeout=3000); pg.wait_for_timeout(500)
+                    opts = [o.inner_text().strip() for o in pg.get_by_role("option").all()][:80]
+                    f["options"] = [o for o in opts if o] if len(opts) < 80 else []   # very long lists (schools) are searched at fill time
+                    pg.keyboard.press("Escape")
+                except Exception:
+                    pass
+        b.close()
+    for f in fields:   # "Question* Select..." is the same field's placeholder, not a second question
+        f["label"] = re.sub(r"\s*select\.{3}\s*$", "", f["label"], flags=re.I)
     # merge radio/checkbox groups by label
     merged, idx = [], {}
     for f in fields:

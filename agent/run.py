@@ -210,7 +210,10 @@ def prepare(con, limit: int = 10, app_id: int | None = None) -> list[str]:
                     x.answer, _ = llm.clean_text(x.answer, "why_us" if llm.WHY_US.search(x.question) else "answer")
             shot = str(config.OUT_DIR / "screens" / f"app{a['id']}.png")
             r = fill(j["apply_url"], {x.question: x.answer for x in fa.answers if x.answer}, a["resume_pdf"], shot)
-            db.update_application(con, a["id"], kind="ats_web", status="pending_approval", answers_json=json.dumps(fa.model_dump(), ensure_ascii=False),
+            dump = fa.model_dump()
+            opts = {q["label"]: q["options"] for q in qs if q.get("options")}
+            dump["needs_options"] = {n: opts[n] for n in fa.needs_human if n in opts}   # shown as a dropdown in "Questions for you"
+            db.update_application(con, a["id"], kind="ats_web", status="pending_approval", answers_json=json.dumps(dump, ensure_ascii=False),
                                   sent_log="\n".join(r.get("log", [])) + f"\nscreenshot: {shot}", error=r.get("error"))
             done.append(f"{j['company']} · {j['title']}: form filled, {len(fa.needs_human)} question(s) for you")
         else:

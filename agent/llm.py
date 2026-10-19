@@ -154,7 +154,7 @@ def answer_form(job: dict, questions: list[dict]) -> FormAnswers:
     opts = {q.get("label"): q.get("options") for q in questions}
     have = {a.question for a in fa.answers}
     from .apply.standing import SKIP_NEED
-    fa.needs_human = [q for q in fa.needs_human if not SKIP_NEED.search(q)]
+    fa.needs_human = list(dict.fromkeys(re.sub(r"\s*select\.{3}\s*$", "", q, flags=re.I) for q in fa.needs_human if not SKIP_NEED.search(q)))
     for q in list(fa.needs_human):
         v = standing_answer(q, opts.get(q))
         if v is not None:

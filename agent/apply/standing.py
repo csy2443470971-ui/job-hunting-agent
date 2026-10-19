@@ -42,6 +42,10 @@ def _is(value: str | None, text: str) -> bool:
     return bool(value) and re.sub(r"\W+", " ", value.lower()).strip() == re.sub(r"\W+", " ", text.lower()).strip()
 
 
+def _norm_opt(o: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z -]", "", (o or "").lower())).strip()
+
+
 def _declined(v: str) -> bool:
     return _is(v, DECLINE)
 
@@ -68,7 +72,7 @@ def simple_answer(label: str) -> str | None:
         (r"require (visa )?sponsorship|need sponsorship|sponsorship for (an )?employment|visa sponsorship",
          None if not (s.get("sponsorship_now") or s.get("sponsorship_future")) else
          ("Yes" if "Yes" in (s.get("sponsorship_now"), s.get("sponsorship_future")) else "No")),
-        (r"^\s*i agree\b|^\s*i acknowledge\b|consent to the processing",
+        (r"^\s*i agree\b|^\s*i acknowledge\b|consent to the processing|(review and )?acknowledge .*(agreement|policy|notice|terms)",
          "Yes" if s.get("consent", "").startswith("Tick") else None),
     ]
     for pat, val in rules:
@@ -98,7 +102,12 @@ def standing_answer(label: str, options: list[str] | None = None, as_option: boo
     if not as_option:
         v = simple_answer(label)
         if v is not None:
-            return (_pick(options, "^" + re.escape(v)) or v) if options else v
+            if not options:
+                return v
+            hit = _pick(options, "^" + re.escape(v))
+            if not hit and v == "Yes":   # "I acknowledge…" / "I agree…" or the form's only choice
+                hit = _pick(options, r"^i (acknowledge|agree|consent|confirm|certify)") or (options[0] if len(options) == 1 else None)
+            return hit or v
     o = re.sub(r"\s*\(.*?\)", "", l).strip()   # "White (Not Hispanic or Latino)" -> "white"
     demo = [s.get(k, "") for k in ("gender", "race", "hispanic_latino", "veteran", "disability")]
     # ---- one checkbox per option: Yes for the person's own value, No for the rest
@@ -135,6 +144,10 @@ def standing_answer(label: str, options: list[str] | None = None, as_option: boo
         no = s["disability"].lower().startswith("no")
         return _pick(options, r"^no\b|don.?t have|do not have" if no else r"^yes\b|i have") or ("No" if no else "Yes")
     if s.get("gender") and re.search(r"\bgender\b|\bsex\b", l):
+        if options and not _declined(s["gender"]):
+            hit = next((o for o in options if _norm_opt(o) in _gender_words(s["gender"])), None)
+            if hit:
+                return hit
         if _declined(s["gender"]):
             return _pick(options, _DECL_OPT) or "Decline to self-identify"
         w = _gender_words(s["gender"])
@@ -152,7 +165,7 @@ def standing_answer(label: str, options: list[str] | None = None, as_option: boo
         if _declined(s["veteran"]):
             return _pick(options, _DECL_OPT) or "I don't wish to answer"
         mine_not = bool(re.search(r"\bnot\b", s["veteran"], re.I))
-        return _pick(options, re.escape(s["veteran"]), r"not a (protected )?veteran" if mine_not else r"^yes|i identify as") or s["veteran"]
+        return _pick(options, re.escape(s["veteran"]), r"not a (protected )?veteran|^no\b" if mine_not else r"^yes|i identify as") or s["veteran"]
     if re.search(r"self-?identification|eeo", l) and not re.search(r"disab", l) and all(s.get(k) for k in ("gender", "race", "veteran")):
         return (f'Gender: {s["gender"]}; race: {s["race"]}' + (f' ({s["race_detail"]})' if s.get("race_detail") else "") +
                 (f'; Hispanic or Latino: {s["hispanic_latino"]}' if s.get("hispanic_latino") else "") + f'; veteran: {s["veteran"]}')

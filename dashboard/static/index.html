@@ -317,7 +317,9 @@ function detailApp(c, done) {
     : c.email_body ? `<div class="doc" style="cursor:default"><div class="pv"><div class="mail"><b>${esc(c.email_subject || '')}</b>\n\n${esc(c.email_body)}</div></div><div class="lb">Email <span>· draft</span></div></div>`
     : `<div class="doc" style="cursor:default"><div class="pv"><div class="none">No form captured</div></div><div class="lb">Application</div></div>`;
   const ask = needs.length && !done ? `<div class="section ask"><div class="sh"><h4>${I.alert}Questions for you <span class="n">${needs.length}</span></h4></div>
-      <div class="qa">${needs.map(q => `<div class="field"><label>${esc(q)}</label><input type="text" data-q="${esc(q)}" placeholder="Your answer"></div>`).join('')}</div>
+      <div class="qa">${needs.map(q => { const o = (c.needs_options || {})[q]; return `<div class="field"><label>${esc(q)}</label>${o && o.length
+        ? `<select data-q="${esc(q)}"><option value="">Choose…</option>${o.map(x => `<option>${esc(x)}</option>`).join('')}</select>`
+        : `<input type="text" data-q="${esc(q)}" placeholder="Your answer">`}</div>`; }).join('')}</div>
       <div style="margin-top:14px"><button class="btn primary sm" onclick="saveAnswers(${c.app_id}, false, this)">Save answers</button></div></div>` : '';
   const ed = editing && !done;
   const filled = c.email_body

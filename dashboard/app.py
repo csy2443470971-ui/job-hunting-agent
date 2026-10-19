@@ -341,7 +341,7 @@ def board(tab: str = "review"):
             out.append({**_facts(a), "apply_url": a.get("apply_url"), "location": (a.get("location") or "") + (" · Remote" if a.get("remote") and not re.search("remote|hybrid", (a.get("location") or ""), re.I) else ""),
                         "app_id": a["id"], "job_id": a["job_id"], "company": a["company"], "title": _title(a["jt"]), "url": a["url"],
                         "kind": a["kind"], "status": a["status"], "match": m, "match_src": src, "fields": fields,
-                        "needs": aj.get("needs_human") or [], "has_shot": "screenshot:" in (a.get("sent_log") or ""),
+                        "needs": aj.get("needs_human") or [], "needs_options": aj.get("needs_options") or {}, "has_shot": "screenshot:" in (a.get("sent_log") or ""),
                         "email_to": a.get("email_to"), "email_subject": a.get("email_subject"), "email_body": a.get("email_body"),
                         "sent_at": a.get("sent_at") or a.get("approved_at")})
     if tab == "review":
