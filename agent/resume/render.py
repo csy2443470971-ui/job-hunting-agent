@@ -66,6 +66,9 @@ def render_one_page(content: dict, basename: str, role_family: str | None = None
     content["summary"] = strip_role_fragment(content.get("summary", ""))
     content["header_links"] = header_links(role_family, sector)
     content["headline"] = headline(role_family, posting_title)
+    from .. import config as _config
+    content["awards"] = list(_config.profile().get("awards") or [])   # on every résumé, never trimmed
+    content["projects"] = [p for p in content.get("projects", []) if not any(p.get("name", "") in a for a in content["awards"])]
     out = RESUME_OUT / f"{safe_name(basename)}.pdf"
     with sync_playwright() as p:
         browser = p.chromium.launch()

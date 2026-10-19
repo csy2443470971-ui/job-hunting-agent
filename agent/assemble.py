@@ -43,7 +43,7 @@ def _words(text: str) -> set[str]:
     return {w for w in re.findall(r"[a-z][a-z\-]{3,}", (text or "").lower()) if w not in _STOP}
 
 
-def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_projects: int = 4, posting_text: str = "") -> dict:
+def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_projects: int = 4, posting_text: str = "", posting_title: str = "") -> dict:
     prof = _p(); ENTRIES = prof.get("entries", {}); PROJECT_LINKS = prof.get("project_links", {})
     PINNED = [n for n, m in ENTRIES.items() if m.get("pinned")]
     exp = _sections(config.MASTER_DIR / "02-experience.md", set(ENTRIES))
@@ -94,7 +94,7 @@ def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_project
     from .links import CREATIVE_FAMILIES, CREATIVE_SECTORS
     creative_only = set(prof.get("creative_only_projects") or [])
     creative_role = lens in CREATIVE_FAMILIES or sector in CREATIVE_SECTORS or bool(
-        re.search(r"creative|game|art director|motion|technologist|illustrat|visual|brand|graphic|interactive|3d", posting_text[:200], re.I))
+        re.search(r"creative|game|art director|motion|technologist|illustrat|visual|brand|graphic|interactive|3d", posting_title or posting_text[:60], re.I))
 
     priority = set(prof.get("creative_priority_projects") or []) if creative_role else set()
 
@@ -109,6 +109,8 @@ def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_project
             continue
         if name in creative_only and not creative_role:
             continue  # game-design projects go only on creative résumés
+        if any(name in a for a in prof.get("awards") or []):
+            continue  # already on the page under Awards
         matching = [(t, tags) for t, tags in lines if tags & want] or [(t, tags) for t, tags in lines if tags & also]
         text = sorted(matching, key=lambda x: verbs[x[0].split()[0]])[0][0]
         verbs[text.split()[0]] += 1

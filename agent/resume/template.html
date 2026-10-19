@@ -71,6 +71,11 @@
   {% if ed.note %}<div class="dates" style="margin:-1px 0 3px">{{ ed.note }}</div>{% endif %}
   {% endfor %}
 
+  {% if r.awards %}
+  <h2>Awards</h2>
+  {% for a in r.awards %}<div class="proj">{{ a }}</div>{% endfor %}
+  {% endif %}
+
   <h2>Skills</h2>
   <div class="skills">{% for g in r.skills %}<div><b>{{ g.label }}:</b> {{ g['items'] | join(', ') }}</div>{% endfor %}</div>
 </body>

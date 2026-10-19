@@ -269,7 +269,7 @@ def compose_job(con, job_id: int) -> int:
         raise SystemExit(f"match {m:.0f}% is below 50%: not applying (your rule)")
     sc = json.loads(job["score_json"]) if job.get("score_json") else {}
     lens = sc.get("role_family") or "product_design"
-    content = assemble(lens, job.get("sector"), posting_text=(job.get("title") or "") + " " + (job.get("description") or ""))
+    content = assemble(lens, job.get("sector"), posting_text=(job.get("title") or "") + " " + (job.get("description") or ""), posting_title=job.get("title") or "")
     pdf, rendered, scale = render_one_page(content, f"{config.file_stem()}_{job['company']}_{job_id}", role_family=lens,
                                            sector=job.get("sector"), posting_title=job.get("title"))
     app_id = db.create_application(con, job_id=job_id, kind="ats_web" if job["source"] in ("greenhouse", "lever", "ashby") else "manual",

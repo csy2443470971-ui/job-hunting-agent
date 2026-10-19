@@ -92,6 +92,17 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
             if not sel or "recaptcha" in (f["label"] + f["name"]).lower():
                 continue
             lab = _norm(f["label"])
+            if f["type"] == "file" and re.search(r"transcript", lab) and re.search(r"\bgraduate\b", lab) and not re.search(r"undergrad", lab):
+                if f["required"]: log.append(f"UNFILLED required: {f['label']} (only an undergraduate transcript is on file)")
+                continue
+            if f["type"] == "file" and re.search(r"transcript", lab):
+                from ..setup_answers import load as _sa
+                tp = (_sa().get("transcript_file") or "").strip()
+                if tp and Path(tp).exists():
+                    pg.set_input_files(sel, tp); log.append(f"attached transcript → {f['label'][:40]}"); uploaded = uploaded or True
+                elif f["required"]:
+                    log.append(f"UNFILLED required: {f['label']} (add a transcript file in Standing answers)")
+                continue
             if f["type"] == "file":
                 key = lab + " " + _norm(f.get("id", "")) + " " + _norm(f.get("name", ""))
                 if resume_pdf and re.search(r"\bresume\b|\bcv\b", key) and "cover" not in key:
@@ -205,9 +216,28 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
             m = re.search(r"(missing entry for required field[^\n]*|needs corrections[^\n]*|this field is required[^\n]*)", body)
             if m and not any(w in body for w in ("thank", "received", "submitted")):
                 result["needs_person"] = "form rejected: " + m.group(1)[:200]
+            elif re.search(r"security code|verification code|enter the code", body) and not any(w in body for w in ("thank you for applying", "successfully submitted")):
+                # Greenhouse emails a one-time code for automated-looking submissions. It is a human check:
+                # the person types it into this window and clicks Submit; we only wait and watch.
+                result["needs_person"] = "Greenhouse emailed you a security code: type it into the open window and click Submit"
+                if headed:
+                    import subprocess
+                    subprocess.run(["osascript", "-e", 'display notification "Enter the security code from your email in the open window, then Submit." with title "Job Hunter Agent" sound name "Glass"'])
+                    for _ in range(60):   # up to 10 minutes
+                        pg.wait_for_timeout(10000)
+                        body = pg.inner_text("body").lower()
+                        if any(w in body for w in ("thank you for applying", "successfully submitted", "application was received", "thanks for applying")):
+                            break
             elif "recaptcha" in pg.content().lower() and not any(w in body for w in ("thank", "received", "submitted")):
-                result["needs_person"] = "CAPTCHA or extra check shown; finish it in the browser window"
-                if headed: pg.wait_for_timeout(180000); body = pg.inner_text("body").lower()
+                result["needs_person"] = "CAPTCHA shown: finish it in the open window"
+                if headed:
+                    import subprocess
+                    subprocess.run(["osascript", "-e", 'display notification "A CAPTCHA needs you in the open window." with title "Job Hunter Agent" sound name "Glass"'])
+                    for _ in range(60):
+                        pg.wait_for_timeout(10000)
+                        body = pg.inner_text("body").lower()
+                        if any(w in body for w in ("thank", "successfully submitted", "received")):
+                            break
             result["submitted"] = any(w in body for w in ("thank", "received", "submitted", "application was"))
             pg.screenshot(path=shot_path.replace(".png", "-after.png"), full_page=True)
         b.close()

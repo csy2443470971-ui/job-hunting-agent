@@ -8,7 +8,13 @@ JS = r"""
   const out = [];
   const seen = new Set();
   const labelFor = (el) => {
-    if (el.id) { const l = document.querySelector(`label[for="${CSS.escape(el.id)}"]`); if (l) return l.innerText.trim(); }
+    if (el.id) { const u = document.getElementById('upload-label-' + el.id); if (u && u.innerText.trim()) return u.innerText.trim(); }
+    if (el.id) { const l = document.querySelector(`label[for="${CSS.escape(el.id)}"]`); if (l && !/^(attach|dropbox|enter manually)\b/i.test(l.innerText.trim())) return l.innerText.trim(); }
+    if (el.type === 'file') {   // upload buttons are labelled "Attach"; the question is further up
+      let n = el;
+      for (let i = 0; i < 6 && n; i++) { n = n.parentElement; const l = n && n.querySelector('label, legend, [class*="label"]');
+        if (l && l.innerText.trim() && !/^(attach|dropbox|enter manually)\b/i.test(l.innerText.trim())) return l.innerText.trim(); }
+    }
     const wrap = el.closest('[class*="field"], fieldset, .application-question, [class*="Field"], [class*="question"]');
     if (wrap) { const l = wrap.querySelector('label, legend, [class*="label"], [class*="title"]'); if (l) return l.innerText.trim(); }
     return el.getAttribute('aria-label') || el.name || el.placeholder || '';

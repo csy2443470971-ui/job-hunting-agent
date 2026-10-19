@@ -42,6 +42,8 @@ QUESTIONS = [
     ("Education", "grad_date", "Graduation date (MM/YYYY)", "text", None, True, "Expected, if you are still studying."),
     ("Education", "undergrad_gpa", "Undergraduate GPA", "text", None, False, "Leave empty to have forms ask you."),
     ("Education", "grad_gpa", "Graduate GPA", "text", None, False, ""),
+    ("Education", "transcript_file", "Transcript file on this computer (optional)", "text", None, False,
+     "Full path to a PDF. Attached when a form asks for a transcript."),
 
     ("Voluntary self-identification", "gender", "Gender", "select", ["Woman", "Man", "Non-binary", DECLINE], True,
      "US forms ask these voluntarily. 'Prefer not to say' is always fine."),
