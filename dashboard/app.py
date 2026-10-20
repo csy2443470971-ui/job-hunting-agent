@@ -76,6 +76,20 @@ class Decision(BaseModel):
     note: str = ""
 
 
+class Stage(BaseModel):
+    stage: str
+
+
+@app.post("/api/applications/{app_id}/stage")
+def set_stage(app_id: int, s: Stage):
+    from agent.replies import advance, STAGES
+    if s.stage not in STAGES + ["rejected"]:
+        raise HTTPException(400)
+    with db.tx() as con:
+        advance(con, app_id, s.stage, "set in the dashboard", by_person=True); con.commit()
+    return {"ok": True}
+
+
 class Standing(BaseModel):
     values: dict
 
@@ -332,6 +346,8 @@ def board(tab: str = "review"):
                             "why": j.get("score_reason") or "", "preparing": _prep_state(j["id"])})
             out.sort(key=lambda c: (c["preparing"] != "running", -(c["match"] if c["match"] is not None else -1)))
             return out
+        from agent.replies import init as _ri
+        _ri(con)
         statuses = ("pending_approval",) if tab == "review" else ("approved", "sent")
         q = f"SELECT a.*, j.company, j.title jt, j.url, j.apply_url, j.location, j.remote, j.score, j.jev_p, j.kw_score, j.raw, j.description FROM applications a JOIN jobs j ON j.id=a.job_id WHERE a.status IN ({','.join('?'*len(statuses))}) ORDER BY a.id DESC"
         for a in con.execute(q, statuses).fetchall():
@@ -341,11 +357,16 @@ def board(tab: str = "review"):
             out.append({**_facts(a), "apply_url": a.get("apply_url"), "location": (a.get("location") or "") + (" · Remote" if a.get("remote") and not re.search("remote|hybrid", (a.get("location") or ""), re.I) else ""),
                         "app_id": a["id"], "job_id": a["job_id"], "company": a["company"], "title": _title(a["jt"]), "url": a["url"],
                         "kind": a["kind"], "status": a["status"], "match": m, "match_src": src, "fields": fields,
+                        "stage": a.get("stage") or "applied", "stage_at": a.get("stage_at"),
+                        "replies": [dict(x) for x in con.execute("SELECT kind, at, sender, subject, snippet, view_url FROM replies WHERE app_id=? ORDER BY at DESC", (a["id"],)).fetchall()] if tab == "applied" else [],
                         "needs": aj.get("needs_human") or [], "needs_options": aj.get("needs_options") or {}, "has_shot": "screenshot:" in (a.get("sent_log") or ""),
                         "email_to": a.get("email_to"), "email_subject": a.get("email_subject"), "email_body": a.get("email_body"),
                         "sent_at": a.get("sent_at") or a.get("approved_at")})
     if tab == "review":
         out.sort(key=lambda c: -(c["match"] if c["match"] is not None else -1))
+    if tab == "applied":   # what needs you first: offers, interviews, next steps; rejections last
+        order = {"offer": 0, "interview": 1, "next_step": 2, "confirmation": 3, "applied": 4, "rejected": 5}
+        out.sort(key=lambda c: (order.get(c.get("stage") or "applied", 4), -(len(c.get("sent_at") or "") and 1), c.get("sent_at") or ""), reverse=False)
     return out
 
 

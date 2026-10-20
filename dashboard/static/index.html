@@ -197,6 +197,12 @@
   .ev .d { color:var(--mute); font-size:13px; margin-top:2px; overflow-wrap:anywhere; }
 
   .toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:var(--ink); color:var(--page); padding:10px 16px; border-radius:10px; font-size:13.5px; box-shadow:var(--shadow-lg); z-index:60; }
+  .stg { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--c); border:1px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius:999px; padding:1px 8px; }
+  .stg::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--c); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin:-6px 0 14px; }
+  .reply { padding:12px 0; border-top:1px solid var(--line2); font-size:13.5px; } .reply:first-child { border-top:0; }
+  .reply .rh { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:4px; } .reply .rs { color:var(--mute); font-size:12.5px; }
+  .reply p { margin:4px 0 0; color:var(--ink2); }
   /* modal */
   .modal { position:fixed; inset:0; background:rgba(20,18,16,.42); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:28px; z-index:50; animation:fade .14s ease-out; }
   @keyframes fade { from { opacity:0; } }
@@ -273,6 +279,7 @@ async function showJD(id) {
 function showImg(src, company, label, open) {
   modal(`<div class="job-t"><div class="job-co">${esc(company)}</div><h3>${esc(label)}</h3></div><a class="btn sm" href="${open}" target="_blank">Open full size${I.ext}</a>`, `<img src="${src}" alt="">`, 'img');
 }
+async function setStage(id, stage) { await post(`/api/applications/${id}/stage`, {stage}); toast('Status updated'); render(); }
 async function decide(id, what) { const r = await post(`/api/applications/${id}/${what}`); if (r && r.msg) toast(r.msg); sel[sub] = null; render(); }
 function toast(m) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 5000); }
 async function reject(id) { const why = prompt('Why not? (optional; the agent learns from it)'); if (why === null) return; await post(`/api/applications/${id}/reject`, {note: why}); sel[sub] = null; render(); }
@@ -292,10 +299,28 @@ const PIN = '<svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 
 const CASH = '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
 const CAL = '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 
+const STAGE = {applied: ['Applied', 'var(--faint)'], confirmation: ['Received', 'var(--mute)'], next_step: ['Next step', 'var(--blue)'],
+  interview: ['Interview', 'var(--green)'], offer: ['Offer', 'var(--orange)'], rejected: ['Rejected', 'var(--ink2)']};
+function stageOf(c) {
+  if (c.status !== 'sent') return 'applied';
+  if ((c.stage || 'applied') === 'applied' || c.stage === 'confirmation') {
+    const days = c.sent_at ? Math.floor((Date.now() - new Date(c.sent_at)) / 864e5) : 0;
+    if (days >= 21) return 'quiet';
+  }
+  return c.stage || 'applied';
+}
+function stageChip(c) {
+  const s = stageOf(c);
+  if (s === 'quiet') return '<span class="stg" style="--c:var(--faint)">No reply · 3+ wks</span>';
+  const [l, col] = STAGE[s] || STAGE.applied;
+  return `<span class="stg" style="--c:${col}">${l}</span>`;
+}
+let stageFilter = 'all';
+
 function queueItem(c) {
   const needs = (c.needs || []).length;
   const st = sub === 'review' ? (needs ? `<div class="st o"><span class="dot"></span>${needs} ${needs === 1 ? 'question' : 'questions'} for you</div>` : `<div class="st r"><span class="dot"></span>Ready to approve</div>`)
-    : sub === 'applied' ? `<div class="st">${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}</div>`
+    : sub === 'applied' ? `<div class="st">${stageChip(c)}<span style="margin-left:6px">${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}</span></div>`
     : c.preparing === 'running' ? `<div class="st o"><span class="spin"></span>Preparing…</div>` : (c.location ? `<div class="st" style="display:block">${esc(c.location)}</div>` : '');
   return `<button class="qi ${keyOf(c) === sel[sub] ? 'on' : ''}" onclick="pickJob(${keyOf(c)})">${mono(c.company)}<div class="t"><div class="c">${esc(c.company)}</div><div class="ti">${esc(c.title)}</div>${st}</div>${ring(c, true)}</button>`;
 }
@@ -328,6 +353,11 @@ function detailApp(c, done) {
         <div class="k">Message</div><div class="v">${ed ? `<textarea data-k="body" style="min-height:240px">${esc(c.email_body)}</textarea>` : esc(c.email_body)}</div></div>`
     : `<div class="kv">${c.fields.map(f => `<div class="k">${esc(f.q)}</div><div class="v">${ed ? (f.a.length > 80 ? `<textarea data-q="${esc(f.q)}">${esc(f.a)}</textarea>` : `<input type="text" data-q="${esc(f.q)}" value="${esc(f.a)}">`) : esc(f.a)}</div>`).join('')}</div>`;
   return `<div class="d-scroll">${header(c)}
+      ${done ? `<div class="section"><div class="sh"><h4>Status</h4>
+        <select style="width:auto" onchange="setStage(${c.app_id}, this.value)">${['applied', 'confirmation', 'next_step', 'interview', 'offer', 'rejected'].map(k => `<option value="${k}" ${(c.stage || 'applied') === k ? 'selected' : ''}>${STAGE[k][0]}</option>`).join('')}</select></div>
+        ${(c.replies || []).length ? (c.replies || []).map(r => `<div class="reply"><div class="rh">${stageChip({status: 'sent', stage: r.kind === 'other' ? 'applied' : r.kind})}<b>${esc(r.subject)}</b><span class="rs">${esc((r.sender || '').replace(/<.*>/, ''))} · ${day(r.at)}</span>
+          ${r.view_url ? `<a class="lk" href="${esc(r.view_url)}" target="_blank">Open in Gmail${I.ext}</a>` : ''}</div><p>${esc((r.snippet || '').slice(0, 280))}</p></div>`).join('')
+          : '<div style="font-size:13.5px;color:var(--mute)">No replies yet. The inbox is checked once a day.</div>'}</div>` : ''}
       <div class="section"><div class="sh"><h4>Documents</h4></div><div class="docs">
         <button class="doc" onclick="showImg('/resume-png/${c.app_id}', ${esc(JSON.stringify(c.company))}, 'Résumé', '/resume/${c.app_id}')"><div class="pv"><img src="/resume-png/${c.app_id}" alt=""></div><div class="lb">Résumé <span>· 1 page</span></div></button>${shot}</div></div>
       ${ask}
@@ -355,7 +385,8 @@ async function renderJobs(p) {
   $('#c-jobs').textContent = rv.length || '';
   const lists = {review: rv, todo: td, applied: ap};
   const names = {review: 'Waiting for review', todo: 'Not started', applied: 'Applied'};
-  const list = lists[sub];
+  const counts = {}; ap.forEach(c => { const s = stageOf(c); counts[s] = (counts[s] || 0) + 1; });
+  const list = sub === 'applied' && stageFilter !== 'all' ? ap.filter(c => stageOf(c) === stageFilter) : lists[sub];
   if (!list.some(c => keyOf(c) === sel[sub])) sel[sub] = list.length ? keyOf(list[0]) : null;
   const cur = list.find(c => keyOf(c) === sel[sub]);
   const sa = await api('/api/standing');
@@ -367,6 +398,8 @@ async function renderJobs(p) {
   p.innerHTML = `<div class="ph"><div><h1>Job applications</h1></div>
       <div class="seg" style="margin:0">${Object.keys(names).map(k => `<button class="${k === sub ? 'on' : ''}" onclick="sub='${k}';editing=false;mobileOpen=false;render()">${names[k]}<span class="n">${lists[k].length}</span></button>`).join('')}</div></div>
     ${banner}
+    ${sub === 'applied' && ap.length ? `<div class="chips">${[['all', 'All'], ['interview', 'Interview'], ['next_step', 'Next step'], ['offer', 'Offer'], ['confirmation', 'Received'], ['applied', 'Applied'], ['quiet', 'No reply 3+ wks'], ['rejected', 'Rejected']]
+        .filter(([k]) => k === 'all' || counts[k]).map(([k, l]) => `<button class="pill" style="${stageFilter === k ? 'border-color:var(--red);color:var(--red)' : ''}" onclick="stageFilter='${k}';render()">${l} ${k === 'all' ? ap.length : counts[k]}</button>`).join('')}</div>` : ''}
     ${list.length ? `<div class="split ${mobileOpen ? 'open' : ''}"><div class="queue">${list.map(queueItem).join('')}</div>
       <section class="detail" id="detail">${cur ? (sub === 'todo' ? detailTodo(cur) : detailApp(cur, sub === 'applied')) : ''}</section></div>` : `<div class="empty">${empty}</div>`}`;
   if ($('.queue')) $('.queue').scrollTop = keepScroll;

@@ -305,6 +305,8 @@ def main(argv=None):
     sub.add_parser("intake")
     cj = sub.add_parser("compose"); cj.add_argument("job_id", type=int)
     sub.add_parser("learn")
+    rq = sub.add_parser("replies-query"); rq.add_argument("--days", type=int, default=3)
+    ri = sub.add_parser("replies-ingest"); ri.add_argument("file")
     cv = sub.add_parser("cover"); cv.add_argument("job_id", type=int)
     pr = sub.add_parser("prepare"); pr.add_argument("--limit", type=int, default=10)
     ms = sub.add_parser("mark-sent"); ms.add_argument("app_id", type=int); ms.add_argument("message_id")
@@ -339,6 +341,13 @@ def main(argv=None):
             print("\n".join(prepare(con, a.limit)) or "nothing to prepare")
         elif a.cmd == "compose":
             print("application", compose_job(con, a.job_id))
+        elif a.cmd == "replies-query":
+            from .replies import gmail_query, tracked
+            print(json.dumps({"query": gmail_query(con, a.days), "tracked": [{k: t[k] for k in ("id", "company", "title", "sent_at", "stage")} for t in tracked(con)]}, ensure_ascii=False, indent=1))
+        elif a.cmd == "replies-ingest":
+            from .replies import ingest
+            counts = ingest(con, json.load(open(a.file, encoding="utf-8")))
+            print(json.dumps(counts) if counts else "no new replies about your applications")
         elif a.cmd == "learn":
             from .learn import propose
             print(f"{propose(con)} patch(es) proposed; review them on the dashboard's Learn page")

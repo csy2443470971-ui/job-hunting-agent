@@ -247,7 +247,14 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
                         body = pg.inner_text("body").lower()
                         if any(w in body for w in ("thank", "successfully submitted", "received")):
                             break
-            result["submitted"] = any(w in body for w in ("thank", "received", "submitted", "application was"))
+            # a real confirmation: one of these phrases AND the Submit button is gone (the form text itself says "submit")
+            confirmed = re.search(r"thank(s| you) for (applying|your application)|application (has been|was) (successfully )?(submitted|received)|"
+                                  r"successfully submitted|we('ve| have) received your application|your application is in", body)
+            try:
+                still_form = pg.get_by_role("button", name=re.compile(r"^\s*submit", re.I)).first.is_visible(timeout=1000)
+            except Exception:
+                still_form = False
+            result["submitted"] = bool(confirmed) and not still_form
             pg.screenshot(path=shot_path.replace(".png", "-after.png"), full_page=True)
         b.close()
     return result
