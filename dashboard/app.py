@@ -76,6 +76,26 @@ class Decision(BaseModel):
     note: str = ""
 
 
+REFRESH = {}
+
+
+@app.post("/api/refresh")
+def refresh_start():
+    import subprocess, sys
+    p = REFRESH.get("proc")
+    if not (p and p.poll() is None):
+        REFRESH["proc"] = subprocess.Popen([sys.executable, "-m", "agent.run", "refresh"], cwd=str(HERE.parent),
+                                           stdout=open(HERE.parent / "data" / "refresh.log", "w"), stderr=subprocess.STDOUT)
+    return {"ok": True}
+
+
+@app.get("/api/refresh")
+def refresh_status():
+    p = REFRESH.get("proc"); f = HERE.parent / "data" / "last_refresh.json"
+    last = json.loads(f.read_text()) if f.exists() else {}
+    return {"running": bool(p and p.poll() is None), "failed": bool(p and p.poll() not in (None, 0)), **last}
+
+
 class Stage(BaseModel):
     stage: str
 

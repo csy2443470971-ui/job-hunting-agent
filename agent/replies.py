@@ -74,7 +74,10 @@ def gmail_query(con, days: int = 3) -> str:
     """A read-only Gmail search for replies about submitted applications."""
     names = sorted({t["company"] for t in tracked(con)})
     who = " OR ".join([f"from:{d}" for d in ATS_SENDERS] + [f'"{n}"' for n in names])
-    return f"newer_than:{days}d -in:sent -in:drafts ({who} OR subject:(application OR interview OR candidacy))"
+    from .setup_answers import load
+    me = (load().get("email") or "").strip()   # the address applications were made with; replies go there
+    to = f" (to:{me} OR deliveredto:{me})" if me else ""
+    return f"newer_than:{days}d -in:sent -in:drafts{to} ({who} OR subject:(application OR interview OR candidacy))"
 
 
 def classify(text: str) -> str:

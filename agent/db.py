@@ -89,8 +89,9 @@ def fingerprint(*parts: str) -> str:
 
 
 def connect() -> sqlite3.Connection:
-    con = sqlite3.connect(DB_PATH)
+    con = sqlite3.connect(DB_PATH, timeout=30)   # wait for a writer instead of failing
     con.row_factory = sqlite3.Row
+    con.execute("PRAGMA journal_mode=WAL")      # readers (the dashboard) never block on a long refresh
     con.executescript(SCHEMA)
     cols = {r["name"] for r in con.execute("PRAGMA table_info(jobs)")}
     if "jev_p" not in cols:  # migration: Jev first-pass probability

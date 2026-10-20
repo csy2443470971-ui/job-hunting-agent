@@ -25,6 +25,7 @@ def discover(con) -> dict:
             print(f"  ! {entry.get('name')}: {e}", file=sys.stderr)
             continue
         new = sum(db.upsert_job(con, j)[1] for j in jobs)
+        con.commit()   # one company at a time, so nothing else waits on the whole refresh
         counts[entry["name"]] = (len(jobs), new)
     try:
         kws = [k for fam in config.roles().get("families", []) for k in fam.get("keywords", [])]
@@ -294,6 +295,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("discover")
+    sub.add_parser("refresh")
     sub.add_parser("prefilter")
     s = sub.add_parser("score"); s.add_argument("--limit", type=int, default=200)
     sub.add_parser("jev")
@@ -320,6 +322,11 @@ def main(argv=None):
         if a.cmd == "discover":
             for k, (tot, new) in discover(con).items():
                 print(f"  {k}: {tot} postings, {new} new")
+        elif a.cmd == "refresh":   # the dashboard's Refresh button: boards + ranking, then a small status file
+            counts = discover(con); prefilter(con)
+            new = sum(v[1] for v in counts.values())
+            (config.DATA_DIR / "last_refresh.json").write_text(json.dumps({"at": db.now(), "new": new}))
+            print(f"{new} new postings")
         elif a.cmd == "prefilter":
             k, d = prefilter(con); print(f"kept {k}, dropped {d}")
         elif a.cmd == "score":
