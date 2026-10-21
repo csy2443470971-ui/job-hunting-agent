@@ -14,6 +14,12 @@ self-identification questions (gender, race, Hispanic/Latino, veteran, disabilit
 *Prefer not to say*; pick it and the agent chooses the form's decline option. Until the starred ones are done, the
 agent won't prepare or submit anything. Your answers stay in `profile/standing.yaml` on your computer.
 
+**Connect your application mailbox (once).** The agent sends approved emails from the address you apply with and
+reads replies there, so it can mark each application *Received*, *Next step*, *Interview*, *Offer* or *Rejected*.
+For Gmail: turn on 2-Step Verification, then Google Account → Security → App passwords → create one and paste it into
+`.env` as `JHA_MAIL_APP_PASSWORD=`. Check it with `python -m agent.run mail-test`. Reading is read-only (nothing is
+marked read, moved or deleted); you can revoke the app password any time.
+
 **1. Feed it everything. It reads, you decide.**
 Drop whatever you have into `inbox/`: old résumés, a LinkedIn PDF, portfolio text, cover letters you were proud of,
 even voice memos. (Yes, you can just talk. Ramble about your last job on a walk, save the recording, drop it in.

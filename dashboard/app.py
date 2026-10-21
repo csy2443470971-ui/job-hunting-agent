@@ -149,7 +149,13 @@ def approve(app_id: int, d: Decision | None = None):
         subprocess.Popen([sys.executable, "-m", "agent.run", "submit", "--app", str(app_id)], cwd=str(HERE.parent),
                          stdout=open(HERE.parent / "data" / f"submit-{app_id}.log", "w"), stderr=subprocess.STDOUT)
         return {"ok": True, "msg": "Submitting in a browser window. If a CAPTCHA appears, finish it there."}
-    return {"ok": True, "msg": "Approved. The email goes out with the next send."}
+    from agent.mailbox import configured
+    if a and a["kind"] in ("email", "proposal") and configured():
+        import subprocess, sys
+        subprocess.Popen([sys.executable, "-m", "agent.run", "mail-send", "--app", str(app_id)], cwd=str(HERE.parent),
+                         stdout=open(HERE.parent / "data" / f"send-{app_id}.log", "w"), stderr=subprocess.STDOUT)
+        return {"ok": True, "msg": "Sending from your application address now."}
+    return {"ok": True, "msg": "Approved. The email goes out with the next daily run."}
 
 
 @app.post("/api/applications/{app_id}/reject")

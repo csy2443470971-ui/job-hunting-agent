@@ -296,6 +296,9 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("discover")
     sub.add_parser("refresh")
+    sub.add_parser("mail-test")
+    mc = sub.add_parser("mail-check"); mc.add_argument("--days", type=int, default=3)
+    ms2 = sub.add_parser("mail-send"); ms2.add_argument("--app", type=int)
     sub.add_parser("prefilter")
     s = sub.add_parser("score"); s.add_argument("--limit", type=int, default=200)
     sub.add_parser("jev")
@@ -322,9 +325,36 @@ def main(argv=None):
         if a.cmd == "discover":
             for k, (tot, new) in discover(con).items():
                 print(f"  {k}: {tot} postings, {new} new")
+        elif a.cmd == "mail-test":
+            from .mailbox import test
+            print(test())
+        elif a.cmd == "mail-check":   # read-only: match recent mail to submitted applications
+            from .mailbox import fetch, configured
+            from .replies import ingest
+            if not configured():
+                raise SystemExit("mailbox not configured: add JHA_MAIL_APP_PASSWORD to .env")
+            counts = ingest(con, fetch(a.days))
+            print(json.dumps(counts) if counts else "no new replies about your applications")
+        elif a.cmd == "mail-send":   # approved emails only (outbox blocks placeholders, raw URLs, missing recipients)
+            from .mailbox import send, configured
+            if not configured():
+                raise SystemExit("mailbox not configured: add JHA_MAIL_APP_PASSWORD to .env")
+            for item in outbox(con):
+                if a.app and item["id"] != a.app:
+                    continue
+                mid = send(item["to"], item["subject"], item["body"], item["htmlBody"], item["attachment"])
+                mark_sent(con, item["id"], mid); print(f"sent {item['id']} to {', '.join(item['to'])}")
         elif a.cmd == "refresh":   # the dashboard's Refresh button: boards + ranking, then a small status file
             counts = discover(con); prefilter(con)
             new = sum(v[1] for v in counts.values())
+            from .mailbox import configured
+            if configured():
+                try:
+                    from .mailbox import fetch
+                    from .replies import ingest
+                    print("replies:", ingest(con, fetch(3)) or "none new")
+                except Exception as e:
+                    print("mail check failed:", e)
             (config.DATA_DIR / "last_refresh.json").write_text(json.dumps({"at": db.now(), "new": new}))
             print(f"{new} new postings")
         elif a.cmd == "prefilter":
