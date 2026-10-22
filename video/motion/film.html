@@ -194,6 +194,11 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
 
   <section class="scene" id="s-fill"><div class="world">
     <div class="label">03 / <b>RÉSUMÉ + APPLICATION</b></div>
+    <div class="abs" id="autoT" style="left:110px; top:300px; width:640px">
+      <div class="mid" style="font-size:50px; color:var(--ink2); line-height:1.15"><span class="w"><i>Then</i></span> <span class="w"><i>it</i></span> <span class="w"><i>fills</i></span> <span class="w"><i>out</i></span> <span class="w"><i>the</i></span> <span class="w"><i>whole</i></span> <span class="w"><i>application</i></span></div>
+      <div class="big red" style="font-size:84px; margin-top:22px"><span class="w"><i>automatically.</i></span></div>
+      <div id="autoLine" style="height:10px; background:var(--red); border-radius:5px; width:600px; margin-top:6px; transform-origin:left center"></div>
+    </div>
     <div class="abs" id="fillT" style="left:110px; top:250px">
       <div class="big" style="font-size:116px"><span class="w"><i>Every.</i></span></div>
       <div class="big" style="font-size:116px"><span class="w"><i>Single.</i></span></div>
@@ -301,22 +306,22 @@ const VO_AT = { hook: .1 };
 const LEAD = .2;                                       // the voice comes in just before its picture, so cuts feel driven by it
 const end = id => VO_AT[id] + line(id).dur, nextBeat = t => Math.ceil(t / (B / 2) - .02) * (B / 2);   // next eighth note
 const cut = (id, T) => { VO_AT[id] = T - LEAD; return T; };
-VO_AT.pile = end('hook') + .02;                        // the opening runs straight through
-const T_BOOM = nextBeat(end('pile') + .1);             // the dropdowns collapse, then the boom
-VO_AT.meet = T_BOOM + .3;
-const T_TELL = cut('tell', nextBeat(end('meet') + .1 + LEAD));
-VO_AT.dump = end('tell') + .15;
-const T_BOOK = cut('book', nextBeat(end('dump') + .1 + LEAD));
-const T_FIND = cut('find', nextBeat(end('book') + .1 + LEAD));
-const T_NOPE = cut('nope', nextBeat(end('find') + .05 + LEAD));
-const T_RES = cut('resume', nextBeat(end('nope') + .1 + LEAD));
-const T_FILL = cut('fill', nextBeat(end('resume') + .1 + LEAD));
-const T_SHOT = cut('shot', Math.max(T_FILL + 4.5, nextBeat(end('fill') + .05 + LEAD)));   // the fill recording needs its 4.5 s
+VO_AT.pile = end('hook') + .45;                        // a breath after "zero pay"
+const T_BOOM = nextBeat(end('pile') + .25);             // the dropdowns collapse, then the boom
+VO_AT.meet = T_BOOM + .5;
+const T_TELL = cut('tell', nextBeat(end('meet') + .3 + LEAD));
+VO_AT.dump = end('tell') + .4;
+const T_BOOK = cut('book', nextBeat(end('dump') + .4 + LEAD));
+const T_FIND = cut('find', nextBeat(end('book') + .4 + LEAD));
+const T_NOPE = cut('nope', nextBeat(end('find') + .3 + LEAD));
+const T_RES = cut('resume', nextBeat(end('nope') + .3 + LEAD));
+const T_FILL = cut('fill', nextBeat(end('resume') + .3 + LEAD));
+const T_SHOT = cut('shot', Math.max(T_FILL + 4.5, nextBeat(end('fill') + .3 + LEAD)));   // the fill recording needs its 4.5 s
 const T_APPROVE = Math.ceil(VO_AT.shot + line('shot').dur + .3 + ((wordAt('ok', 'approve') || { t: 2 }).t));   // the press lands on the next downbeat
 VO_AT.ok = T_APPROVE - (wordAt('ok', 'approve') || { t: 2 }).t;
-VO_AT.reply = snap(VO_AT.ok + line('ok').dur + .15, B / 2) - LEAD;
-const T_STILL = snap(VO_AT.reply + line('reply').dur + .2, B / 2);
-VO_AT.end = T_STILL + .7;
+VO_AT.reply = snap(VO_AT.ok + line('ok').dur + .4 + LEAD, B / 2) - LEAD;
+const T_STILL = snap(VO_AT.reply + line('reply').dur + .3, B / 2);
+VO_AT.end = T_STILL + 1.0;
 const T_END = VO_AT.end + line('end').dur + 1.4;
 const at = (id, word, from) => { const w = wordAt(id, word, from); return VO_AT[id] + (w ? w.t : 0); };
 
@@ -501,8 +506,12 @@ drift('s-res', T_RES, T_FILL, 1.04);
 
 // ---- the real filler at work -----------------------------------------------------------------------------
 scene('s-fill', T_FILL, T_SHOT);
-cap('fill', 'Then it fills out the whole application automatically.', 'then', 'automatically');
-land('#fillT', 'fill');
+land('#autoT', 'fill');                                      // "automatically" gets the stage, then the dropdowns
+const T_AUTO = at('fill', 'automatically'), T_EVERY = at('fill', 'every', 6);
+tl.fromTo('#autoLine', { scaleX: 0 }, { scaleX: 1, duration: .35, ease: 'power3.out', immediateRender: true }, T_AUTO + .15);
+sfx(T_AUTO, 'thump', .9); punch(T_AUTO, .03);
+tl.set('#autoT', { visibility: 'hidden' }, T_EVERY - .08);
+land('#fillT', 'fill', { minT: T_EVERY - .06 });
 ['every', 'single', 'dropdown'].forEach((w, i) => { const t = at('fill', w, 6); sfx(t, 'thump', .55); punch(t, .02); });
 pop('#win', T_FILL, { scale: .9, opacity: 0, y: 80 }, .4); sfx(T_FILL, 'thump', .7);
 (() => {
@@ -578,7 +587,7 @@ tl.to('#s-reply .world', { scale: .96, opacity: 0, duration: .3, ease: 'power2.i
 
 // ---- END: a beat of stillness, then the two-step lockup -----------------------------------------------------
 scene('s-end', T_STILL + .1, T_END + 1);
-const T_MARK = T_STILL + .4;
+const T_MARK = T_STILL + .5;
 pop('#endIcon', T_MARK, { scale: 0, opacity: 0, y: 0 }, .5); sfx(T_MARK, 'hit', 1); punch(T_MARK, .03);
 land('#endName', 'end'); land('#endTag', 'end');
 tl.fromTo('#endUrl', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .4, immediateRender: true }, VO_AT.end + line('end').dur - .2);
