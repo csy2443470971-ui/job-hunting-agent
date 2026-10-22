@@ -96,7 +96,7 @@ template hook  main line1
   var rnd = E.rng(7), pills = [];
   for (var i = 0; i < LABELS.length; i++) {
     var x, y, tries = 0;
-    do { x = (.06 + rnd() * .88) * W; y = (.08 + rnd() * .86) * H; tries++; }
+    do { x = (.06 + rnd() * .88) * W; y = (.08 + rnd() * .74) * H; tries++; }   // clear of the caption strip
     while (tries < 400 && Math.abs(y - H * .45) < 190 * k);
     pills.push({ x: x, y: y, r: (rnd() - .5) * .35, t: beat + .15 + i * .07, label: LABELS[i] });
   }
