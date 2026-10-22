@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Job Hunter Agent · cover</title>
+<!-- The film's cover (website hero poster, README image): the name and the line on the left, the film's own components on
+     the right, a play button so it reads as a film. Rendered by cover.py at 2x. -->
+<style>
+@font-face { font-family: R; font-weight: 700; src: url("fonts/Roobert-Bold.ttf"); }
+@font-face { font-family: R; font-weight: 600; src: url("fonts/Roobert-SemiBold.ttf"); }
+@font-face { font-family: R; font-weight: 400; src: url("fonts/Roobert-Regular.ttf"); }
+:root { --bg:#F3EEE6; --ink:#1C1917; --ink2:#57534E; --mute:#8A817A; --line:#DDD6CC; --red:#E5372A; --orange:#F27420; --green:#16A34A; --blue:#2563EB; }
+html, body { margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--bg); font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased; }
+.abs { position:absolute; }
+.card { position:absolute; background:#fff; border:2px solid var(--line); border-radius:28px; box-shadow:0 30px 70px rgba(60,40,20,.14), 0 2px 6px rgba(60,40,20,.06); }
+.mono { font-family:"SF Mono", Menlo, monospace; letter-spacing:.1em; }
+</style></head>
+<body>
+  <!-- left: who and what -->
+  <img class="abs" src="img/icon.webp" style="left:130px; top:170px; width:132px; height:132px; border-radius:31px; box-shadow:0 20px 50px rgba(229,55,42,.25)">
+  <div class="abs" style="left:126px; top:340px; font-size:128px; font-weight:700; letter-spacing:-.045em; line-height:.95">Job Hunter<br><span style="color:var(--red)">Agent</span></div>
+  <div class="abs" style="left:130px; top:620px; font-size:56px; font-weight:700; letter-spacing:-.025em; line-height:1.12">It does the grind.<br><span style="color:var(--red)">You do the talking.</span></div>
+  <div class="abs" style="left:130px; top:830px; display:flex; align-items:center; gap:26px">
+    <div style="width:104px; height:104px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; box-shadow:0 18px 40px rgba(229,55,42,.35)">
+      <svg width="44" height="50" viewBox="0 0 44 50"><path d="M6 4 L40 25 L6 46 Z" fill="#fff" stroke="#fff" stroke-width="6" stroke-linejoin="round"/></svg></div>
+    <div><div style="font-size:34px; font-weight:700">Watch the film</div><div class="mono" style="font-size:20px; color:var(--mute); margin-top:6px">55 S · SOUND ON</div></div>
+  </div>
+
+  <!-- right: the film's components, as they appear in it -->
+  <svg class="abs" style="left:0; top:0" width="1920" height="1080"><path d="M940 980 C 1160 900, 1240 640, 1420 560 S 1760 420, 1880 300" fill="none" stroke="var(--red)" stroke-width="6" stroke-dasharray="18 16" stroke-linecap="round"/></svg>
+
+  <div class="card" style="left:1040px; top:120px; width:520px; height:300px; padding:34px 38px; box-sizing:border-box; transform:rotate(-3deg)">
+    <div style="display:flex; align-items:center; gap:16px; font-size:26px; color:var(--ink2); font-weight:600"><span style="width:54px; height:54px; border-radius:14px; background:#F1ECE5; display:flex; align-items:center; justify-content:center; font-weight:700">T</span>Tidewater</div>
+    <div style="font-size:38px; font-weight:700; letter-spacing:-.02em; margin-top:70px">Senior Product Designer</div>
+    <div style="font-size:24px; color:var(--mute); margin-top:10px">Boston, MA · $170K – $195K</div>
+    <svg class="abs" style="right:30px; top:26px" width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#EFE9E1" stroke-width="10"/>
+      <circle cx="60" cy="60" r="50" fill="none" stroke="var(--green)" stroke-width="10" stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="28.3" transform="rotate(-90 60 60)"/></svg>
+    <div class="abs" style="right:30px; top:26px; width:120px; height:120px; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:700">91</div>
+  </div>
+
+  <div class="card" style="left:1180px; top:480px; width:620px; padding:30px 34px; box-sizing:border-box; transform:rotate(2deg)">
+    <div style="font-size:24px; color:var(--ink2); font-weight:600; margin-bottom:12px">Are you Hispanic/Latino? <span style="color:var(--red)">*</span></div>
+    <div style="height:80px; border:3px solid var(--red); border-radius:16px; display:flex; align-items:center; justify-content:space-between; padding:0 26px; font-size:30px; font-weight:600; background:#FFF6F5">
+      I don't wish to answer<span style="color:var(--green); font-weight:700">✓</span></div>
+    <div class="mono" style="font-size:18px; color:var(--mute); margin-top:14px">FILLED BY THE AGENT · 16 OF 16</div>
+  </div>
+
+  <div class="abs" style="left:1020px; top:760px; width:440px; height:140px; border-radius:30px; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; gap:18px; font-size:54px; font-weight:700; box-shadow:0 30px 70px rgba(229,55,42,.35); transform:rotate(-2deg)">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>Approve</div>
+  <svg class="abs" width="70" height="86" viewBox="0 0 22 28" style="left:1340px; top:850px"><path d="M2 2 L2 21 L7 16.5 L10.5 24.5 L14 23 L10.6 15.2 L17.2 15.2 Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg>
+
+  <div class="abs" style="left:1440px; top:780px; border:8px solid var(--green); color:var(--green); border-radius:24px; padding:6px 30px; font-size:84px; font-weight:700; letter-spacing:-.02em; background:rgba(255,255,255,.9); transform:rotate(-9deg)">Interview!</div>
+
+  <svg class="abs" style="left:1700px; top:200px; transform:rotate(-24deg)" width="200" height="148" viewBox="0 0 190 140">
+    <path d="M6 64 L184 6 L82 82 Z" fill="#fff" stroke="#1C1917" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M82 82 L184 6 L104 128 Z" fill="#F3EEE6" stroke="#1C1917" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M82 82 L104 128 L72 108 Z" fill="var(--red)" stroke="#1C1917" stroke-width="6" stroke-linejoin="round"/></svg>
+</body></html>
