@@ -3,6 +3,8 @@
 Each scene: retina frames from the browser's screencast (rec/<scene>/NNNNN.jpg + frames.json) and an event log
 (cursor moves, clicks, camera focus) in rec/<scene>/events.json. The cursor is drawn later by compose.py, so it
 moves smoothly at 30 fps. Actions that would do real work (refresh, prepare, approve/submit) are answered by mocks.
+The "tell" scene is real: three files are dropped and the agent reads them; the storybook is put back afterwards.
+The microphone hears a scripted sentence (SAY) through a stand-in for the browser's speech recognition.
 
     JHA_PROFILE=profile.example JHA_DB=data/demo.sqlite python3 scripts/demo.py   # fresh demo data first
     python3 video/record.py [scene ...]
@@ -69,6 +71,10 @@ class Scene:
     def speed(self, t0, t1, x):
         self.events.append({"type": "speed", "t0": t0, "t1": t1, "x": x})
 
+    def mark(self, line, at=0.0):
+        """Pin this moment to narration line `line` (+ `at` seconds) when composing."""
+        self.events.append({"type": "mark", "t": self.now(), "line": line, "at": at})
+
     def focus(self, rect, zoom, dur=.9):
         """Camera: centre `rect` (x, y, w, h in CSS px; None = whole page) at `zoom`, easing over `dur`."""
         self.events.append({"type": "focus", "t": self.now(), "dur": dur, "rect": rect, "zoom": zoom})
@@ -79,8 +85,14 @@ class Scene:
         b = await loc.bounding_box()
         return [b["x"], b["y"], b["width"], b["height"]]
 
-    async def drag_file(self, label, start, sel, pdf, dur=1.4):
-        """Drag a file card from outside the window onto `sel`, then fire a real drop with the file."""
+    async def union(self, *sels):
+        bs = [await self.box(x) for x in sels]
+        x0, y0 = min(b[0] for b in bs), min(b[1] for b in bs)
+        return [x0, y0, max(b[0] + b[2] for b in bs) - x0, max(b[1] + b[3] for b in bs) - y0]
+
+    async def drag_file(self, labels, start, sel, pdfs, dur=1.4, mark=None):
+        """Drag file cards from outside the window onto `sel`, then fire a real drop with the files."""
+        labels, pdfs = ([labels], [pdfs]) if isinstance(labels, str) else (labels, pdfs)
         self.cur = list(start)
         b = await self.box(sel)
         x, y = b[0] + b[2] / 2, b[1] + b[3] / 2
@@ -89,18 +101,23 @@ class Scene:
         await self.wait(.3)
         t1 = self.now()
         self.events.append({"type": "move", "t": t1, "dur": dur, "from": list(start), "to": [x, y]})
-        self.events.append({"type": "drag", "t0": t0, "t1": t1 + dur + .25, "label": label})
+        self.events.append({"type": "drag", "t0": t0, "t1": t1 + dur + .25, "label": labels[0], "count": len(labels)})
         await self.page.wait_for_timeout(int(dur * 650))
         await self.page.evaluate("document.querySelector('%s').classList.add('over')" % sel)
         await self.page.wait_for_timeout(int(dur * 350) + 200)
         self.cur = [x, y]
         self.events.append({"type": "click", "t": self.now(), "at": [x, y]})
-        b64 = base64.b64encode(Path(pdf).read_bytes()).decode()
-        await self.page.evaluate("""([sel, name, b64]) => {
-            const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-            const dt = new DataTransfer(); dt.items.add(new File([u], name, {type: 'application/pdf'}));
+        if mark:
+            self.mark(*mark)
+        files = [[n, base64.b64encode(Path(f).read_bytes()).decode()] for n, f in zip(labels, pdfs)]
+        await self.page.evaluate("""([sel, files]) => {
+            const dt = new DataTransfer();
+            for (const [name, b64] of files) {
+                const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+                dt.items.add(new File([u], name, {type: 'application/pdf'}));
+            }
             document.querySelector(sel).dispatchEvent(new DragEvent('drop', {bubbles: true, cancelable: true, dataTransfer: dt}));
-        }""", [sel, label, b64])
+        }""", [sel, files])
 
     async def move(self, x, y, dur=.6):
         self.events.append({"type": "move", "t": self.now(), "dur": dur, "from": list(self.cur), "to": [x, y]})
@@ -108,12 +125,14 @@ class Scene:
         await self.page.mouse.move(x, y)
         await self.wait(dur)
 
-    async def click(self, sel, dur=.6, pause=.18, dx=.5, dy=.5):
+    async def click(self, sel, dur=.6, pause=.18, dx=.5, dy=.5, mark=None):
         b = await self.box(sel)
         x, y = b[0] + b[2] * dx, b[1] + b[3] * dy
         await self.move(x, y, dur)
         await self.wait(pause)
         self.events.append({"type": "click", "t": self.now(), "at": [x, y]})
+        if mark:
+            self.mark(*mark)
         await self.page.mouse.click(x, y)
 
     async def type(self, sel, text, delay=28):
@@ -133,7 +152,19 @@ async def mock(page):
         await route.fulfill(json={"running": bool(running), "failed": False, **({} if running else {"at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "new": 24})})
     await page.route("**/api/refresh", refresh)
     await page.route("**/api/jobs/*/prepare", lambda r: r.fulfill(json={"ok": True}))
+    await page.route("**/api/config", lambda r: r.fulfill(json={"jev": True}))     # no setup banner in the demo
     await page.route("**/api/applications/*/approve", lambda r: r.fulfill(json={"ok": True, "msg": "Submitting in a browser window. If a CAPTCHA appears, finish it there."}))
+
+
+SAY = "Oh, and I taught a UX workshop at Pratt last spring. Thirty students. Nobody fell asleep."
+FAKE_MIC = """
+window.SpeechRecognition = window.webkitSpeechRecognition = class {
+  start() { const w = SAY.split(' '); let i = 0;
+    this._t = setInterval(() => { i++; this.onresult && this.onresult({results: [[{transcript: w.slice(0, i).join(' ')}]]});
+      if (i >= w.length) { clearInterval(this._t); setTimeout(() => this.onend && this.onend(), 350); } }, 135); }
+  stop() { clearInterval(this._t); this.onend && this.onend(); }
+};""".replace("SAY", json.dumps(SAY))
+FILES = ["Alex_Rivera_Resume_2021.pdf", "Reference_Letter_Fieldwork.pdf", "Thesis_Irrigation_Dashboards.pdf"]
 
 
 async def nav(page, tab, sub=None):
@@ -142,197 +173,89 @@ async def nav(page, tab, sub=None):
 
 
 # ------------------------------------------------------------------ scenes
-async def standing(s: Scene):
+async def tell(s: Scene):
     p = s.page
-    await p.evaluate("tab='storybook'; pbFile='@standing'; render()"); await s.wait(.6)
+    await p.evaluate("tab='storybook'; pbFile='02-experience.md'; picked=[]; draft=''; render()"); await s.wait(.6)
     await p.evaluate("document.querySelector('main').scrollTop = 0")
     await s.start()
-    s.wide(.01); await s.wait(.5)
-    s.focus(await s.box(".toc"), 1.9, 1.1)
-    await s.click(".toc button:has-text('Standing answers')", .8)
-    await s.wait(.4)
-    s.focus(await s.box(".md h1"), 1.7, 1.1)
-    await s.wait(1.2)
-    s.whole(.9)
-    await p.evaluate("document.querySelector('main').scrollTo({top: 520, behavior: 'smooth'})"); await s.wait(1.0)
-    s.focus(await s.box("select[data-k='relocate']"), 2.1, .9)
-    await s.click("select[data-k='relocate']", .7)
-    await p.select_option("select[data-k='relocate']", "Yes"); await s.wait(.5)
-    s.whole(.8)
-    await p.evaluate("document.querySelector('main').scrollTo({top: 1500, behavior: 'smooth'})"); await s.wait(1.0)
-    s.focus(await s.box("select[data-k='gender']"), 2.1, .9)
-    await s.click("select[data-k='gender']", .7)
-    await p.select_option("select[data-k='gender']", "Prefer not to say"); await s.wait(.5)
-    await s.click("select[data-k='race']", .5)
-    await p.select_option("select[data-k='race']", "Prefer not to say"); await s.wait(.5)
-    s.wide(1.1)
-    await s.wait(1.4)
-    await s.stop()
-
-
-async def storybook(s: Scene):
-    p = s.page
-    await p.evaluate("tab='storybook'; pbFile='02-experience.md'; picked=null; draft=''; render()"); await s.wait(.6)
-    await p.evaluate("document.querySelector('main').scrollTop = 0")
-    await s.start()
-    s.wide(.01); await s.wait(.6)
-    s.focus(await s.box(".tell"), 1.12, 1.0)          # wide enough to see the file come in from the desk
-    await s.wait(.4)
-    await s.drag_file("Jordan_Lee_Resume.pdf", (VW + 120, VH * .36), "#drop", ROOT / "ref" / "Jordan_Lee_Resume.pdf", 1.7)
-    await s.wait(.5)
-    s.focus(await s.box("#drop"), 2.0, .8)
-    await s.wait(1.0)
-    s.focus(await s.box(".composer"), 1.9, .9)
-    await s.click(".pill:has-text('Change how my résumé is written')", .7)
-    await s.wait(.2)
-    await p.locator("#ask").press_sequentially("lead every bullet with the result, like Jordan does.", delay=24)
+    s.wide(.01); await s.wait(.2)
+    s.focus(await s.box(".tell"), 1.12, .8)            # wide enough to see the files come in from the desk
     await s.wait(.3)
-    await s.click(".composer .btn.primary", .7)
+    await s.drag_file(FILES, (VW + 120, VH * .36), "#drop", [ROOT / "ref" / f for f in FILES], 1.5, mark=("t2", .1))
+    await s.wait(.3)
+    s.focus(await s.box(".composer .bar"), 1.9, .7)    # the three files, by name
+    await s.wait(2.2)
+    s.focus(await s.box(".composer"), 1.7, .7)
+    await s.click("#mic", .6, mark=("t3", .5))
+    await s.wait(2.7)                                  # the sentence comes in as it is "said"
+    await s.click(".composer .btn.primary", .6, mark=("t4", .05))
     for _ in range(20):        # the run reports "running" a moment after Send; then the page shows its progress
         st = await p.evaluate("fetch('/api/storybook/learn-status').then(r => r.json())")
         if st.get("state") == "running":
             break
         await s.wait(.25)
-    await p.evaluate("render()"); await s.wait(1.0)
-    s.wide(1.0)
-    await s.wait(1.0)
+    await p.evaluate("render()")
     await p.locator(".panel").first.wait_for(timeout=15000)
-    s.focus(await s.box(".panel"), 1.7, 1.0)
+    s.focus(await s.box(".panel"), 1.45, .6)
     t_ff = s.now()
     for _ in range(150):   # the real agent at work
         st = await p.evaluate("fetch('/api/storybook/learn-status').then(r => r.json())")
         if st.get("state") in ("done", "stopped", "error"):
             break
-        await s.wait(2.0)
-    await s.wait(2.8)          # the dashboard re-renders with the changes
-    s.speed(t_ff + .8, s.now() - 1.6, 8)
-    await p.evaluate("document.querySelector('main').scrollTo({top: 260, behavior: 'smooth'})"); await s.wait(.8)
-    s.focus(await s.box(".change >> nth=0"), 2.2, 1.0)
+        await s.wait(1.0)
+    await s.wait(2.7)          # the page re-renders with the changes
+    s.speed(t_ff + .4, s.now() - .4, 50)
+    s.focus(await s.union(".panel b", ".change >> nth=2"), 1.75, .7)
     await s.wait(3.2)
-    s.whole(.9)
-    await p.evaluate("document.querySelector('main').scrollTo({top: 99999, behavior: 'smooth'})"); await s.wait(1.0)
-    s.focus(await s.box(".toc .back"), 2.2, .9)
-    await s.click(".toc .back button", .8)
-    await s.wait(1.4)
-    s.wide(1.0)
-    await s.wait(1.2)
     await s.stop()
+    print("  agent:", st.get("state"), len(st.get("changes", [])), "lines added", st.get("error", ""))
+    await p.evaluate("fetch('/api/storybook/back', {method: 'POST'}).then(() => { picked = []; draft = ''; })"); await s.wait(.8)
 
 
 async def find(s: Scene):
     p = s.page
     await nav(p, "jobs", "todo")
     await s.start()
-    s.wide(.01); await s.wait(.4)
-    s.focus(await s.box(".side-foot"), 2.3, 1.0)
-    await s.click("#refresh", .9)
-    await s.wait(2.9)
-    s.whole(.9); await s.wait(.6)
-    s.focus(await s.box(".queue"), 1.75, 1.0)
+    s.whole(.01); await s.wait(.3)
+    s.focus(await s.box(".queue"), 1.5, .8)
     await s.wait(.6)
-    for name in ("Tidewater", "Halden Studio", "Parcel & Co"):
-        b = await s.box(f".qi:has-text('{name}')")
-        s.focus([b[0] + b[2] - 90, b[1] - 20, 120, b[3] + 40], 2.4, .55)
-        await s.move(b[0] + b[2] - 34, b[1] + b[3] / 2, .5)
-        await s.wait(.5)
+    b = await s.union(".qi >> nth=0", ".qi >> nth=2")
+    s.focus([b[0] + b[2] - 110, b[1], 140, b[3]], 2.3, .8)    # the score rings
+    for i in range(3):
+        q = await s.box(f".qi >> nth={i}")
+        await s.move(q[0] + q[2] - 34, q[1] + q[3] / 2, .45)
+        await s.wait(.35)
+    await s.click(".qi >> nth=0", .5, mark=("f2", 0))
+    await s.wait(.4)
+    s.focus(await s.box(".d-head"), 1.7, .8)
+    await s.wait(1.6)
     s.whole(.8)
-    await s.click(".qi:has-text('Tidewater')", .6)
     await s.wait(.6)
-    s.focus(await s.box(".d-head"), 1.8, .9)
-    await s.wait(1.2)
-    s.wide(1.0)
-    await s.wait(1.0)
     await s.stop()
 
 
-async def prepare(s: Scene):
+async def ready(s: Scene):
     p = s.page
-    await nav(p, "jobs", "todo")
-    await p.locator(".qi:has-text('Tidewater')").first.click(); await s.wait(.5)
-    await s.start()
-    s.focus(await s.box(".d-foot"), 2.0, .01); await s.wait(.3)
-    await s.click(".d-foot .btn.primary", .7)
-    await p.evaluate("const b=document.querySelector('.d-foot .btn.primary'); b.innerHTML='<span class=\"spin\"></span>Preparing…'; b.disabled=true")
-    await s.wait(1.1)
-    s.wide(.8)
     await nav(p, "jobs", "review")
-    await p.locator(".qi:has-text('Northwind Energy')").first.click(); await s.wait(.5)
-    s.focus(await s.box(".docs"), 2.1, .9)
-    await s.click(".doc >> nth=0", .7)
-    await s.wait(.4)
-    s.focus(await s.box(".modal .win"), 1.45, .9)
-    await s.wait(2.0)
-    await p.keyboard.press("Escape"); await s.wait(.3)
-    await s.stop()
-
-
-async def fill(s: Scene):
-    p = s.page
-    _box = s.box
-
-    async def colbox(sel):   # frame the whole form column at the field's height, not the field alone
-        b = await _box(sel); w = await _box(".wrap")
-        return [w[0] - 20, b[1], w[2] + 40, b[3]]
-    await p.goto((ROOT / "form.html").as_uri()); await s.wait(.5)
+    await p.locator(".qi:has-text('Northwind Energy')").first.click(); await s.wait(.6)
     await s.start()
-    s.wide(.01); await s.wait(.5)
-    s.focus(await colbox("#first"), 1.95, 1.0)
-    for sel, text in (("#first", "Alejandro"), ("#last", "Rivera"), ("#email", "alex@example.com"), ("#phone", "(555) 010-0000")):
-        await s.click(sel, .32, .06); await p.locator(sel).press_sequentially(text, delay=24)
-    await s.click("#loc .v", .35, .05); await s.wait(.25)
-    await s.click("#loc .menu div >> nth=0", .3, .1)
-    await s.click("#up .btn", .35, .08); await s.wait(.3)
-    s.focus(await colbox("#li"), 1.95, .8)
-    await s.click("#li", .3, .05); await p.locator("#li").press_sequentially("linkedin.com/in/alex-rivera", delay=14)
-    await s.click("#pf", .3, .05); await p.locator("#pf").press_sequentially("alexrivera.example", delay=16)
-    s.focus(await colbox("#auth"), 2.0, .8)
-    await s.click("#auth button >> nth=0", .45, .08)
-    await s.click("#spon button >> nth=1", .4, .08)
-    await s.click("#heard .v", .4, .05); await s.wait(.25)
-    await s.click("#heard .menu div >> nth=0", .3, .1)
-    s.focus(await colbox("#why"), 2.0, .8)
-    await s.click("#why", .4, .05)
-    await p.locator("#why").press_sequentially("Northwind's mission is to help the grid run on clean power, and I love that it treats planning as a design problem. "
-                                              "I'm happiest untangling messy workflows, which is most of what a planner's day is.", delay=9)
-    s.focus(await colbox("#gender"), 2.05, .8)
-    await s.click("#gender .v", .45, .05); await s.wait(.25)
-    await s.click("#gender .menu div >> nth=3", .35, .1)
-    await s.click("#consent", .4, .1)
-    await s.wait(.4)
-    s.focus(await colbox("#submit"), 1.9, .8)
-    await s.move(*(lambda b: (b[0] + b[2] / 2, b[1] + b[3] / 2))(await s.box("#submit")), .7)
+    s.whole(.01); await s.wait(.3)
+    s.focus(await s.box(".doc >> nth=0"), 2.3, .8)        # the tailored résumé
+    await s.move(*(lambda b: (b[0] + b[2] * .5, b[1] + b[3] * .4))(await s.box(".doc >> nth=0")), .6)
     await s.wait(.5)
-    s.wide(1.1)
-    await s.wait(1.2)
-    await s.stop()
-    await p.goto(URL); await s.wait(.8)
-
-
-async def review(s: Scene):
-    p = s.page
-    await nav(p, "jobs", "review")
-    await s.start()
-    s.wide(.01); await s.wait(.5)
-    s.focus(await s.box(".queue"), 1.8, 1.0)
-    await s.wait(.8)
-    await s.click(".qi:has-text('Lumen Labs')", .8)
-    await s.wait(.6)
-    s.whole(.7)
-    s.focus(await s.box(".section.ask"), 1.85, 1.0)
-    await s.click(".section.ask select", .8)
-    await p.select_option(".section.ask select", "Within 2 weeks"); await s.wait(.5)
-    await s.click(".section.ask input[type=text]", .6)
-    await p.locator(".section.ask input[type=text]").press_sequentially("No password needed", delay=30)
-    await s.wait(.3)
-    await s.click(".section.ask .btn.primary", .7)
-    await s.wait(1.3)
-    s.focus(await s.box(".d-foot"), 2.3, .9)
-    await s.wait(.6)
-    await s.click(".d-foot .btn.primary", .9)
-    await s.wait(.9)
-    s.wide(1.2)
+    s.mark("r1", 2.2)
+    s.focus(await s.box(".doc >> nth=1"), 2.3, .7)        # the filled form
+    await s.click(".doc >> nth=1", .6, mark=("r1", 3.4))
+    await s.wait(.4)
+    s.focus(await s.box(".modal .win"), 1.35, .8)
     await s.wait(1.8)
-    await s.wait(1.5)
+    await p.keyboard.press("Escape"); await s.wait(.3)
+    s.focus(await s.box(".d-foot"), 2.2, .7)
+    await s.wait(.4)
+    await s.click(".d-foot .btn.primary", .8, mark=("r2", 1.6))
+    await s.wait(.9)
+    s.whole(.9)
+    await s.wait(1.2)
     await s.stop()
 
 
@@ -340,21 +263,17 @@ async def track(s: Scene):
     p = s.page
     await nav(p, "jobs", "applied")
     await p.evaluate("stageFilter='all'; render()"); await s.wait(.5)
+    await p.locator(".qi:has-text('Copperleaf')").first.click(); await s.wait(.5)
     await s.start()
-    s.wide(.01); await s.wait(.5)
-    s.focus(await s.box(".queue"), 1.8, 1.0)
-    await s.wait(1.0)
-    await s.click(".qi:has-text('Copperleaf')", .7)
-    await s.wait(.5)
-    s.focus(await s.box(".reply"), 2.2, 1.0)
-    await s.wait(2.0)
-    s.whole(.9)
-    await s.click(".chips .pill:has-text('Rejected')", .8)
+    s.whole(.01); await s.wait(.3)
+    s.focus(await s.box(".queue"), 1.7, .7)
+    await s.wait(.9)
+    s.focus(await s.box(".reply"), 2.0, .7)
     await s.wait(1.4)
     await s.stop()
 
 
-SCENES = {"standing": standing, "storybook": storybook, "find": find, "prepare": prepare, "fill": fill, "review": review, "track": track}
+SCENES = {"tell": tell, "find": find, "ready": ready, "track": track}
 
 
 async def main(names):
@@ -366,6 +285,7 @@ async def main(names):
             b = await pw.chromium.launch(args=["--force-device-scale-factor=2"])
             ctx = await b.new_context(viewport={"width": VW, "height": VH}, device_scale_factor=2)
             page = await ctx.new_page()
+            await page.add_init_script(FAKE_MIC)
             await mock(page)
             cdp = await ctx.new_cdp_session(page)
             await page.goto(URL, wait_until="networkidle"); await page.wait_for_timeout(1200)

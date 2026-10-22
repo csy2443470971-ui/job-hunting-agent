@@ -4,9 +4,9 @@ from pathlib import Path
 
 root = Path(__file__).parent
 lines = json.loads((root / "voice" / "timing.json").read_text())
-SCENE_OF = {"s5e": "human"}           # the CAPTCHA line gets its own graphic
-GAP_IN, GAP_SCENE, LEAD, TAIL = .32, .75, .45, 1.6
-PAUSE_AFTER = {"s4a": 1.6, "s2c": .3, "s5d": .3}   # let a few shots breathe
+SCENE_OF = {}                         # line id -> scene, when a line needs a different picture than its script scene
+GAP_IN, GAP_SCENE, LEAD, TAIL = .12, .3, .3, 1.0   # under a minute: tight gaps
+PAUSE_AFTER = {"r2": .5}              # let the Approve click land
 
 t, out, scenes, prev = 0.0, [], [], None
 for ln in lines:

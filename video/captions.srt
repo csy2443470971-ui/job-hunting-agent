@@ -1,183 +1,75 @@
 1
-00:00:00,450 --> 00:00:03,670
-Applying for jobs is a full-time job.
+00:00:00,300 --> 00:00:02,670
+Job hunting is a full-time job.
 
 2
-00:00:03,670 --> 00:00:07,650
-Except it doesn't pay, and it's ninety percent dropdowns.
+00:00:02,670 --> 00:00:05,770
+With zero pay, and way too many dropdowns.
 
 3
-00:00:08,240 --> 00:00:10,690
+00:00:05,770 --> 00:00:08,040
 Meet Job Hunter Agent.
 
 4
-00:00:10,690 --> 00:00:12,230
-It does the boring part.
+00:00:08,040 --> 00:00:10,440
+Step one: dump everything on it.
 
 5
-00:00:12,230 --> 00:00:15,090
-You stay in charge of the part that matters.
+00:00:10,440 --> 00:00:14,410
+Old résumés, reference letters, that paper nobody read.
 
 6
-00:00:15,690 --> 00:00:19,090
-Step one: answer the questions every application asks.
+00:00:14,410 --> 00:00:16,230
+Or just hit the mic and ramble.
 
 7
-00:00:19,090 --> 00:00:20,510
-Once.
+00:00:16,230 --> 00:00:17,780
+It's a great listener.
 
 8
-00:00:20,510 --> 00:00:23,630
-Your name, your visa, whether you'd move to New York.
+00:00:17,780 --> 00:00:19,240
+It writes your story from that.
 
 9
-00:00:23,630 --> 00:00:26,630
-Prefer not to say is always an option.
+00:00:19,240 --> 00:00:20,120
+True stuff only.
 
 10
-00:00:27,230 --> 00:00:29,860
-Step two: tell it your story.
+00:00:20,480 --> 00:00:22,430
+No surprise PhD.
 
 11
-00:00:29,860 --> 00:00:35,100
-Type it, say it out loud, or just drop in a résumé you secretly admire.
+00:00:22,430 --> 00:00:26,020
+Step two: it finds the roles and scores how well you fit.
 
 12
-00:00:35,100 --> 00:00:37,340
-Say what you like about it, hit Send,
+00:00:26,020 --> 00:00:29,120
+Goodbye, “entry level, ten years required.”
 
 13
-00:00:37,340 --> 00:00:41,720
-and watch it rewrite your storybook in that style, line by line.
+00:00:29,120 --> 00:00:31,880
+Step three: your résumé is tailored and the form is filled.
 
 14
-00:00:41,720 --> 00:00:45,480
-This storybook is the only thing the agent is allowed to say about you.
+00:00:32,150 --> 00:00:34,520
+Every single dropdown.
 
 15
-00:00:45,480 --> 00:00:48,390
-So, no surprise PhD.
-
-16
-00:00:48,870 --> 00:00:49,890
-Don't love it?
-
-17
-00:00:49,890 --> 00:00:51,770
-One click takes you back.
-
-18
-00:00:52,370 --> 00:00:57,130
-Every morning, it checks the job boards of the companies you care about.
-
-19
-00:00:57,130 --> 00:00:58,610
-Then it scores every role.
-
-20
-00:00:58,900 --> 00:01:03,880
-Green means go, orange means maybe, and under fifty, it doesn't even bother.
-
-21
-00:01:04,480 --> 00:01:09,040
-Hit Prepare, and it builds a one-page résumé from your storybook.
-
-22
-00:01:11,230 --> 00:01:13,300
-Then it fills out the actual application.
-
-23
-00:01:13,860 --> 00:01:18,860
-Names, dropdowns, even those tiny checkboxes nobody reads.
-
-24
-00:01:18,860 --> 00:01:21,300
-And when a form asks why you want to work there,
-
-25
-00:01:21,560 --> 00:01:25,480
-it starts with their mission, not a cover-letter cliché.
-
-26
-00:01:26,080 --> 00:01:28,200
-And then, it stops.
-
-27
-00:01:28,200 --> 00:01:31,420
-Everything waits for you in the review queue.
-
-28
-00:01:31,420 --> 00:01:36,670
-Anything only you can answer shows up right here, with the form's own options.
-
-29
-00:01:36,670 --> 00:01:38,580
+00:00:34,520 --> 00:00:37,090
 Nothing goes out until you hit Approve.
 
-30
-00:01:39,020 --> 00:01:39,960
-You're the boss.
+16
+00:00:37,740 --> 00:00:41,150
+Then it watches your inbox and tells you who wrote back.
 
-31
-00:01:40,240 --> 00:01:44,390
-The agent is the intern who actually read the job description.
-
-32
-00:01:45,290 --> 00:01:48,870
-If a CAPTCHA or an email code shows up, that one's yours.
-
-33
-00:01:49,230 --> 00:01:52,920
-It's a robot, and it's not allowed to pretend otherwise.
-
-34
-00:01:53,520 --> 00:01:59,440
-After you apply, it reads your inbox, read-only, and moves each application along.
-
-35
-00:01:59,440 --> 00:02:01,540
-Received, next step, interview, offer.
-
-36
-00:02:01,540 --> 00:02:03,810
-Or, you know, the other one.
-
-37
-00:02:04,410 --> 00:02:07,450
-Under the hood, it's a simple pipeline.
-
-38
-00:02:07,450 --> 00:02:09,120
-Your storybook goes in.
-
-39
-00:02:09,120 --> 00:02:14,600
-The agent finds roles, ranks them, builds the résumé, and fills the form.
-
-40
-00:02:14,600 --> 00:02:15,280
-You approve.
-
-41
-00:02:15,680 --> 00:02:18,980
-It submits, tracks the replies, and learns from your notes,
-
-42
-00:02:18,980 --> 00:02:22,280
-one small fix at a time, which you approve too.
-
-43
-00:02:22,880 --> 00:02:24,010
+17
+00:00:41,150 --> 00:00:42,460
 Job Hunter Agent.
 
-44
-00:02:24,320 --> 00:02:26,820
-Open source, and on your side.
-
-45
-00:02:26,820 --> 00:02:28,060
+18
+00:00:42,460 --> 00:00:43,500
 It does the grind.
 
-46
-00:02:28,060 --> 00:02:29,590
+19
+00:00:43,500 --> 00:00:44,900
 You do the talking.

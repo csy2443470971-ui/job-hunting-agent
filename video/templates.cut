@@ -2,7 +2,7 @@
 
 template hook  main line1
 ```js
-// The pain in two beats: a big line, then a second line while "Select…" dropdowns rain onto the page.
+// The pain in two beats: a big line, then a second line while "Select…" dropdowns pile onto the page around it.
 (function () {
   var W = E.W, H = E.H, k = E.k;
   var line1 = E.knob('line1', 'text', 'Applying for jobs is a <em>full-time job</em>.', { label: 'First line' });
@@ -34,7 +34,8 @@ template hook  main line1
     g.save(); g.font = '500 ' + (22 * k) + 'px "Roobert TWHINT", Helvetica, sans-serif'; g.textBaseline = 'middle';
     pills.forEach(function (p) {
       var q = E.e(t, p.t, .7, E.outCubic); if (q <= 0) return;
-      var y = p.y - (1 - q) * (p.y + 80 * k), w = g.measureText(p.label).width + 64 * k, h = 48 * k;
+      var up = p.y < H * .45;   // above the headline: fall from the top; below it: rise from the bottom (never across the words)
+      var y = up ? p.y - (1 - q) * (p.y + 80 * k) : p.y + (1 - q) * (H - p.y + 80 * k), w = g.measureText(p.label).width + 64 * k, h = 48 * k;
       g.save(); g.globalAlpha = A * Math.min(1, q * 2) * .92; g.translate(p.x, y); g.rotate(p.r * q);
       g.shadowColor = 'rgba(40,30,20,.12)'; g.shadowBlur = 14 * k; g.shadowOffsetY = 6 * k;
       g.fillStyle = '#FFFFFF'; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, 10 * k); g.fill();

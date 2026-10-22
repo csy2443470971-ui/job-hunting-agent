@@ -9,7 +9,7 @@ lines = json.loads((root / "script.json").read_text())
 pipe = KPipeline(lang_code="a")
 out = []
 for ln in lines:
-    say = ln["text"].replace("CAPTCHA", "captcha").replace("PhD", "P H D")
+    say = ln.get("say", ln["text"]).replace("CAPTCHA", "captcha").replace("PhD", "P H D")
     audio = np.concatenate([np.asarray(a) for _, _, a in pipe(say, voice=VOICE, speed=SPEED)])
     p = root / "voice" / f"{ln['id']}.wav"; sf.write(p, audio, 24000)
     out.append({**ln, "file": str(p.relative_to(root)), "dur": round(len(audio) / 24000, 3)})

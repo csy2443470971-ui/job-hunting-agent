@@ -2,12 +2,12 @@
  {
   "id": "hook1",
   "scene": "hook",
-  "text": "Applying for jobs is a full-time job."
+  "text": "Job hunting is a full-time job."
  },
  {
   "id": "hook2",
   "scene": "hook",
-  "text": "Except it doesn't pay, and it's ninety percent dropdowns."
+  "text": "With zero pay, and way too many dropdowns."
  },
  {
   "id": "meet1",
@@ -15,128 +15,55 @@
   "text": "Meet Job Hunter Agent."
  },
  {
-  "id": "meet2",
-  "scene": "meet",
-  "text": "It does the boring part. You stay in charge of the part that matters."
+  "id": "t1",
+  "scene": "tell",
+  "text": "Step one: dump everything on it."
  },
  {
-  "id": "s1a",
-  "scene": "standing",
-  "text": "Step one: answer the questions every application asks. Once."
+  "id": "t2",
+  "scene": "tell",
+  "text": "Old résumés, reference letters, that paper nobody read."
  },
  {
-  "id": "s1b",
-  "scene": "standing",
-  "text": "Your name, your visa, whether you'd move to New York. Prefer not to say is always an option."
+  "id": "t3",
+  "scene": "tell",
+  "text": "Or just hit the mic and ramble. It's a great listener."
  },
  {
-  "id": "s2a",
-  "scene": "storybook",
-  "text": "Step two: tell it your story."
+  "id": "t4",
+  "scene": "tell",
+  "text": "It writes your story from that. True stuff only. No surprise PhD."
  },
  {
-  "id": "s2b",
-  "scene": "storybook",
-  "text": "Type it, say it out loud, or just drop in a résumé you secretly admire."
- },
- {
-  "id": "s2d",
-  "scene": "storybook",
-  "text": "Say what you like about it, hit Send, and watch it rewrite your storybook in that style, line by line."
- },
- {
-  "id": "s2c",
-  "scene": "storybook",
-  "text": "This storybook is the only thing the agent is allowed to say about you. So, no surprise PhD."
- },
- {
-  "id": "s2e",
-  "scene": "storybook",
-  "text": "Don't love it? One click takes you back."
- },
- {
-  "id": "s3a",
+  "id": "f1",
   "scene": "find",
-  "text": "Every morning, it checks the job boards of the companies you care about."
+  "text": "Step two: it finds the roles and scores how well you fit."
  },
  {
-  "id": "s3b",
+  "id": "f2",
   "scene": "find",
-  "text": "Then it scores every role. Green means go, orange means maybe, and under fifty, it doesn't even bother."
+  "text": "Goodbye, “entry level, ten years required.”",
+  "say": "Goodbye, entry level, ten years required."
  },
  {
-  "id": "s4a",
-  "scene": "prepare",
-  "text": "Hit Prepare, and it builds a one-page résumé from your storybook."
+  "id": "r1",
+  "scene": "ready",
+  "text": "Step three: your résumé is tailored and the form is filled. Every single dropdown.",
+  "say": "Step three: your résumé is tailored, and the form is filled. Every. Single. Dropdown."
  },
  {
-  "id": "s4b",
-  "scene": "fill",
-  "text": "Then it fills out the actual application. Names, dropdowns, even those tiny checkboxes nobody reads."
+  "id": "r2",
+  "scene": "ready",
+  "text": "Nothing goes out until you hit Approve."
  },
  {
-  "id": "s4c",
-  "scene": "fill",
-  "text": "And when a form asks why you want to work there, it starts with their mission, not a cover-letter cliché."
- },
- {
-  "id": "s5a",
-  "scene": "review",
-  "text": "And then, it stops."
- },
- {
-  "id": "s5b",
-  "scene": "review",
-  "text": "Everything waits for you in the review queue."
- },
- {
-  "id": "s5c",
-  "scene": "review",
-  "text": "Anything only you can answer shows up right here, with the form's own options."
- },
- {
-  "id": "s5d",
-  "scene": "review",
-  "text": "Nothing goes out until you hit Approve. You're the boss. The agent is the intern who actually read the job description."
- },
- {
-  "id": "s5e",
-  "scene": "review",
-  "text": "If a CAPTCHA or an email code shows up, that one's yours. It's a robot, and it's not allowed to pretend otherwise."
- },
- {
-  "id": "s6a",
+  "id": "k1",
   "scene": "track",
-  "text": "After you apply, it reads your inbox, read-only, and moves each application along."
+  "text": "Then it watches your inbox and tells you who wrote back."
  },
  {
-  "id": "s6b",
-  "scene": "track",
-  "text": "Received, next step, interview, offer. Or, you know, the other one."
- },
- {
-  "id": "arch1",
-  "scene": "arch",
-  "text": "Under the hood, it's a simple pipeline."
- },
- {
-  "id": "arch2",
-  "scene": "arch",
-  "text": "Your storybook goes in. The agent finds roles, ranks them, builds the résumé, and fills the form."
- },
- {
-  "id": "arch3",
-  "scene": "arch",
-  "text": "You approve. It submits, tracks the replies, and learns from your notes, one small fix at a time, which you approve too."
- },
- {
-  "id": "end1",
+  "id": "e1",
   "scene": "end",
-  "text": "Job Hunter Agent. Open source, and on your side."
- },
- {
-  "id": "end2",
-  "scene": "end",
-  "text": "It does the grind. You do the talking."
+  "text": "Job Hunter Agent. It does the grind. You do the talking."
  }
 ]

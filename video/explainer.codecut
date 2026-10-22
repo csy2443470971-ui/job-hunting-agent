@@ -4,127 +4,73 @@ size   16:9
 fps    30
 by     claude
 theme  bg #F3EEE6  ink #1C1917  ink2 #57534E  accent #E5372A  accent2 #F27420  font "Roobert TWHINT"
-brief  A 2-minute product explainer for Job Hunter Agent, an open-source job-application agent: what the person does, what the agent does, and that nothing is sent without the person's approval. Plain words, a little American humour, real screen recordings with fictional demo data.
+brief  A 45-second product demo for Job Hunter Agent, an open-source job-application agent: drop in everything or just talk, it finds and scores roles, the résumé and form come back done, nothing is sent until you approve. Fast, simple, a little American humour; real screen recordings with fictional demo data.
 lock   theme
 
 voice  vo   voice/narration.wav
-asset  standing  scenes/standing.mp4
-asset  storybook  scenes/storybook.mp4
+asset  tell  scenes/tell.mp4
 asset  find  scenes/find.mp4
-asset  prepare  scenes/prepare.mp4
-asset  fill  scenes/fill.mp4
-asset  review  scenes/review.mp4
+asset  ready  scenes/ready.mp4
 asset  track  scenes/track.mp4
 music  bed  find "light playful upbeat background, pizzicato or ukulele, positive tech explainer, instrumental"
 
 # ---- the cut (times from plan.json) -------------------------------------------
-0:00  hook  #hook  7.795s
-      line1  "Applying for jobs is a <em>full-time job</em>."
-      line2  "It doesn't pay. And it's <em>90% dropdowns</em>."
-      beat   3.57
+0:00  hook  #hook  5.47s
+      line1  "Job hunting is a <em>full-time job</em>."
+      line2  "With <em>zero pay</em>."
+      beat   2.57
       edit   line1, line2
-      variant B  line2 "No salary. <em>Infinite</em> dropdowns."
+      variant B  line2 "And <em>way too many</em> dropdowns."
       why    The pain first, in one breath, before any product shows up.
-7.795  meet  #meet  7.445s
+5.47  meet  #meet  2.275s
       name   "Job Hunter <em>Agent</em>"
-      sub    "It does the boring part. You keep the part that matters."
+      sub    "It applies. <em>You approve.</em>"
       edit   name, sub
       why    The product's face: the icon people will see in the Dock.
-15.24  clip  standing  11.545s
-      why    Real screen recording of the standing step (demo data, fictional applicant).
-26.785  clip  storybook  25.13s
-      why    Real screen recording of the storybook step (demo data, fictional applicant).
-51.915  clip  find  12.12s
+7.745  clip  tell  14.385s
+      why    Real screen recording of the tell step (demo data, fictional applicant).
+22.13  clip  find  6.695s
       why    Real screen recording of the find step (demo data, fictional applicant).
-64.035  clip  prepare  6.75s
-      why    Real screen recording of the prepare step (demo data, fictional applicant).
-70.785  clip  fill  14.845s
-      why    Real screen recording of the fill step (demo data, fictional applicant).
-85.63  clip  review  19.21s
-      why    Real screen recording of the review step (demo data, fictional applicant).
-113.065  clip  track  10.895s
+28.825  clip  ready  8.62s
+      why    Real screen recording of the ready step (demo data, fictional applicant).
+37.445  clip  track  3.4s
       why    Real screen recording of the track step (demo data, fictional applicant).
-104.84  human  #human  8.225s
-      title  "That one's <em>yours</em>."
-      note   "The agent never solves CAPTCHAs or types your codes."
-      code   K7Q2MX9B
-      edit   title, note
-      why    The one place the agent hands the keyboard back, made visible.
-123.96  arch  #arch  18.465s
-      t_title  0.35
-      t_story  3.49
-      t_agent  5.16
-      t_agent_end  10.64
-      t_approve  10.64
-      t_loop  11.72
-      edit   title
-      why    The architecture in three lanes, revealed on the narration's beat: you, the agent, the outside world.
-142.425  ending  #end  8.62s
+40.845  ending  #end  4.9s
       name   "Job Hunter <em>Agent</em>"
       sub    "Open source · github.com/csy2443470971-ui/job-hunting-agent"
       tag    "It does the grind. <em>You do the talking.</em>"
-      t_tag  4.395
+      t_tag  1.615
       edit   name, sub, tag
       why    Where to get it, and the promise in one line.
-0:00  voice  vo  151.045s
+0:00  voice  vo  45.745s
       why    Narration (Kokoro, af_heart). Swap the file to change the voice; captions are timed to it.
-0:00  music  bed  151.045s  gain -17  fade 0.6  ending -1
+0:00  music  bed  45.745s  gain -17  fade 0.6  ending -1
 
 captions  size 36  x .05  y .935  w .9  color #1C1917  align center  fade 0
-  0.45-3.67  Applying for jobs is a full-time job.
-  3.67-7.65  Except it doesn't pay, and it's ninety percent dropdowns.
-  8.24-10.69  Meet Job Hunter Agent.
-  10.69-12.23  It does the boring part.
-  12.23-15.09  You stay in charge of the part that matters.
-  15.69-19.09  Step one: answer the questions every application asks.
-  19.09-20.51  Once.
-  20.51-23.63  Your name, your visa, whether you'd move to New York.
-  23.63-26.63  Prefer not to say is always an option.
-  27.23-29.86  Step two: tell it your story.
-  29.86-35.1  Type it, say it out loud, or just drop in a résumé you secretly admire.
-  35.1-37.34  Say what you like about it, hit Send,
-  37.34-41.72  and watch it rewrite your storybook in that style, line by line.
-  41.72-45.48  This storybook is the only thing the agent is allowed to say about you.
-  45.48-48.39  So, no surprise PhD.
-  48.87-49.89  Don't love it?
-  49.89-51.77  One click takes you back.
-  52.37-57.13  Every morning, it checks the job boards of the companies you care about.
-  57.13-58.61  Then it scores every role.
-  58.9-63.88  Green means go, orange means maybe, and under fifty, it doesn't even bother.
-  64.48-69.04  Hit Prepare, and it builds a one-page résumé from your storybook.
-  71.23-73.3  Then it fills out the actual application.
-  73.86-78.86  Names, dropdowns, even those tiny checkboxes nobody reads.
-  78.86-81.3  And when a form asks why you want to work there,
-  81.56-85.48  it starts with their mission, not a cover-letter cliché.
-  86.08-88.2  And then, it stops.
-  88.2-91.42  Everything waits for you in the review queue.
-  91.42-96.67  Anything only you can answer shows up right here, with the form's own options.
-  96.67-98.58  Nothing goes out until you hit Approve.
-  99.02-99.96  You're the boss.
-  100.24-104.39  The agent is the intern who actually read the job description.
-  105.29-108.87  If a CAPTCHA or an email code shows up, that one's yours.
-  109.23-112.92  It's a robot, and it's not allowed to pretend otherwise.
-  113.52-119.44  After you apply, it reads your inbox, read-only, and moves each application along.
-  119.44-121.54  Received, next step, interview, offer.
-  121.54-123.81  Or, you know, the other one.
-  124.41-127.45  Under the hood, it's a simple pipeline.
-  127.45-129.12  Your storybook goes in.
-  129.12-134.6  The agent finds roles, ranks them, builds the résumé, and fills the form.
-  134.6-135.28  You approve.
-  135.68-138.98  It submits, tracks the replies, and learns from your notes,
-  138.98-142.28  one small fix at a time, which you approve too.
-  142.88-144.01  Job Hunter Agent.
-  144.32-146.82  Open source, and on your side.
-  146.82-148.06  It does the grind.
-  148.06-149.59  You do the talking.
+  0.3-2.67  Job hunting is a full-time job.
+  2.67-5.77  With zero pay, and way too many dropdowns.
+  5.77-8.04  Meet Job Hunter Agent.
+  8.04-10.44  Step one: dump everything on it.
+  10.44-14.41  Old résumés, reference letters, that paper nobody read.
+  14.41-16.23  Or just hit the mic and ramble.
+  16.23-17.78  It's a great listener.
+  17.78-19.24  It writes your story from that.
+  19.24-20.12  True stuff only.
+  20.48-22.43  No surprise PhD.
+  22.43-26.02  Step two: it finds the roles and scores how well you fit.
+  26.02-29.12  Goodbye, “entry level, ten years required.”
+  29.12-31.88  Step three: your résumé is tailored and the form is filled.
+  32.15-34.52  Every single dropdown.
+  34.52-37.09  Nothing goes out until you hit Approve.
+  37.74-41.15  Then it watches your inbox and tells you who wrote back.
+  41.15-42.46  Job Hunter Agent.
+  42.46-43.5  It does the grind.
+  43.5-44.9  You do the talking.
 
-marker 15.24  Standing
-marker 26.785  Storybook
-marker 51.915  Find
-marker 64.035  Prepare
-marker 85.63  Review
-marker 113.065  Track
-marker 123.96  Architecture
+marker 7.745  Tell it everything
+marker 22.13  It finds the roles
+marker 28.825  Ready for your OK
+marker 37.445  It tracks replies
 
 ask #hook "Which second line for the hook?"
 ask "Is the music level right under the voice?"
@@ -133,7 +79,7 @@ ask "Is the music level right under the voice?"
 
 template hook  main line1
 ```js
-// The pain in two beats: a big line, then a second line while "Select…" dropdowns rain onto the page.
+// The pain in two beats: a big line, then a second line while "Select…" dropdowns pile onto the page around it.
 (function () {
   var W = E.W, H = E.H, k = E.k;
   var line1 = E.knob('line1', 'text', 'Applying for jobs is a <em>full-time job</em>.', { label: 'First line' });
@@ -165,7 +111,8 @@ template hook  main line1
     g.save(); g.font = '500 ' + (22 * k) + 'px "Roobert TWHINT", Helvetica, sans-serif'; g.textBaseline = 'middle';
     pills.forEach(function (p) {
       var q = E.e(t, p.t, .7, E.outCubic); if (q <= 0) return;
-      var y = p.y - (1 - q) * (p.y + 80 * k), w = g.measureText(p.label).width + 64 * k, h = 48 * k;
+      var up = p.y < H * .45;   // above the headline: fall from the top; below it: rise from the bottom (never across the words)
+      var y = up ? p.y - (1 - q) * (p.y + 80 * k) : p.y + (1 - q) * (H - p.y + 80 * k), w = g.measureText(p.label).width + 64 * k, h = 48 * k;
       g.save(); g.globalAlpha = A * Math.min(1, q * 2) * .92; g.translate(p.x, y); g.rotate(p.r * q);
       g.shadowColor = 'rgba(40,30,20,.12)'; g.shadowBlur = 14 * k; g.shadowOffsetY = 6 * k;
       g.fillStyle = '#FFFFFF'; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, 10 * k); g.fill();
