@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Northwind Energy · Product Designer, Grid Tools</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:#F6F7F9; font:15px/1.5 -apple-system, "Helvetica Neue", Helvetica, sans-serif; color:#1F2328; }
+  .top { background:#fff; border-bottom:1px solid #E4E7EB; padding:18px 0; }
+  .wrap { width:760px; margin:0 auto; }
+  .brand { display:flex; align-items:center; gap:12px; font-weight:700; font-size:18px; }
+  .logo { width:34px; height:34px; border-radius:8px; background:#0F5C4A; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; }
+  h1 { font-size:28px; margin:34px 0 4px; letter-spacing:-.01em; }
+  .meta { color:#626C76; margin-bottom:26px; }
+  .card { background:#fff; border:1px solid #E4E7EB; border-radius:12px; padding:28px 30px; margin-bottom:18px; }
+  .card h2 { font-size:16px; margin:0 0 18px; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .f { margin-bottom:18px; } .f label, .q { display:block; font-weight:600; font-size:14px; margin-bottom:7px; }
+  .f label i, .q i { color:#C2410C; font-style:normal; }
+  input[type=text], textarea { width:100%; font:inherit; padding:10px 12px; border:1px solid #CDD3DA; border-radius:8px; background:#fff; }
+  input:focus, textarea:focus { outline:none; border-color:#0F5C4A; box-shadow:0 0 0 3px rgba(15,92,74,.15); }
+  textarea { min-height:112px; resize:none; }
+  .dd { position:relative; } .dd .v { border:1px solid #CDD3DA; border-radius:8px; padding:10px 12px; background:#fff; color:#8A939C; display:flex; justify-content:space-between; cursor:pointer; }
+  .dd .v.set { color:#1F2328; } .dd .v::after { content:"▾"; color:#8A939C; }
+  .dd .menu { position:absolute; left:0; right:0; top:calc(100% + 4px); background:#fff; border:1px solid #CDD3DA; border-radius:8px; box-shadow:0 12px 28px rgba(0,0,0,.12); z-index:5; display:none; padding:4px; }
+  .dd.open .menu { display:block; } .dd .menu div { padding:8px 10px; border-radius:6px; cursor:pointer; } .dd .menu div:hover, .dd .menu div.hl { background:#EEF5F2; }
+  .yn { display:flex; gap:8px; } .yn button { font:inherit; padding:8px 22px; border-radius:8px; border:1px solid #CDD3DA; background:#fff; cursor:pointer; }
+  .yn button.on { background:#0F5C4A; border-color:#0F5C4A; color:#fff; }
+  .up { border:1.5px dashed #CDD3DA; border-radius:10px; padding:16px; display:flex; align-items:center; gap:12px; color:#626C76; }
+  .up .btn { border:1px solid #CDD3DA; border-radius:8px; padding:7px 14px; background:#fff; color:#1F2328; cursor:pointer; }
+  .chip { display:none; align-items:center; gap:8px; background:#EEF5F2; color:#0F5C4A; border-radius:8px; padding:7px 12px; font-weight:600; }
+  .up.has .chip { display:inline-flex; } .up.has .btn, .up.has .hint { display:none; }
+  .cb { display:flex; gap:10px; align-items:flex-start; } .box { width:20px; height:20px; border:1.5px solid #9AA4AE; border-radius:5px; flex:none; margin-top:1px; display:flex; align-items:center; justify-content:center; background:#fff; }
+  .box.on { background:#0F5C4A; border-color:#0F5C4A; } .box.on::after { content:"✓"; color:#fff; font-size:14px; font-weight:800; }
+  .submit { width:100%; padding:14px; border:0; border-radius:10px; background:#0F5C4A; color:#fff; font:600 16px inherit; margin:6px 0 60px; }
+</style></head>
+<body>
+<div class="top"><div class="wrap brand"><div class="logo">N</div>Northwind Energy · Careers</div></div>
+<div class="wrap">
+  <h1>Product Designer, Grid Tools</h1>
+  <div class="meta">New York, NY · Full-time · $150K–$180K</div>
+  <div class="card"><h2>Your details</h2>
+    <div class="row"><div class="f"><label>First name <i>*</i></label><input id="first" type="text"></div><div class="f"><label>Last name <i>*</i></label><input id="last" type="text"></div></div>
+    <div class="row"><div class="f"><label>Email <i>*</i></label><input id="email" type="text"></div><div class="f"><label>Phone <i>*</i></label><input id="phone" type="text"></div></div>
+    <div class="f"><label>Location <i>*</i></label><div class="dd" id="loc"><div class="v">Start typing…</div><div class="menu"><div>Brooklyn, New York, United States</div><div>Brookline, Massachusetts, United States</div><div>Brooklyn Park, Minnesota, United States</div></div></div></div>
+    <div class="f"><label>Résumé <i>*</i></label><div class="up" id="up"><span class="btn">Attach</span><span class="hint">PDF, up to 10 MB</span><span class="chip">📄 Alex_Rivera_Northwind.pdf</span></div></div>
+    <div class="row"><div class="f"><label>LinkedIn</label><input id="li" type="text"></div><div class="f"><label>Portfolio <i>*</i></label><input id="pf" type="text"></div></div>
+  </div>
+  <div class="card"><h2>A few questions</h2>
+    <div class="f"><span class="q">Are you legally authorized to work in the United States? <i>*</i></span><div class="yn" id="auth"><button>Yes</button><button>No</button></div></div>
+    <div class="f"><span class="q">Will you now or in the future require visa sponsorship? <i>*</i></span><div class="yn" id="spon"><button>Yes</button><button>No</button></div></div>
+    <div class="f"><label>How did you hear about this role? <i>*</i></label><div class="dd" id="heard"><div class="v">Select…</div><div class="menu"><div>Northwind careers site</div><div>LinkedIn</div><div>Referral</div><div>Other</div></div></div></div>
+    <div class="f"><label>Why Northwind? <i>*</i></label><textarea id="why"></textarea></div>
+  </div>
+  <div class="card"><h2>Voluntary self-identification</h2>
+    <div class="f"><label>Gender</label><div class="dd" id="gender"><div class="v">Select…</div><div class="menu"><div>Woman</div><div>Man</div><div>Non-binary</div><div>I don't wish to answer</div></div></div></div>
+    <div class="f cb"><div class="box" id="consent"></div><div>I agree to the processing of my data for this application. <i style="color:#C2410C">*</i></div></div>
+  </div>
+  <button class="submit" id="submit">Submit application</button>
+</div>
+<script>
+document.querySelectorAll('.dd .v').forEach(v => v.onclick = () => v.parentElement.classList.toggle('open'));
+document.querySelectorAll('.dd .menu div').forEach(o => o.onclick = () => { const d = o.closest('.dd'), v = d.querySelector('.v'); v.textContent = o.textContent; v.classList.add('set'); d.classList.remove('open'); });
+document.querySelectorAll('.yn button').forEach(b => b.onclick = () => { b.parentElement.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); });
+document.querySelector('#up .btn').onclick = () => document.querySelector('#up').classList.add('has');
+document.querySelector('#consent').onclick = e => e.target.classList.toggle('on');
+</script>
+</body></html>

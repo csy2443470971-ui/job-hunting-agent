@@ -1,0 +1,232 @@
+[
+ {
+  "start": 0.45,
+  "end": 3.67,
+  "text": "Applying for jobs is a full-time job."
+ },
+ {
+  "start": 3.67,
+  "end": 7.65,
+  "text": "Except it doesn't pay, and it's ninety percent dropdowns."
+ },
+ {
+  "start": 8.24,
+  "end": 10.69,
+  "text": "Meet Job Hunter Agent."
+ },
+ {
+  "start": 10.69,
+  "end": 12.23,
+  "text": "It does the boring part."
+ },
+ {
+  "start": 12.23,
+  "end": 15.09,
+  "text": "You stay in charge of the part that matters."
+ },
+ {
+  "start": 15.69,
+  "end": 19.09,
+  "text": "Step one: answer the questions every application asks."
+ },
+ {
+  "start": 19.09,
+  "end": 20.51,
+  "text": "Once."
+ },
+ {
+  "start": 20.51,
+  "end": 23.63,
+  "text": "Your name, your visa, whether you'd move to New York."
+ },
+ {
+  "start": 23.63,
+  "end": 26.63,
+  "text": "Prefer not to say is always an option."
+ },
+ {
+  "start": 27.23,
+  "end": 29.86,
+  "text": "Step two: tell it your story."
+ },
+ {
+  "start": 29.86,
+  "end": 35.1,
+  "text": "Type it, say it out loud, or just drop in a résumé you secretly admire."
+ },
+ {
+  "start": 35.1,
+  "end": 37.34,
+  "text": "Say what you like about it, hit Send,"
+ },
+ {
+  "start": 37.34,
+  "end": 41.72,
+  "text": "and watch it rewrite your storybook in that style, line by line."
+ },
+ {
+  "start": 41.72,
+  "end": 45.48,
+  "text": "This storybook is the only thing the agent is allowed to say about you."
+ },
+ {
+  "start": 45.48,
+  "end": 48.39,
+  "text": "So, no surprise PhD."
+ },
+ {
+  "start": 48.87,
+  "end": 49.89,
+  "text": "Don't love it?"
+ },
+ {
+  "start": 49.89,
+  "end": 51.77,
+  "text": "One click takes you back."
+ },
+ {
+  "start": 52.37,
+  "end": 57.13,
+  "text": "Every morning, it checks the job boards of the companies you care about."
+ },
+ {
+  "start": 57.13,
+  "end": 58.61,
+  "text": "Then it scores every role."
+ },
+ {
+  "start": 58.9,
+  "end": 63.88,
+  "text": "Green means go, orange means maybe, and under fifty, it doesn't even bother."
+ },
+ {
+  "start": 64.48,
+  "end": 69.04,
+  "text": "Hit Prepare, and it builds a one-page résumé from your storybook."
+ },
+ {
+  "start": 71.23,
+  "end": 73.3,
+  "text": "Then it fills out the actual application."
+ },
+ {
+  "start": 73.86,
+  "end": 78.86,
+  "text": "Names, dropdowns, even those tiny checkboxes nobody reads."
+ },
+ {
+  "start": 78.86,
+  "end": 81.3,
+  "text": "And when a form asks why you want to work there,"
+ },
+ {
+  "start": 81.56,
+  "end": 85.48,
+  "text": "it starts with their mission, not a cover-letter cliché."
+ },
+ {
+  "start": 86.08,
+  "end": 88.2,
+  "text": "And then, it stops."
+ },
+ {
+  "start": 88.2,
+  "end": 91.42,
+  "text": "Everything waits for you in the review queue."
+ },
+ {
+  "start": 91.42,
+  "end": 96.67,
+  "text": "Anything only you can answer shows up right here, with the form's own options."
+ },
+ {
+  "start": 96.67,
+  "end": 98.58,
+  "text": "Nothing goes out until you hit Approve."
+ },
+ {
+  "start": 99.02,
+  "end": 99.96,
+  "text": "You're the boss."
+ },
+ {
+  "start": 100.24,
+  "end": 104.39,
+  "text": "The agent is the intern who actually read the job description."
+ },
+ {
+  "start": 105.29,
+  "end": 108.87,
+  "text": "If a CAPTCHA or an email code shows up, that one's yours."
+ },
+ {
+  "start": 109.23,
+  "end": 112.92,
+  "text": "It's a robot, and it's not allowed to pretend otherwise."
+ },
+ {
+  "start": 113.52,
+  "end": 119.44,
+  "text": "After you apply, it reads your inbox, read-only, and moves each application along."
+ },
+ {
+  "start": 119.44,
+  "end": 121.54,
+  "text": "Received, next step, interview, offer."
+ },
+ {
+  "start": 121.54,
+  "end": 123.81,
+  "text": "Or, you know, the other one."
+ },
+ {
+  "start": 124.41,
+  "end": 127.45,
+  "text": "Under the hood, it's a simple pipeline."
+ },
+ {
+  "start": 127.45,
+  "end": 129.12,
+  "text": "Your storybook goes in."
+ },
+ {
+  "start": 129.12,
+  "end": 134.6,
+  "text": "The agent finds roles, ranks them, builds the résumé, and fills the form."
+ },
+ {
+  "start": 134.6,
+  "end": 135.28,
+  "text": "You approve."
+ },
+ {
+  "start": 135.68,
+  "end": 138.98,
+  "text": "It submits, tracks the replies, and learns from your notes,"
+ },
+ {
+  "start": 138.98,
+  "end": 142.28,
+  "text": "one small fix at a time, which you approve too."
+ },
+ {
+  "start": 142.88,
+  "end": 144.01,
+  "text": "Job Hunter Agent."
+ },
+ {
+  "start": 144.32,
+  "end": 146.82,
+  "text": "Open source, and on your side."
+ },
+ {
+  "start": 146.82,
+  "end": 148.06,
+  "text": "It does the grind."
+ },
+ {
+  "start": 148.06,
+  "end": 149.59,
+  "text": "You do the talking."
+ }
+]

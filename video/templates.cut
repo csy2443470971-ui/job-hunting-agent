@@ -1,0 +1,251 @@
+# ---- templates (written for this video) ------------------------------------------
+
+template hook  main line1
+```js
+// The pain in two beats: a big line, then a second line while "Select…" dropdowns rain onto the page.
+(function () {
+  var W = E.W, H = E.H, k = E.k;
+  var line1 = E.knob('line1', 'text', 'Applying for jobs is a <em>full-time job</em>.', { label: 'First line' });
+  var line2 = E.knob('line2', 'text', "It doesn't pay. And it's <em>90% dropdowns</em>.", { label: 'Second line' });
+  var beat = +E.knob('beat', 'number', 3.6, { min: 1, max: 6, step: .1, label: 'Second line at (s)' });
+  E.text('line1', { text: line1, x: .12, y: .45, w: .76, size: 92, align: 'center', start: .2, end: beat, param: 'line1' });
+  E.text('line2', { text: line2, x: .12, y: .45, w: .76, size: 92, align: 'center', start: beat, end: E.DUR, param: 'line2' });
+  var a = E.el('title', ''), b = E.el('title', '');
+  [a, b].forEach(function (e) { e.style.width = (W * .76) + 'px'; e.style.whiteSpace = 'normal'; });
+  var wa = E.words(a, line1), wb = E.words(b, line2);
+  var LABELS = ['Select…', 'Choose one…', 'Country ▾', 'Please select', 'Select…', 'Years of experience ▾', 'Select…', 'How did you hear? ▾',
+                'Select…', 'Pronouns ▾', 'Choose…', 'Start date ▾', 'Select…', 'Visa status ▾', 'Select…', 'Relocate? ▾', 'Choose one…', 'Select…',
+                'Degree ▾', 'Select…', 'Salary range ▾', 'Select…', 'Choose…', 'Select…'];
+  var rnd = E.rng(7), pills = [];
+  for (var i = 0; i < LABELS.length; i++) {
+    var x, y, tries = 0;
+    do { x = (.06 + rnd() * .88) * W; y = (.08 + rnd() * .86) * H; tries++; }
+    while (tries < 400 && Math.abs(y - H * .45) < 190 * k);
+    pills.push({ x: x, y: y, r: (rnd() - .5) * .35, t: beat + .15 + i * .07, label: LABELS[i] });
+  }
+  E.scene(function (t) {
+    E.bgctx.fillStyle = E.C.bg; E.bgctx.fillRect(0, 0, E.W, E.H);
+    var A = E.outro(t), g = E.g;
+    var outA = 1 - E.e(t, beat - .35, .3, E.inCubic);
+    wa.forEach(function (s, i) { var p = E.e(t, .15 + i * .07, .55); s.style.opacity = p; s.style.transform = 'translateY(' + ((1 - p) * 34 * k).toFixed(1) + 'px)'; });
+    E.place(a, W / 2, H * .45, A * outA, 'c');
+    wb.forEach(function (s, i) { var p = E.e(t, beat + i * .06, .5); s.style.opacity = p; s.style.transform = 'translateY(' + ((1 - p) * 34 * k).toFixed(1) + 'px)'; });
+    E.place(b, W / 2, H * .45, A * E.e(t, beat, .2), 'c');
+    g.save(); g.font = '500 ' + (22 * k) + 'px "Roobert TWHINT", Helvetica, sans-serif'; g.textBaseline = 'middle';
+    pills.forEach(function (p) {
+      var q = E.e(t, p.t, .7, E.outCubic); if (q <= 0) return;
+      var y = p.y - (1 - q) * (p.y + 80 * k), w = g.measureText(p.label).width + 64 * k, h = 48 * k;
+      g.save(); g.globalAlpha = A * Math.min(1, q * 2) * .92; g.translate(p.x, y); g.rotate(p.r * q);
+      g.shadowColor = 'rgba(40,30,20,.12)'; g.shadowBlur = 14 * k; g.shadowOffsetY = 6 * k;
+      g.fillStyle = '#FFFFFF'; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, 10 * k); g.fill();
+      g.shadowColor = 'transparent'; g.strokeStyle = '#D6D0C8'; g.lineWidth = 1.5 * k; g.stroke();
+      g.fillStyle = '#8A817A'; g.fillText(p.label.replace(' ▾', ''), -w / 2 + 18 * k, 1);
+      g.fillStyle = '#B5ADA5'; g.fillText('▾', w / 2 - 30 * k, 1);
+      g.restore();
+    });
+    g.restore();
+  });
+})();
+```
+
+template meet  main name
+```js
+// The app icon pops in, then the name and the one-line promise.
+(function () {
+  var W = E.W, H = E.H, k = E.k;
+  var name = E.knob('name', 'text', 'Job Hunter <em>Agent</em>', { label: 'Name' });
+  var sub = E.knob('sub', 'text', 'It does the boring part. You keep the part that matters.', { label: 'Line' });
+  E.text('name', { text: name, x: .15, y: .62, w: .7, size: 96, align: 'center', start: .5, end: E.DUR, param: 'name' });
+  E.text('sub', { text: sub, x: .15, y: .72, w: .7, size: 34, align: 'center', start: 1.0, end: E.DUR, param: 'sub' });
+  var icon = E.el('', '<img src="@ICON@" style="width:' + (230 * k) + 'px;height:' + (230 * k) + 'px;display:block;filter:drop-shadow(0 ' + (18 * k) + 'px ' + (30 * k) + 'px rgba(80,40,20,.25))">');
+  var t1 = E.el('title', name), t2 = E.el('sub', sub);
+  t2.style.fontSize = (34 * k) + 'px';
+  E.scene(function (t) {
+    E.bgctx.fillStyle = E.C.bg; E.bgctx.fillRect(0, 0, E.W, E.H);
+    var A = E.outro(t), p = E.seg(t, .1, .75);
+    var s = p <= 0 ? .6 : 1 + Math.sin(p * Math.PI * 1.25) * .12 * (1 - p) - (1 - E.outCubic(p)) * .4;
+    E.place(icon, W / 2, H * .36, A * E.e(t, .1, .3), 'c'); icon.style.transform += ' scale(' + s.toFixed(3) + ')';
+    E.place(t1, W / 2, H * .62, A * E.e(t, .5, .5), 'c', (1 - E.e(t, .5, .6)) * 24 * k);
+    E.place(t2, W / 2, H * .72, A * E.e(t, 1.0, .5), 'c', (1 - E.e(t, 1.0, .6)) * 18 * k);
+  });
+})();
+```
+
+template step  main label
+```js
+// Step number and name in the left margin while a screen recording plays.
+(function () {
+  var W = E.W, H = E.H, k = E.k;
+  var num = E.knob('num', 'text', '01', { label: 'Number' });
+  var label = E.knob('label', 'text', 'Standing<br>answers', { label: 'Step' });
+  E.text('label', { text: label, x: .03, y: .27, w: .12, size: 30, align: 'left', start: .3, end: E.DUR, param: 'label' });
+  var n = E.el('', num), l = E.el('', label);
+  n.style.cssText += ';font-size:' + (64 * k) + 'px;font-weight:700;letter-spacing:-.03em;color:var(--accent)';
+  l.style.cssText += ';font-size:' + (30 * k) + 'px;font-weight:600;line-height:1.15;white-space:normal;width:' + (200 * k) + 'px;letter-spacing:-.01em';
+  E.scene(function (t) {
+    E.bgctx.fillStyle = E.C.bg; E.bgctx.fillRect(0, 0, E.W, E.H);
+    var A = E.outro(t), x = 58 * k;
+    E.place(n, x, 150 * k, A * E.e(t, 0, .45), 'l', 0);
+    n.style.transform += ' translateX(' + ((1 - E.e(t, 0, .6)) * -30 * k).toFixed(1) + 'px)';
+    E.rect(x, 196 * k, 46 * k * E.e(t, .15, .5, E.outExpo), 5 * k, 2.5 * k, E.C.accent2, A);
+    E.place(l, x, 262 * k, A * E.e(t, .25, .45), 'l', (1 - E.e(t, .25, .55)) * 12 * k);
+  });
+})();
+```
+
+template human  main title
+```js
+// The human check: a CAPTCHA box and an emailed code, both tagged "you".
+(function () {
+  var W = E.W, H = E.H, k = E.k;
+  var title = E.knob('title', 'text', "That one's <em>yours</em>.", { label: 'Title' });
+  var note = E.knob('note', 'text', 'The agent never solves CAPTCHAs or types your codes.', { label: 'Note' });
+  var code = String(E.knob('code', 'text', 'K7Q2MX9B', { label: 'Example code' })).slice(0, 8);
+  E.text('title', { text: title, x: .15, y: .2, w: .7, size: 88, align: 'center', start: .2, end: E.DUR, param: 'title' });
+  E.text('note', { text: note, x: .15, y: .8, w: .7, size: 30, align: 'center', start: 2, end: E.DUR, param: 'note' });
+  var tt = E.el('title', title), nn = E.el('sub', note);
+  var c1 = E.el('', "<span style='font-size:" + (30 * k) + "px;font-weight:600'>I'm not a robot</span>");
+  var c2 = E.el('', "<span style='font-size:" + (22 * k) + "px;color:var(--ink2);letter-spacing:.12em'>SECURITY CODE</span>");
+  var you1 = E.el('', 'you'), you2 = E.el('', 'you');
+  [you1, you2].forEach(function (y) { y.style.cssText += ';font-size:' + (20 * k) + 'px;font-weight:700;color:#fff;background:var(--accent2);padding:' + (4 * k) + 'px ' + (12 * k) + 'px;border-radius:999px'; });
+  var letters = []; for (var i = 0; i < 8; i++) { var e = E.el('', code[i] || ''); e.style.cssText += ';font-size:' + (40 * k) + 'px;font-weight:600'; letters.push(e); }
+  function card(x, y, w, h, a) { var g = E.g; g.save(); g.globalAlpha = a; g.shadowColor = 'rgba(60,40,20,.14)'; g.shadowBlur = 30 * k; g.shadowOffsetY = 12 * k;
+    g.fillStyle = '#fff'; g.beginPath(); g.roundRect(x, y, w, h, 18 * k); g.fill(); g.restore(); }
+  E.scene(function (t) {
+    E.bgctx.fillStyle = E.C.bg; E.bgctx.fillRect(0, 0, E.W, E.H);
+    var A = E.outro(t), g = E.g;
+    E.place(tt, W / 2, H * .2, A * E.e(t, .2, .5), 'c', (1 - E.e(t, .2, .6)) * 22 * k);
+    var a1 = A * E.e(t, .6, .5), a2 = A * E.e(t, 1.0, .5);
+    var L = { x: W * .2, y: H * .38, w: W * .26, h: H * .24 }, R = { x: W * .52, y: H * .38, w: W * .3, h: H * .24 };
+    card(L.x, L.y, L.w, L.h, a1); card(R.x, R.y, R.w, R.h, a2);
+    // CAPTCHA
+    var bx = L.x + 44 * k, by = L.y + L.h / 2 - 22 * k, tick = E.e(t, 2.3, .35);
+    g.save(); g.globalAlpha = a1; g.strokeStyle = '#B9B2AA'; g.lineWidth = 3 * k; g.beginPath(); g.roundRect(bx, by, 44 * k, 44 * k, 6 * k); g.stroke();
+    if (tick > 0) { g.strokeStyle = '#1E9E5A'; g.lineWidth = 6 * k; g.lineCap = 'round'; g.beginPath(); g.moveTo(bx + 10 * k, by + 23 * k);
+      g.lineTo(bx + 10 * k + 9 * k * Math.min(1, tick * 2), by + 23 * k + 9 * k * Math.min(1, tick * 2));
+      if (tick > .5) g.lineTo(bx + 19 * k + 16 * k * (tick - .5) * 2, by + 32 * k - 20 * k * (tick - .5) * 2); g.stroke(); }
+    g.restore();
+    E.place(c1, bx + 66 * k, by + 22 * k, a1, 'l');
+    E.place(you1, L.x + L.w - 44 * k, L.y + 40 * k, A * E.e(t, 2.1, .3), 'c', (1 - E.e(t, 2.1, .4)) * 10 * k);
+    // code boxes
+    E.place(c2, R.x + 40 * k, R.y + 44 * k, a2, 'l');
+    var bw = (R.w - 80 * k - 7 * 10 * k) / 8;
+    for (var i = 0; i < 8; i++) {
+      var x = R.x + 40 * k + i * (bw + 10 * k), y = R.y + 82 * k, on = E.e(t, 3.4 + i * .18, .2);
+      g.save(); g.globalAlpha = a2; g.strokeStyle = on > 0 ? '#F27420' : '#D6D0C8'; g.lineWidth = 2.5 * k; g.beginPath(); g.roundRect(x, y, bw, 76 * k, 10 * k); g.stroke(); g.restore();
+      E.place(letters[i], x + bw / 2, y + 38 * k, a2 * on, 'c');
+    }
+    E.place(you2, R.x + R.w - 44 * k, R.y + 40 * k, A * E.e(t, 3.2, .3), 'c', (1 - E.e(t, 3.2, .4)) * 10 * k);
+    E.place(nn, W / 2, H * .8, A * E.e(t, 2, .6), 'c');
+  });
+})();
+```
+
+template arch  main title
+```js
+// Architecture in three lanes. Nodes and arrows appear on the narration's beat (t_* knobs).
+(function () {
+  var W = E.W, H = E.H, k = E.k;
+  var title = E.knob('title', 'text', 'Under the <em>hood</em>', { label: 'Title' });
+  var T = {}; ['title', 'story', 'agent', 'agent_end', 'approve', 'loop'].forEach(function (n) { T[n] = +E.knob('t_' + n, 'number', 1, { min: 0, max: 30, step: .05, label: n + ' at (s)' }); });
+  E.text('title', { text: title, x: .2, y: .1, w: .6, size: 64, align: 'center', start: T.title, end: E.DUR, param: 'title' });
+  var d = T.agent_end - T.agent;
+  var LY = { you: H * .32, agent: H * .54, out: H * .76 };
+  var N = [
+    { id: 'story', lane: 'you', x: 290, label: 'Your storybook', t: T.story },
+    { id: 'find', lane: 'agent', x: 500, label: 'Find roles', t: T.agent },
+    { id: 'rank', lane: 'agent', x: 680, label: 'Rank', t: T.agent + d * .25 },
+    { id: 'build', lane: 'agent', x: 860, label: 'Build résumé', t: T.agent + d * .5 },
+    { id: 'fill', lane: 'agent', x: 1040, label: 'Fill the form', t: T.agent + d * .75 },
+    { id: 'approve', lane: 'you', x: 1230, label: 'You approve', t: T.approve },
+    { id: 'submit', lane: 'agent', x: 1420, label: 'Submit', t: T.loop },
+    { id: 'track', lane: 'agent', x: 1600, label: 'Track replies', t: T.loop + .9 },
+    { id: 'learn', lane: 'agent', x: 1780, label: 'Learn', t: T.loop + 1.9 },
+    { id: 'boards', lane: 'out', x: 500, label: 'Job boards', t: T.agent + .3, out: 1 },
+    { id: 'forms', lane: 'out', x: 1230, label: 'ATS forms', t: T.agent + d * .8, out: 1 },
+    { id: 'inbox', lane: 'out', x: 1600, label: 'Your inbox', t: T.loop + 1.2, out: 1 }
+  ];
+  var byId = {}; N.forEach(function (n) { n.x *= k; n.y = LY[n.lane]; byId[n.id] = n;
+    n.el = E.el('', n.label); n.el.style.cssText += ';font-size:' + (20 * k) + 'px;font-weight:600;color:' + (n.lane === 'you' ? '#fff' : 'var(--ink)'); });
+  var EDGES = [['story', 'find'], ['find', 'rank'], ['rank', 'build'], ['build', 'fill'], ['fill', 'approve'], ['approve', 'submit'], ['submit', 'track'], ['track', 'learn']];
+  var DASH = [['find', 'boards'], ['fill', 'forms'], ['submit', 'forms'], ['track', 'inbox']];
+  var lanes = [['YOU', 'you', E.C.accent], ['AGENT', 'agent', E.C.ink], ['OUTSIDE', 'out', E.C.ink2]].map(function (l) {
+    var e = E.el('lbl', l[0]); e.style.color = l[2]; e.style.fontWeight = '700'; e.style.fontSize = (19 * k) + 'px'; return { el: e, y: LY[l[1]] }; });
+  var tt = E.el('title', title); tt.style.fontSize = (64 * k) + 'px';
+  var loopLbl = E.el('', 'small fixes you approve'); loopLbl.style.cssText += ';font-size:' + (20 * k) + 'px;color:var(--accent2);font-weight:600';
+  var NW = 162 * k, NH = 62 * k;
+  function arrow(a, b, p, col, dash) {
+    var g = E.g, x0 = a.x + (b.x > a.x + 1 ? NW / 2 : 0), y0 = a.y + (b.y > a.y + 1 ? NH / 2 : b.y < a.y - 1 ? -NH / 2 : 0);
+    var x1 = b.x - (b.x > a.x + 1 && Math.abs(b.y - a.y) < 1 ? NW / 2 : 0), y1 = b.y - (b.y > a.y + 1 ? NH / 2 : b.y < a.y - 1 ? -NH / 2 : 0);
+    if (Math.abs(b.y - a.y) > 1 && Math.abs(b.x - a.x) > 1) { x0 = a.x + NW / 2; y0 = a.y; x1 = b.x - NW / 2; y1 = b.y; }
+    var xe = x0 + (x1 - x0) * p, ye = y0 + (y1 - y0) * p;
+    g.save(); g.strokeStyle = col; g.lineWidth = 3 * k; g.lineCap = 'round'; if (dash) g.setLineDash([6 * k, 8 * k]);
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(xe, ye); g.stroke();
+    if (p > .95 && !dash) { var an = Math.atan2(y1 - y0, x1 - x0); g.setLineDash([]); g.fillStyle = col; g.beginPath();
+      g.moveTo(xe, ye); g.lineTo(xe - 13 * k * Math.cos(an - .45), ye - 13 * k * Math.sin(an - .45)); g.lineTo(xe - 13 * k * Math.cos(an + .45), ye - 13 * k * Math.sin(an + .45)); g.fill(); }
+    g.restore();
+  }
+  E.scene(function (t) {
+    E.bgctx.fillStyle = E.C.bg; E.bgctx.fillRect(0, 0, E.W, E.H);
+    var A = E.outro(t), g = E.g;
+    E.place(tt, W / 2, H * .1, A * E.e(t, T.title, .5), 'c', (1 - E.e(t, T.title, .6)) * 18 * k);
+    lanes.forEach(function (l, i) { var a = A * E.e(t, T.title + .2 + i * .12, .5);
+      g.save(); g.globalAlpha = a * .55; g.fillStyle = i === 0 ? 'rgba(229,55,42,.07)' : i === 1 ? 'rgba(28,25,23,.045)' : 'rgba(0,0,0,0)';
+      g.beginPath(); g.roundRect(36 * k, l.y - 70 * k, W - 72 * k, 140 * k, 18 * k); g.fill();
+      if (i === 2) { g.strokeStyle = 'rgba(87,83,78,.35)'; g.setLineDash([8 * k, 8 * k]); g.lineWidth = 2 * k; g.stroke(); } g.restore();
+      E.place(l.el, 62 * k, l.y - 46 * k, a, 'l'); });
+    EDGES.forEach(function (ed) { var a = byId[ed[0]], b = byId[ed[1]], p = E.e(t, b.t - .35, .45, E.inOut); if (p > 0) arrow(a, b, p, E.rgba(E.C.ink, .55 * A)); });
+    DASH.forEach(function (ed) { var a = byId[ed[0]], b = byId[ed[1]], p = E.e(t, Math.max(a.t, b.t), .5, E.inOut); if (p > 0) arrow(a, b, p, E.rgba(E.C.ink2, .5 * A), true); });
+    N.forEach(function (n) {
+      var p = E.e(t, n.t, .45, E.outCubic); if (p <= 0) { E.place(n.el, n.x, n.y, 0, 'c'); return; }
+      var s = .7 + .3 * p + Math.sin(p * Math.PI) * .06;
+      g.save(); g.globalAlpha = A * p; g.translate(n.x, n.y); g.scale(s, s);
+      g.shadowColor = 'rgba(60,40,20,.12)'; g.shadowBlur = 14 * k; g.shadowOffsetY = 5 * k;
+      g.fillStyle = n.lane === 'you' ? E.C.accent : '#fff'; g.beginPath(); g.roundRect(-NW / 2, -NH / 2, NW, NH, 14 * k); g.fill();
+      g.shadowColor = 'transparent';
+      if (n.out) { g.setLineDash([6 * k, 6 * k]); g.strokeStyle = 'rgba(87,83,78,.6)'; g.lineWidth = 2 * k; g.stroke(); }
+      else if (n.lane === 'agent') { g.strokeStyle = 'rgba(28,25,23,.18)'; g.lineWidth = 1.5 * k; g.stroke(); }
+      g.restore();
+      E.place(n.el, n.x, n.y, A * p, 'c'); n.el.style.transform += ' scale(' + s.toFixed(3) + ')';
+    });
+    // the learning loop: Learn -> back over the top -> Your storybook
+    var lp = E.e(t, T.loop + 2.4, 1.4, E.inOut);
+    if (lp > 0) {
+      var L = byId.learn, S = byId.story, top = H * .19;
+      var pts = [[L.x, L.y - NH / 2], [L.x, top], [S.x, top], [S.x, S.y - NH / 2]], len = 0, seg = [];
+      for (var i = 1; i < pts.length; i++) { var dd = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(dd); len += dd; }
+      var want = len * lp, out = [pts[0]];
+      for (var j = 0; j < seg.length && want > 0; j++) { var q = Math.min(1, want / seg[j]); out.push([pts[j][0] + (pts[j + 1][0] - pts[j][0]) * q, pts[j][1] + (pts[j + 1][1] - pts[j][1]) * q]); want -= seg[j]; }
+      E.line(out, { col: E.C.accent2, w: 3, a: A });
+      if (lp > .97) { var e2 = out[out.length - 1]; g.save(); g.fillStyle = E.C.accent2; g.globalAlpha = A; g.beginPath(); g.moveTo(e2[0], e2[1]); g.lineTo(e2[0] - 9 * k, e2[1] - 14 * k); g.lineTo(e2[0] + 9 * k, e2[1] - 14 * k); g.fill(); g.restore(); }
+      E.place(loopLbl, (L.x + S.x) / 2, top - 22 * k, A * E.e(t, T.loop + 3.0, .5), 'c');
+    } else E.place(loopLbl, 0, 0, 0, 'c');
+  });
+})();
+```
+
+template ending  main name
+```js
+// Closing card: icon, name, where to get it, and the promise.
+(function () {
+  var W = E.W, H = E.H, k = E.k;
+  var name = E.knob('name', 'text', 'Job Hunter <em>Agent</em>', { label: 'Name' });
+  var sub = E.knob('sub', 'text', 'Open source on GitHub', { label: 'Where' });
+  var tag = E.knob('tag', 'text', 'It does the grind. <em>You do the talking.</em>', { label: 'Promise' });
+  var tTag = +E.knob('t_tag', 'number', 4, { min: 0, max: 10, step: .05, label: 'Promise at (s)' });
+  E.text('name', { text: name, x: .15, y: .55, w: .7, size: 92, align: 'center', start: .4, end: E.DUR, param: 'name' });
+  E.text('sub', { text: sub, x: .15, y: .64, w: .7, size: 28, align: 'center', start: .9, end: E.DUR, param: 'sub' });
+  E.text('tag', { text: tag, x: .15, y: .75, w: .7, size: 40, align: 'center', start: tTag, end: E.DUR, param: 'tag' });
+  var icon = E.el('', '<img src="@ICON@" style="width:' + (170 * k) + 'px;height:' + (170 * k) + 'px;display:block;filter:drop-shadow(0 ' + (14 * k) + 'px ' + (24 * k) + 'px rgba(80,40,20,.25))">');
+  var t1 = E.el('title', name), t2 = E.el('sub', sub), t3 = E.el('', tag);
+  t1.style.fontSize = (92 * k) + 'px'; t3.style.cssText += ';font-size:' + (40 * k) + 'px;font-weight:600;letter-spacing:-.01em';
+  E.scene(function (t) {
+    E.bgctx.fillStyle = E.C.bg; E.bgctx.fillRect(0, 0, E.W, E.H);
+    var A = E.outro(t);
+    E.place(icon, W / 2, H * .33, A * E.e(t, 0, .4), 'c', (1 - E.e(t, 0, .7)) * 24 * k);
+    E.place(t1, W / 2, H * .55, A * E.e(t, .4, .5), 'c', (1 - E.e(t, .4, .6)) * 20 * k);
+    E.place(t2, W / 2, H * .64, A * E.e(t, .9, .5), 'c');
+    E.place(t3, W / 2, H * .75, A * E.e(t, tTag, .5), 'c', (1 - E.e(t, tTag, .6)) * 16 * k);
+  });
+})();
+```

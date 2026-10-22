@@ -49,6 +49,8 @@ JOBS = [
   dict(company="Parcel & Co", title="Brand Designer", location="Remote", salary=None, kw=0.57, sector="creative", tab="todo", desc="Brand refresh for a logistics startup.", why="Brand-led; a stretch from your product focus."),
   dict(company="Copperleaf", title="Product Designer", location="Denver, CO", salary="$140K - $160K", kw=0.93, sector="climate", tab="applied", desc="Water utility software."),
   dict(company="Signal & Noise", title="Design Engineer", location="Remote", salary=None, kw=0.85, sector="ai", tab="applied", desc="AI audio tools."),
+  dict(company="Tidal Labs", title="Product Designer, Platform", location="New York, NY", salary="$150K - $175K", kw=0.88, sector="climate", tab="applied", desc="Ocean data APIs."),
+  dict(company="Orbit Health", title="UX Designer", location="Boston, MA", salary="$120K - $140K", kw=0.79, sector="tech", tab="applied", desc="Patient scheduling."),
 ]
 
 with db.tx() as con:
@@ -83,11 +85,27 @@ with db.tx() as con:
                 pg.set_content(FORM.replace("{co}", J["company"]).replace("{title}", J["title"]).replace("{rows}", rows))
                 pg.set_viewport_size({"width": 816, "height": max(1056, pg.evaluate("document.body.scrollHeight"))})
                 pg.screenshot(path=str(shot), full_page=True); b.close()
-            aj = {"answers": [{"question": q, "answer": a, "provenance": "master"} for q, a in fields], "needs_human": J.get("needs", []), "diy_ratio": 0.0}
+            aj = {"answers": [{"question": q, "answer": a, "provenance": "master"} for q, a in fields], "needs_human": J.get("needs", []), "diy_ratio": 0.0,
+                  "needs_options": {"When is the earliest you could start?": ["Immediately", "Within 2 weeks", "Within a month", "In 2–3 months"]}}
             aid = db.create_application(con, kind="ats_web", status=status, answers_json=json.dumps(aj), sent_log=f"screenshot: {shot}", **common)
         if status == "sent":
             con.execute("UPDATE applications SET sent_at=?, approved_at=? WHERE id=?", (db.now(), db.now(), aid))
         log(con, "compose", "resume", f"lens {lens}", job_id=jid, app_id=aid)
+    # what happened after applying (fictional replies)
+    from agent.replies import init as rinit
+    rinit(con)
+    REPLIES = {
+        "Copperleaf": ("interview", "Copperleaf · Product Designer: let's talk", "Hi Alex, thanks for applying! We'd love to set up a 30-minute intro call. Could you share your availability this week?"),
+        "Tidal Labs": ("next_step", "Next step: a short design exercise", "Thanks for your application. As a next step we'd like to invite you to a short take-home design exercise."),
+        "Orbit Health": ("confirmation", "We received your application", "Thank you for applying to Orbit Health. We have received your application for UX Designer."),
+        "Signal & Noise": ("rejected", "Your application at Signal & Noise", "Thank you for your interest. Unfortunately, we have decided to move forward with other candidates."),
+    }
+    for co, (stage, subj, body) in REPLIES.items():
+        r = con.execute("SELECT a.id FROM applications a JOIN jobs j ON j.id=a.job_id WHERE j.company=?", (co,)).fetchone()
+        if not r: continue
+        con.execute("UPDATE applications SET stage=?, stage_at=? WHERE id=?", (stage, db.now(), r[0]))
+        con.execute("INSERT INTO replies(app_id, at, msg_id, sender, subject, snippet, kind, view_url) VALUES (?,?,?,?,?,?,?,?)",
+                    (r[0], db.now(), f"demo-{co}", f"{co} Recruiting <jobs@{co.split()[0].lower()}.example>", subj, body, stage, "https://mail.google.com/"))
     log(con, "discover", "scraped", "142 public postings from Greenhouse, Ashby and Lever boards")
     log(con, "rank", "jev", "38 postings rated; 11 above 50%")
     log(con, "apply", "submit-sent", "Copperleaf · Product Designer")

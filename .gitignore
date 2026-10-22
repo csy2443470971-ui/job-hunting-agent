@@ -18,3 +18,12 @@ __pycache__/
 docs/flowchart-options/
 docs/flowchart-source.py
 docs/screens/*.tmp
+
+# explainer video media (large); the .codecut file and scripts are kept
+video/voice/
+video/rec/
+video/scenes/
+video/*.mp4
+
+# storybook version snapshots (local undo history)
+.versions/
