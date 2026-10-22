@@ -27,7 +27,7 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
 .mid { font-weight:700; font-size:92px; letter-spacing:-.035em; line-height:1.02; }
 .w { display:inline-block; overflow:hidden; vertical-align:top; padding:0 .02em .1em; margin-bottom:-.1em; }
 .w > i { display:inline-block; font-style:normal; }
-.red { color:var(--red); } .orange { color:var(--orange); } .green { color:var(--green); } .muted { color:var(--mute); }
+.ink { color:var(--ink); } .red { color:var(--red); } .orange { color:var(--orange); } .green { color:var(--green); } .muted { color:var(--mute); }
 .card { position:absolute; background:var(--card); border:2px solid var(--line); border-radius:28px; box-shadow:0 24px 60px rgba(60,40,20,.10), 0 2px 6px rgba(60,40,20,.06); }
 .dd { position:absolute; height:96px; background:#fff; border:2px solid var(--line); border-radius:20px; display:flex; align-items:center;
       justify-content:space-between; padding:0 30px; font-size:34px; font-weight:400; color:var(--mute); box-shadow:0 12px 30px rgba(60,40,20,.08); box-sizing:border-box; white-space:nowrap; }
@@ -44,6 +44,7 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
 .job .ti { font-size:38px; font-weight:700; letter-spacing:-.02em; margin-top:84px; line-height:1.1; }
 .job .lo { font-size:24px; color:var(--mute); margin-top:12px; }
 .job svg { position:absolute; right:30px; top:28px; }
+.jev { position:absolute; right:30px; top:152px; width:120px; text-align:center; font:600 16px "SF Mono", Menlo, monospace; letter-spacing:.16em; color:var(--mute); }
 .ring-n { position:absolute; right:30px; top:28px; width:120px; height:120px; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:700; }
 .src-card { position:absolute; width:520px; padding:34px 38px; box-sizing:border-box; }
 .src-card h4 { margin:0 0 18px; font-size:24px; letter-spacing:.1em; font-family:"SF Mono", Menlo, monospace; font-weight:600; }
@@ -157,7 +158,8 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
     <div class="label">02 / <b>IT FINDS THE JOBS</b></div>
     <div class="abs" id="findT" style="left:110px; top:130px">
       <div class="mid"><span class="w"><i>Every</i></span> <span class="w"><i>morning,</i></span> <span class="w"><i>it</i></span> <span class="w"><i>finds</i></span> <span class="w"><i>jobs</i></span></div>
-      <div class="mid"><span class="w"><i>that</i></span> <span class="w"><i class="red">actually</i></span> <span class="w"><i class="red">fit</i></span> <span class="w"><i class="red">you.</i></span></div>
+      <div class="mid"><span class="w"><i>that</i></span> <span class="w"><i class="red">actually</i></span> <span class="w"><i class="red">fit</i></span> <span class="w"><i class="red">you,</i></span></div>
+      <div class="mid" style="font-size:58px; color:var(--ink2); margin-top:10px"><span class="w"><i>using</i></span> <span class="w"><i>the</i></span> <span class="w"><i class="ink">Jev</i></span> <span class="w"><i>model.</i></span></div>
     </div>
     <div id="jobs"></div>
   </div></section>
@@ -288,14 +290,27 @@ const norm = s => s.toLowerCase().replace(/é/g, 'e').replace(/[^a-z0-9]/g, '');
 const tok = id => line(id).words.filter(w => norm(w.w));
 // when a word is said: the next token (from `from`) whose text starts like it; Whisper may split or merge words
 function wordAt(id, word, from = 0) {
-  const ws = tok(id), n = norm(word).replace(/^(one|two|three|ten)$/, m => ({ one: '1', two: '2', three: '3', ten: '10' })[m]);
-  for (let i = from; i < ws.length; i++) { const k = norm(ws[i].w); if (k && (k.startsWith(n.slice(0, 4)) || n.startsWith(k.slice(0, 4)))) return { i, t: ws[i].t0, e: ws[i].t1 }; }
+  const NUM = { one: '1', two: '2', three: '3', ten: '10' }, ws = tok(id), n = norm(word), forms = [n, NUM[n]].filter(Boolean);   // Whisper writes "two" or "2"
+  for (let i = from; i < ws.length; i++) { const k = norm(ws[i].w); if (k && forms.some(f => k.startsWith(f.slice(0, 4)) || f.startsWith(k.slice(0, 4)))) return { i, t: ws[i].t0, e: ws[i].t1 }; }
   return null;
 }
 
 // ---- where each voice line starts (on the beat grid) ------------------------------------------------------
-const VO_AT = { hook: .25, pile: 4.0, meet: 7.0, tell: 9.0, dump: 11.5, book: 17.75, find: 22.5, nope: 25.5, resume: 28.5, fill: 33.25, shot: 37.75 };
-const T_APPROVE = Math.ceil(Math.max(VO_AT.shot + line('shot').dur + .3 + ((wordAt('ok', 'approve') || { t: 2 }).t), 41.5));   // the press lands on the next downbeat
+// every section starts on a beat after the previous line ends, so a line can change length and the film re-flows
+const VO_AT = { hook: .15 };
+const end = id => VO_AT[id] + line(id).dur, nextBeat = t => Math.ceil(t / (B / 2) - .02) * (B / 2);   // next eighth note
+VO_AT.pile = nextBeat(end('hook') + .1);
+const T_BOOM = nextBeat(end('pile') + .25);                 // the dropdowns collapse, then the boom
+VO_AT.meet = T_BOOM + .5;
+const T_TELL = nextBeat(end('meet') + .3);  VO_AT.tell = T_TELL;
+VO_AT.dump = nextBeat(end('tell') + .3);
+const T_BOOK = nextBeat(end('dump') + .4);  VO_AT.book = T_BOOK;
+const T_FIND = nextBeat(end('book') + .4);  VO_AT.find = T_FIND;
+const T_NOPE = nextBeat(end('find') + .2);  VO_AT.nope = T_NOPE;
+const T_RES = nextBeat(end('nope') + .3);   VO_AT.resume = T_RES;
+const T_FILL = nextBeat(end('resume') + .3); VO_AT.fill = T_FILL;
+const T_SHOT = T_FILL + 4.5;                VO_AT.shot = T_SHOT;      // the fill recording needs its 4.5 s
+const T_APPROVE = Math.ceil(VO_AT.shot + line('shot').dur + .3 + ((wordAt('ok', 'approve') || { t: 2 }).t));   // the press lands on the next downbeat
 VO_AT.ok = T_APPROVE - (wordAt('ok', 'approve') || { t: 2 }).t;
 VO_AT.reply = snap(VO_AT.ok + line('ok').dur + .4, B);
 const T_STILL = snap(VO_AT.reply + line('reply').dur + .3, B);
@@ -348,16 +363,16 @@ function plane(t, y0 = 760, y1 = 300) {          // flies left → right in 0.55
 }
 gsap.set(['#plane', '#trail'], { visibility: 'hidden' });
 
-// ---- HOOK (0 – 6.5) --------------------------------------------------------------------------------------
-scene('s-hook', 0, 6.5);
+// ---- HOOK ----------------------------------------------------------------------------------------------
+scene('s-hook', 0, T_BOOM);
 tl.fromTo('#hookField', { x: -340, y: -150, scale: 1.5 }, { x: 0, y: 0, scale: 1, duration: .6, ease: 'power3.inOut', immediateRender: true }, .12);   // frame 0: the field is the poster
 land('#hookA', 'hook');
 const T_PAY = snap(at('hook', 'with'), B / 2);
 tl.set('#hookA', { visibility: 'hidden' }, T_PAY); tl.set('#hookB', { visibility: 'visible' }, T_PAY);
 land('#hookB', 'hook', { minT: T_PAY + .01 });
 tl.to('#hookField', { y: -14, duration: .18, ease: 'power2.out', yoyo: true, repeat: 1 }, 1.0); sfx(1.0, 'tick', .7);
-tl.set('#hookB', { visibility: 'hidden' }, 4.0); tl.set('#hookC', { visibility: 'visible' }, 4.0);
-land('#hookC', 'pile', { minT: 4.0 });
+tl.set('#hookB', { visibility: 'hidden' }, VO_AT.pile); tl.set('#hookC', { visibility: 'visible' }, VO_AT.pile);
+land('#hookC', 'pile', { minT: VO_AT.pile });
 const LAB = ['Select…', 'Visa status', 'Years of experience', 'How did you hear?', 'Pronouns', 'Start date', 'Salary range', 'Choose one…',
              'Degree', 'Country', 'Relocate?', 'Please select', 'Select…', 'Race / ethnicity', 'Select…', 'Notice period', 'Select…', 'Choose…'];
 const SPOTS = [[80,80],[480,150],[900,70],[1330,120],[1560,200],[100,620],[470,700],[180,850],[620,880],[1000,840],[1400,900],[1640,780],
@@ -365,26 +380,26 @@ const SPOTS = [[80,80],[480,150],[900,70],[1330,120],[1560,200],[100,620],[470,7
 LAB.forEach((l, i) => {
   const d = document.createElement('div'); d.className = 'dd'; d.style.cssText = `left:${SPOTS[i][0]}px; top:${SPOTS[i][1]}px; height:76px; font-size:26px; border-radius:16px; padding:0 24px`;
   d.innerHTML = l + '<span class="chev">▾</span>'; $('#pile').appendChild(d);
-  const t = 4.0 + i * .11; pop(d, t, { scale: .4, opacity: 0, y: 30, rotation: (i % 2 ? 7 : -6), endRot: (i % 3 - 1) * 3 }, .38);
+  const t = VO_AT.pile + i * .08; pop(d, t, { scale: .4, opacity: 0, y: 30, rotation: (i % 2 ? 7 : -6), endRot: (i % 3 - 1) * 3 }, .38);
   if (i % 2 === 0) sfx(t, 'tick', .55);
 });
 tl.to(['#pile .dd', '#hookField', '#hookC'], { x: (i, el) => 960 - (el.offsetLeft + el.offsetWidth / 2), y: (i, el) => 540 - (el.offsetTop + el.offsetHeight / 2),
-  scale: 0, opacity: 0, duration: .42, ease: 'power3.in', stagger: .006 }, 6.02);
-sfx(5.4, 'riser', .9);
-drift('s-hook', 0, 6.0, 1.03);
+  scale: 0, opacity: 0, duration: .42, ease: 'power3.in', stagger: .006 }, T_BOOM - .48);
+sfx(T_BOOM - 1.1, 'riser', .9);
+drift('s-hook', 0, T_BOOM - .5, 1.03);
 
-// ---- MEET (6.5 – 9) ---------------------------------------------------------------------------------------
-scene('s-boom', 6.5, 9.0);
-flash(6.5); sfx(6.5, 'boom', 1); punch(6.5, .06);
-tl.fromTo('#boomIcon', { scale: 0, rotation: -20 }, { scale: 1, rotation: 0, duration: .55, ease: 'back.out(2.2)', immediateRender: true }, 6.5);
-tl.fromTo('#shock circle', { attr: { r: 40 }, opacity: 1, strokeWidth: 16 }, { attr: { r: 900 }, opacity: 0, strokeWidth: 2, duration: .8, ease: 'expo.out', immediateRender: true }, 6.5);
+// ---- MEET ----------------------------------------------------------------------------------------------
+scene('s-boom', T_BOOM, T_TELL);
+flash(T_BOOM); sfx(T_BOOM, 'boom', 1); punch(T_BOOM, .06);
+tl.fromTo('#boomIcon', { scale: 0, rotation: -20 }, { scale: 1, rotation: 0, duration: .55, ease: 'back.out(2.2)', immediateRender: true }, T_BOOM);
+tl.fromTo('#shock circle', { attr: { r: 40 }, opacity: 1, strokeWidth: 16 }, { attr: { r: 900 }, opacity: 0, strokeWidth: 2, duration: .8, ease: 'expo.out', immediateRender: true }, T_BOOM);
 land('#meetT', 'meet');
-drift('s-boom', 6.5, 9.0, 1.04);
-plane(9.0, 700, 320);
+drift('s-boom', T_BOOM, T_TELL, 1.04);
+plane(T_TELL, 700, 320);
 
 // ---- 01 TELL (9 – mic) ------------------------------------------------------------------------------------
 const T_MIC = snap(at('dump', 'or', 6) - .05, B);
-scene('s-tell', 9.0, T_MIC);
+scene('s-tell', T_TELL, T_MIC);
 land('#tellT', 'tell');
 const FROM = [[1900, -160, 18], [-300, 1150, -14], [1900, 1100, 10]], LANDAT = [[1110, 380, -5], [1100, 510, 3], [1110, 640, -2]];
 const FILE_AT = [snap(at('dump', 'old')), snap(at('dump', 'reference')), snap(at('dump', 'paper'))];
@@ -397,9 +412,9 @@ const FILE_AT = [snap(at('dump', 'old')), snap(at('dump', 'reference')), snap(at
 tl.to('#zone', { borderColor: '#F27420', backgroundColor: '#FEF1E7', duration: .15 }, FILE_AT[0] - .3);
 pop('#badge', FILE_AT[2] + .4, { scale: 0, opacity: 0, y: 0 }); sfx(FILE_AT[2] + .4, 'pop', .8);
 cap('dump', 'Old résumés, reference letters, that paper nobody read.', 'old', 'read');
-drift('s-tell', 9.0, T_MIC, 1.04);
+drift('s-tell', T_TELL, T_MIC, 1.04);
 
-scene('s-mic', T_MIC, 17.75);
+scene('s-mic', T_MIC, T_BOOK);
 land('#micT', 'dump', { minT: T_MIC + .01 }); land('#listen', 'dump', { minT: T_MIC + .3 });
 pop('#micB', T_MIC, { scale: .3, opacity: 0, y: 0 }, .4); sfx(T_MIC, 'thump', .7); punch(T_MIC, .03);
 $$('#rings circle').forEach((c, i) => {
@@ -407,28 +422,28 @@ $$('#rings circle').forEach((c, i) => {
 });
 for (const id of ['#wave', '#wave2']) for (let i = 0; i < 16; i++) {
   const b = document.createElement('i'); b.style.cssText = 'display:block; width:10px; height:16px; border-radius:6px; background:var(--orange)'; $(id).appendChild(b);
-  const o = { a: 0 }, d = 17.5 - T_MIC;
+  const o = { a: 0 }, d = T_BOOK - .25 - T_MIC;
   tl.to(o, { a: 1, duration: d, ease: 'none', onUpdate() { const t = T_MIC + o.a * d; b.style.height = (16 + 64 * Math.abs(Math.sin(t * 9 + i * .9) * Math.sin(t * 3.1 + i * .37)) * Math.min(1, o.a * 8)).toFixed(1) + 'px'; } }, T_MIC + .1);
 }
 const SAID = 'Oh, and I taught a UX workshop at Pratt last spring. Thirty students. Nobody fell asleep.';
 const said = { n: 0 }; tl.to(said, { n: SAID.length, duration: 1.8, ease: 'none', onUpdate() { $('#said').textContent = SAID.slice(0, Math.round(said.n)); } }, T_MIC + .3);
-drift('s-mic', T_MIC, 17.75, 1.06);
+drift('s-mic', T_MIC, T_BOOK, 1.06);
 
 // ---- the storybook (book) ---------------------------------------------------------------------------------
-scene('s-book', 17.75, 22.5);
-pop('#book', 17.75, { scale: .92, opacity: 0, y: 60 }, .4); sfx(17.75, 'thump', .7);
-tl.fromTo('#bar', { width: '0%' }, { width: '100%', duration: .6, ease: 'power2.out', immediateRender: true }, 17.75);
-['#r1', '#r2', '#r3'].forEach((r, i) => { const t = 18.25 + i * B; tl.fromTo(r, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, t); sfx(t, 'pop', .8); });
+scene('s-book', T_BOOK, T_FIND);
+pop('#book', T_BOOK, { scale: .92, opacity: 0, y: 60 }, .4); sfx(T_BOOK, 'thump', .7);
+tl.fromTo('#bar', { width: '0%' }, { width: '100%', duration: .6, ease: 'power2.out', immediateRender: true }, T_BOOK);
+['#r1', '#r2', '#r3'].forEach((r, i) => { const t = T_BOOK + .5 + i * B; tl.fromTo(r, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, t); sfx(t, 'pop', .8); });
 const T_PHD = snap(at('book', 'phd'), B / 2);
 tl.fromTo('#r4', { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: .25, immediateRender: true }, T_PHD - .5);
 tl.fromTo('#phd', { textDecorationColor: 'transparent' }, { textDecorationColor: '#E5372A', duration: .01, immediateRender: true }, T_PHD); sfx(T_PHD, 'stamp', .7); punch(T_PHD, .03);
 cap('book', 'It turns all of it into your storybook.', 'it', 'storybook');
 cap('book', 'True stuff only. No surprise PhD.', 'true', 'phd');
-tl.fromTo('#s-book .world', { scale: 1, y: 0 }, { scale: 1.06, y: -24, duration: 4.75, ease: 'none', immediateRender: false }, 17.75);
-plane(22.5, 280, 820);
+tl.fromTo('#s-book .world', { scale: 1, y: 0 }, { scale: 1.06, y: -24, duration: T_FIND - T_BOOK, ease: 'none', immediateRender: false }, T_BOOK);
+plane(T_FIND, 280, 820);
 
-// ---- 02 FIND (22.5 – 25.5) and NOPE (25.5 – 28.5) --------------------------------------------------------
-scene('s-find', 22.5, 25.5);
+// ---- 02 FIND and NOPE -------------------------------------------------------------------------------------
+scene('s-find', T_FIND, T_NOPE);
 land('#findT', 'find');
 cap('find', 'Step two.', 'step', 'two');
 const JOBS = [['T', 'Tidewater', 'Senior Product Designer', 'Boston, MA · $170K – $195K', 91, 'var(--green)'],
@@ -440,57 +455,57 @@ JOBS.forEach((j, i) => {
   c.innerHTML = `<div class="co"><span class="ini">${j[0]}</span>${j[1]}</div><div class="ti">${j[2]}</div><div class="lo">${j[3]}</div>
     <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#EFE9E1" stroke-width="10"/>
     <circle class="arc" cx="60" cy="60" r="50" fill="none" stroke="${j[5]}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 60 60)"/></svg>
-    <div class="ring-n"><span class="n">0</span></div>`;
+    <div class="ring-n"><span class="n">0</span></div><div class="jev">JEV</div>`;
   $('#jobs').appendChild(c);
-  const t = 23.5 + i * B;
+  const t = T_FIND + 1.0 + i * B;
   pop(c, t, { scale: .7, opacity: 0, y: 160 }, .45); sfx(t, 'thump', .75); punch(t, .02);
   tl.fromTo(c.querySelector('.arc'), { attr: { 'stroke-dashoffset': C } }, { attr: { 'stroke-dashoffset': C * (1 - j[4] / 100) }, duration: .7, ease: 'power2.out', immediateRender: true }, t + .15);
   const o = { v: 0 }; tl.to(o, { v: j[4], duration: .7, ease: 'power2.out', onUpdate() { c.querySelector('.n').textContent = Math.round(o.v); } }, t + .15);
   sfx(t + .85, 'tick', .8);
 });
-tl.fromTo('#s-find .world', { scale: 1, x: 0 }, { scale: 1.05, x: 40, duration: 3, ease: 'none', immediateRender: false }, 22.5);
+tl.fromTo('#s-find .world', { scale: 1, x: 0 }, { scale: 1.05, x: 40, duration: T_NOPE - T_FIND, ease: 'none', immediateRender: false }, T_FIND);
 
-scene('s-nope', 25.5, 28.5);
-pop('#bad', 25.5, { scale: .8, opacity: 0, y: 80 }, .4); sfx(25.5, 'thump', .7);
+scene('s-nope', T_NOPE, T_RES);
+pop('#bad', T_NOPE, { scale: .8, opacity: 0, y: 80 }, .4); sfx(T_NOPE, 'thump', .7);
 (() => {
   const C = 2 * Math.PI * 50, card = $('#bad');
   card.insertAdjacentHTML('beforeend', `<svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#EFE9E1" stroke-width="10"/>
     <circle class="arc" cx="60" cy="60" r="50" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 60 60)"/></svg>
     <div class="ring-n red"><span class="n">0</span></div>`);
-  tl.fromTo(card.querySelector('.arc'), { attr: { 'stroke-dashoffset': C } }, { attr: { 'stroke-dashoffset': C * .88 }, duration: .6, ease: 'power2.out', immediateRender: true }, 25.75);
-  const o = { v: 0 }; tl.to(o, { v: 12, duration: .6, ease: 'power2.out', onUpdate() { card.querySelector('.n').textContent = Math.round(o.v); } }, 25.75);
+  tl.fromTo(card.querySelector('.arc'), { attr: { 'stroke-dashoffset': C } }, { attr: { 'stroke-dashoffset': C * .88 }, duration: .6, ease: 'power2.out', immediateRender: true }, T_NOPE + .25);
+  const o = { v: 0 }; tl.to(o, { v: 12, duration: .6, ease: 'power2.out', onUpdate() { card.querySelector('.n').textContent = Math.round(o.v); } }, T_NOPE + .25);
 })();
-const T_NOPE = at('nope', 'nope');
-land('#nopeT', 'nope', { d: .22 }); sfx(T_NOPE, 'stamp', .9); punch(T_NOPE, .04);
+const T_SAY_NOPE = at('nope', 'nope');
+land('#nopeT', 'nope', { d: .22 }); sfx(T_SAY_NOPE, 'stamp', .9); punch(T_SAY_NOPE, .04);
 cap('nope', 'Entry level, ten years required?', 'entry', 'required');
-const T_FLICK = snap(T_NOPE + .45, B);
+const T_FLICK = snap(T_SAY_NOPE + .45, B);
 tl.to('#bad', { x: 1500, y: -140, rotation: 28, duration: .38, ease: 'power3.in' }, T_FLICK); sfx(T_FLICK, 'swipe', .9);
-plane(28.5, 820, 260);
+plane(T_RES, 820, 260);
 
-// ---- 03 RÉSUMÉ (28.5 – 33.25) ------------------------------------------------------------------------------
-scene('s-res', 28.5, 33.25);
+// ---- 03 RÉSUMÉ -----------------------------------------------------------------------------------------
+scene('s-res', T_RES, T_FILL);
 cap('resume', 'Step three: for each job, it writes a résumé', 'step', 'resume');
 cap('resume', 'from your storybook and the job description.', 'from', 'description', 8);
-pop('#sb', 28.75, { scale: .8, opacity: 0, x: -200 }, .4); sfx(28.75, 'thump', .7);          // what goes in first, then what comes out
-pop('#jd', 29.25, { scale: .8, opacity: 0, x: -200 }, .4); sfx(29.25, 'thump', .7);
-tl.fromTo('#plus', { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, 29.75);
+pop('#sb', T_RES + .25, { scale: .8, opacity: 0, x: -200 }, .4); sfx(T_RES + .25, 'thump', .7);          // what goes in first, then what comes out
+pop('#jd', T_RES + .75, { scale: .8, opacity: 0, x: -200 }, .4); sfx(T_RES + .75, 'thump', .7);
+tl.fromTo('#plus', { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, T_RES + 1.25);
 tl.fromTo('#resume', { y: 1100, rotation: 6 }, { y: 0, rotation: -2, duration: .42, ease: 'power3.out', immediateRender: true }, snap(at('resume', 'writes')) - .2);
 sfx(snap(at('resume', 'writes')), 'boomlite', .9); punch(snap(at('resume', 'writes')), .04);
-pop('#tail', 32.0, { scale: .5, opacity: 0, y: 30 }); sfx(32.0, 'pop', .8);
-drift('s-res', 28.5, 33.25, 1.04);
+pop('#tail', T_FILL - 1.25, { scale: .5, opacity: 0, y: 30 }); sfx(T_FILL - 1.25, 'pop', .8);
+drift('s-res', T_RES, T_FILL, 1.04);
 
-// ---- the real filler at work (33.25 – 37.75) ---------------------------------------------------------------
-scene('s-fill', 33.25, 37.75);
+// ---- the real filler at work -----------------------------------------------------------------------------
+scene('s-fill', T_FILL, T_SHOT);
 cap('fill', 'Then it fills out the whole application.', 'then', 'application');
 land('#fillT', 'fill');
 ['every', 'single', 'dropdown'].forEach((w, i) => { const t = at('fill', w, 6); sfx(t, 'thump', .55); punch(t, .02); });
-pop('#win', 33.25, { scale: .9, opacity: 0, y: 80 }, .4); sfx(33.25, 'thump', .7);
+pop('#win', T_FILL, { scale: .9, opacity: 0, y: 80 }, .4); sfx(T_FILL, 'thump', .7);
 (() => {
   // recording time → film time: the résumé upload, a jump over the 4 s the form takes to settle after it, then the fill at FFX×
   const fr = FILL.frames, fl = FILL.fields, cv = $('#fillCv'), g = cv.getContext('2d'), imgs = fr.map(f => { const im = new Image(); im.src = f.f; return im; });
   window.FILL_IMGS = imgs;
   const first = (fl.find(e => e.id === 'first_name') || { t: 6 }).t, upload = (fl.find(e => e.id === 'resume') || { t: 2 }).t, endT = fr.length ? fr[fr.length - 1].t : 15;
-  const T0 = 33.5, T1 = 37.5, UP = .5, FFX = (endT - first) / (T1 - T0 - UP);
+  const T0 = T_FILL + .25, T1 = T_SHOT - .25, UP = .5, FFX = (endT - first) / (T1 - T0 - UP);
   $('#ffx').textContent = (Math.round(FFX * 2) / 2) + '×';
   const src = t => t < T0 ? upload - .2 : t < T0 + UP ? upload - .2 + (t - T0) : Math.min(endT, first + (t - T0 - UP) * FFX);
   const SX = 230, SW = 820, SH = SW * 824 / 1040;                     // crop: the form column, 1.32× its page size
@@ -502,12 +517,12 @@ pop('#win', 33.25, { scale: .9, opacity: 0, y: 80 }, .4); sfx(33.25, 'thump', .7
     return prev + (cur - prev) * (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
   };
   const o = { t: 0 };
-  tl.fromTo(o, { t: 33.25 }, { t: 37.75, duration: 4.5, ease: 'none', immediateRender: true, onUpdate() {
+  tl.fromTo(o, { t: T_FILL }, { t: T_SHOT, duration: T_SHOT - T_FILL, ease: 'none', immediateRender: true, onUpdate() {
     const s = src(o.t); let k = 0; while (k + 1 < fr.length && fr[k + 1].t <= s) k++;
     const im = imgs[k]; if (!im || !im.complete) return;
     g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
     g.drawImage(im, SX, camY(s), SW, SH, 0, 0, cv.width, cv.height);
-  } }, 33.25);
+  } }, T_FILL);
   tl.fromTo('#ffb', { opacity: 0, scale: .8 }, { opacity: 1, scale: 1, duration: .2, immediateRender: true }, T0 + UP);
   tl.to('#ffb', { opacity: 0, duration: .15 }, T1);
   for (const e of fl.filter(e => e.kind === 'change')) {           // a tick for every answer the filler sets
@@ -515,17 +530,17 @@ pop('#win', 33.25, { scale: .9, opacity: 0, y: 80 }, .4); sfx(33.25, 'thump', .7
     if (t < T1) sfx(t, 'tick', .7);
   }
 })();
-drift('s-fill', 33.25, 37.75, 1.03);
+drift('s-fill', T_FILL, T_SHOT, 1.03);
 
-// ---- the screenshot for review (37.75 – ok) ----------------------------------------------------------------
+// ---- the screenshot for review ----------------------------------------------------------------------------
 const T_OK = VO_AT.ok - .25;
-scene('s-shot', 37.75, T_OK);
+scene('s-shot', T_SHOT, T_OK);
 cap('shot', 'And takes a screenshot', 'and', 'screenshot');
-flash(37.75, .95); sfx(37.75, 'shutter', 1); punch(37.75, .03);
-tl.fromTo('#shotBig', { opacity: 1, x: 0, y: 0, scale: 1 }, { opacity: 0, x: 150, y: 140, scale: .35, duration: .5, ease: 'power3.inOut', immediateRender: true }, 38.1);
-pop('#review', 38.25, { scale: .9, opacity: 0, y: 60 }, .4); sfx(38.25, 'thump', .6);
+flash(T_SHOT, .95); sfx(T_SHOT, 'shutter', 1); punch(T_SHOT, .03);
+tl.fromTo('#shotBig', { opacity: 1, x: 0, y: 0, scale: 1 }, { opacity: 0, x: 150, y: 140, scale: .35, duration: .5, ease: 'power3.inOut', immediateRender: true }, T_SHOT + .35);
+pop('#review', T_SHOT + .5, { scale: .9, opacity: 0, y: 60 }, .4); sfx(T_SHOT + .5, 'thump', .6);
 land('#shotT', 'shot');
-drift('s-shot', 37.75, T_OK, 1.04);
+drift('s-shot', T_SHOT, T_OK, 1.04);
 
 // ---- 04 YOU DECIDE (ok – reply) ------------------------------------------------------------------------------
 scene('s-ok', T_OK, VO_AT.reply);
@@ -575,7 +590,7 @@ $('#cap').style.visibility = 'hidden';
 for (const [t, k] of PUNCH) tl.fromTo('#stage', { scale: 1 + k }, { scale: 1, duration: .28, ease: 'power3.out', immediateRender: false }, t);
 
 window.SFX = SFX; window.VO_AT = VO_AT; window.DUR = tl.duration();
-window.MUSIC = { groove: [6.5, T_STILL], gaps: [[6.25, 6.5], [T_APPROVE - .25, T_APPROVE], [T_STILL, T_MARK]], hit: T_MARK, intro: [[0, 4.0], [4.0, 6.0]] };
+window.MUSIC = { groove: [T_BOOM, T_STILL], gaps: [[T_BOOM - .25, T_BOOM], [T_APPROVE - .25, T_APPROVE], [T_STILL, T_MARK]], hit: T_MARK };
 window.seek = t => { tl.seek(Math.min(Math.max(t, .0001), tl.duration()), false); };   // .0001: sets placed at 0 render on frame 0
 window.ready = document.fonts.ready.then(() => Promise.all([...document.images, ...(window.FILL_IMGS || [])].map(i => i.decode().catch(() => 0)))).then(() => true);
 </script>

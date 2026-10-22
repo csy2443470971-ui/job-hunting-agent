@@ -11,7 +11,7 @@ LINES = [
     ("tell", "Step one: tell it your whole life story."),
     ("dump", "Old résumés, reference letters, that paper nobody read. Or just talk. It's a great listener."),
     ("book", "It turns all of it into your storybook. True stuff only. No surprise PhD."),
-    ("find", "Step two: every morning, it finds jobs that actually fit you."),
+    ("find", "Step two: every morning, it finds jobs that actually fit you, using the Jev model."),
     ("nope", "Entry level, ten years required? Nope."),
     ("resume", "Step three: for each job, it writes a résumé from your storybook and the job description."),
     ("fill", "Then it fills out the whole application. Every. Single. Dropdown."),
@@ -31,8 +31,15 @@ if sys.argv[1:2] == ["chatterbox"]:     # run with ~/.cache/chatterbox-venv: exp
             continue
         torch.manual_seed(attempt * 1000 + sum(map(ord, i)))   # each re-roll gets a new seed
         wav = m.generate(text, audio_prompt_path=str(ROOT / "voices" / "ref_male.wav"), exaggeration=1.05, cfg_weight=.3)   # "D": the comic setting
-        ta.save(str(ROOT / "vo" / f"{i}.wav"), wav, m.sr)
+        ta.save(str(ROOT / "vo" / "raw" / f"{i}.wav"), wav, m.sr)
         print(f"{i:6s} {wav.shape[1] / m.sr:5.2f}s  {text}")
+elif sys.argv[1:2] == ["tempo"]:         # vo/raw/<id>.wav -> vo/<id>.wav: silence trimmed, each line at its own pace
+    import subprocess
+    TEMPO = {"hook": 1.25, "pile": 1.2}  # the opening runs fast; everything else a touch tighter than read
+    trim = "silenceremove=start_periods=1:start_threshold=-45dB"
+    for i, _ in LINES:
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(ROOT / "vo" / "raw" / f"{i}.wav"),
+                        "-af", f"{trim},areverse,{trim},areverse,atempo={TEMPO.get(i, 1.08)}", str(ROOT / "vo" / f"{i}.wav")], check=True)
 elif sys.argv[1:] == ["speak"]:          # run with the Kokoro venv
     from kokoro import KPipeline
     pipe = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M")
