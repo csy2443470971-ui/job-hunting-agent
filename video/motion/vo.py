@@ -14,7 +14,7 @@ LINES = [
     ("find", "Step two: every morning, it finds jobs that actually fit you, using the Jev model."),
     ("nope", "Entry level, ten years required? Nope."),
     ("resume", "Step three: for each job, it writes a résumé from your storybook and the job description."),
-    ("fill", "Then it fills out the whole application. Every. Single. Dropdown."),
+    ("fill", "Then it fills out the whole application automatically. Every. Single. Dropdown."),
     ("shot", "And takes a screenshot, so you can check every answer."),
     ("ok", "Nothing gets sent until you hit Approve."),
     ("reply", "Then it watches your inbox and tells you who wrote back."),
@@ -35,7 +35,7 @@ if sys.argv[1:2] == ["chatterbox"]:     # run with ~/.cache/chatterbox-venv: exp
         print(f"{i:6s} {wav.shape[1] / m.sr:5.2f}s  {text}")
 elif sys.argv[1:2] == ["tempo"]:         # vo/raw/<id>.wav -> vo/<id>.wav: silence trimmed, each line at its own pace
     import subprocess
-    TEMPO = {"hook": 1.25, "pile": 1.2}  # the opening runs fast; everything else a touch tighter than read
+    TEMPO = {"hook": 1.42, "pile": 1.38}  # the opening runs fast; everything else a touch tighter than read
     trim = "silenceremove=start_periods=1:start_threshold=-45dB"
     for i, _ in LINES:
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(ROOT / "vo" / "raw" / f"{i}.wav"),

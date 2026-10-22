@@ -5,9 +5,9 @@
 A personal agent that turns your own material into job applications: it finds postings, ranks them, writes a
 one-page résumé from facts you approved, fills the form or drafts the email, and waits for you to say yes.
 
-<a href="https://siennachen.com/project-job-hunting-agent.html"><img src="docs/media/job-hunter-agent-film-cover.jpg" alt="Job Hunter Agent, the 52-second product film: click to watch with sound" width="100%"></a>
+<a href="https://siennachen.com/project-job-hunting-agent.html"><img src="docs/media/job-hunter-agent-film-cover.jpg" alt="Job Hunter Agent, the 48-second product film: click to watch with sound" width="100%"></a>
 
-▶ **[Watch the 52-second film](https://siennachen.com/project-job-hunting-agent.html)** (sound on) · or the [mp4 in this repo](docs/media/job-hunter-agent-film.mp4). It shows demo data: a fictional applicant and fictional companies, and the application form is filled by the agent's own code.
+▶ **[Watch the 48-second film](https://siennachen.com/project-job-hunting-agent.html)** (sound on) · or the [mp4 in this repo](docs/media/job-hunter-agent-film.mp4). It shows demo data: a fictional applicant and fictional companies, and the application form is filled by the agent's own code.
 
 **New here? Start with the [User guide](USER_GUIDE.md).**
 

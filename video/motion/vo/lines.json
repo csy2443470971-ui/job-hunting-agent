@@ -2,65 +2,65 @@
  {
   "id": "hook",
   "text": "Job hunting is a full-time job. With zero pay.",
-  "dur": 2.755,
+  "dur": 2.427,
   "heard": "Job hunting is a full-time job with zero pay.",
   "words": [
    {
     "w": "Job",
     "t0": 0.0,
-    "t1": 0.3
+    "t1": 0.26
    },
    {
     "w": "hunting",
-    "t0": 0.3,
-    "t1": 0.5
+    "t0": 0.26,
+    "t1": 0.44
    },
    {
     "w": "is",
-    "t0": 0.5,
-    "t1": 0.86
+    "t0": 0.44,
+    "t1": 0.76
    },
    {
     "w": "a",
-    "t0": 0.86,
-    "t1": 0.96
+    "t0": 0.76,
+    "t1": 0.84
    },
    {
     "w": "full",
-    "t0": 0.96,
-    "t1": 1.14
+    "t0": 0.84,
+    "t1": 1.0
    },
    {
     "w": "-time",
-    "t0": 1.14,
-    "t1": 1.34
+    "t0": 1.0,
+    "t1": 1.18
    },
    {
     "w": "job",
-    "t0": 1.34,
-    "t1": 1.64
+    "t0": 1.18,
+    "t1": 1.46
    },
    {
     "w": "with",
-    "t0": 1.64,
-    "t1": 2.06
+    "t0": 1.46,
+    "t1": 1.8
    },
    {
     "w": "zero",
-    "t0": 2.06,
-    "t1": 2.32
+    "t0": 1.8,
+    "t1": 2.08
    },
    {
     "w": "pay.",
-    "t0": 2.32,
-    "t1": 2.66
+    "t0": 2.08,
+    "t1": 2.4
    }
   ]
  },
  {
   "id": "pile",
   "text": "And about a thousand dropdowns.",
-  "dur": 1.724,
+  "dur": 1.502,
   "heard": "and about a thousand drop downs.",
   "words": [
    {
@@ -76,22 +76,22 @@
    {
     "w": "a",
     "t0": 0.26,
-    "t1": 0.38
+    "t1": 0.44
    },
    {
     "w": "thousand",
-    "t0": 0.38,
-    "t1": 0.8
+    "t0": 0.44,
+    "t1": 0.72
    },
    {
     "w": "drop",
-    "t0": 0.8,
-    "t1": 1.22
+    "t0": 0.72,
+    "t1": 1.06
    },
    {
     "w": "downs.",
-    "t0": 1.22,
-    "t1": 1.46
+    "t0": 1.06,
+    "t1": 1.26
    }
   ]
  },
@@ -543,9 +543,9 @@
  },
  {
   "id": "fill",
-  "text": "Then it fills out the whole application. Every. Single. Dropdown.",
-  "dur": 3.014,
-  "heard": "Then it fills out the whole application, every single drop-down.",
+  "text": "Then it fills out the whole application automatically. Every. Single. Dropdown.",
+  "dur": 4.229,
+  "heard": "Then it fills out the whole application automatically. Every single drop-down.",
   "words": [
    {
     "w": "Then",
@@ -560,11 +560,11 @@
    {
     "w": "fills",
     "t0": 0.22,
-    "t1": 0.44
+    "t1": 0.42
    },
    {
     "w": "out",
-    "t0": 0.44,
+    "t0": 0.42,
     "t1": 0.6
    },
    {
@@ -578,29 +578,34 @@
     "t1": 0.92
    },
    {
-    "w": "application,",
+    "w": "application",
     "t0": 0.92,
-    "t1": 1.42
+    "t1": 1.4
    },
    {
-    "w": "every",
-    "t0": 1.62,
-    "t1": 1.88
+    "w": "automatically.",
+    "t0": 1.4,
+    "t1": 1.94
+   },
+   {
+    "w": "Every",
+    "t0": 2.1,
+    "t1": 2.5
    },
    {
     "w": "single",
-    "t0": 1.88,
-    "t1": 2.3
+    "t0": 2.5,
+    "t1": 3.18
    },
    {
     "w": "drop",
-    "t0": 2.3,
-    "t1": 2.76
+    "t0": 3.18,
+    "t1": 3.88
    },
    {
     "w": "-down.",
-    "t0": 2.76,
-    "t1": 2.96
+    "t0": 3.88,
+    "t1": 4.2
    }
   ]
  },

@@ -189,7 +189,7 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
     </div>
     <div class="abs mid" id="plus" style="left:690px; top:470px; font-size:120px; color:var(--mute)">→</div>
     <img class="abs" id="resume" src="img/resume.png" style="left:930px; top:70px; width:700px; border-radius:10px; box-shadow:0 40px 90px rgba(60,40,20,.25); border:1px solid var(--line)">
-    <div class="pill" id="tail" style="left:1010px; top:940px"><span class="green" style="font-weight:700">✓</span>Tailored to Northwind Energy · 1 page</div>
+    <div class="pill" id="tail" style="left:1010px; top:872px"><span class="green" style="font-weight:700">✓</span>Tailored to Northwind Energy · 1 page</div>
   </div></section>
 
   <section class="scene" id="s-fill"><div class="world">
@@ -297,24 +297,26 @@ function wordAt(id, word, from = 0) {
 
 // ---- where each voice line starts (on the beat grid) ------------------------------------------------------
 // every section starts on a beat after the previous line ends, so a line can change length and the film re-flows
-const VO_AT = { hook: .15 };
+const VO_AT = { hook: .1 };
+const LEAD = .2;                                       // the voice comes in just before its picture, so cuts feel driven by it
 const end = id => VO_AT[id] + line(id).dur, nextBeat = t => Math.ceil(t / (B / 2) - .02) * (B / 2);   // next eighth note
-VO_AT.pile = nextBeat(end('hook') + .1);
-const T_BOOM = nextBeat(end('pile') + .25);                 // the dropdowns collapse, then the boom
-VO_AT.meet = T_BOOM + .5;
-const T_TELL = nextBeat(end('meet') + .3);  VO_AT.tell = T_TELL;
-VO_AT.dump = nextBeat(end('tell') + .3);
-const T_BOOK = nextBeat(end('dump') + .4);  VO_AT.book = T_BOOK;
-const T_FIND = nextBeat(end('book') + .4);  VO_AT.find = T_FIND;
-const T_NOPE = nextBeat(end('find') + .2);  VO_AT.nope = T_NOPE;
-const T_RES = nextBeat(end('nope') + .3);   VO_AT.resume = T_RES;
-const T_FILL = nextBeat(end('resume') + .3); VO_AT.fill = T_FILL;
-const T_SHOT = T_FILL + 4.5;                VO_AT.shot = T_SHOT;      // the fill recording needs its 4.5 s
+const cut = (id, T) => { VO_AT[id] = T - LEAD; return T; };
+VO_AT.pile = end('hook') + .02;                        // the opening runs straight through
+const T_BOOM = nextBeat(end('pile') + .1);             // the dropdowns collapse, then the boom
+VO_AT.meet = T_BOOM + .3;
+const T_TELL = cut('tell', nextBeat(end('meet') + .1 + LEAD));
+VO_AT.dump = end('tell') + .15;
+const T_BOOK = cut('book', nextBeat(end('dump') + .1 + LEAD));
+const T_FIND = cut('find', nextBeat(end('book') + .1 + LEAD));
+const T_NOPE = cut('nope', nextBeat(end('find') + .05 + LEAD));
+const T_RES = cut('resume', nextBeat(end('nope') + .1 + LEAD));
+const T_FILL = cut('fill', nextBeat(end('resume') + .1 + LEAD));
+const T_SHOT = cut('shot', Math.max(T_FILL + 4.5, nextBeat(end('fill') + .05 + LEAD)));   // the fill recording needs its 4.5 s
 const T_APPROVE = Math.ceil(VO_AT.shot + line('shot').dur + .3 + ((wordAt('ok', 'approve') || { t: 2 }).t));   // the press lands on the next downbeat
 VO_AT.ok = T_APPROVE - (wordAt('ok', 'approve') || { t: 2 }).t;
-VO_AT.reply = snap(VO_AT.ok + line('ok').dur + .4, B);
-const T_STILL = snap(VO_AT.reply + line('reply').dur + .3, B);
-VO_AT.end = T_STILL + 1.0;
+VO_AT.reply = snap(VO_AT.ok + line('ok').dur + .15, B / 2) - LEAD;
+const T_STILL = snap(VO_AT.reply + line('reply').dur + .2, B / 2);
+VO_AT.end = T_STILL + .7;
 const T_END = VO_AT.end + line('end').dur + 1.4;
 const at = (id, word, from) => { const w = wordAt(id, word, from); return VO_AT[id] + (w ? w.t : 0); };
 
@@ -323,9 +325,11 @@ const SFX = [];
 const sfx = (t, type, gain = 1) => SFX.push({ t: +t.toFixed(3), type, gain });
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 
-function scene(id, t0, t1) { tl.set('#' + id, { visibility: 'visible' }, t0); tl.set('#' + id, { visibility: 'hidden' }, t1); }
+const SCENE_AT = {};
+function scene(id, t0, t1) { SCENE_AT[id] = t0; tl.set('#' + id, { visibility: 'visible' }, t0); tl.set('#' + id, { visibility: 'hidden' }, t1); }
 // words rise into their masks as they are said
 function land(sel, id, { d = .3, minT = 0, lead = .04 } = {}) {
+  const host = document.querySelector(sel).closest('.scene'); minT = Math.max(minT, SCENE_AT[host ? host.id : ''] || 0);
   let from = 0, last = VO_AT[id];
   $$(sel + ' .w > i').forEach(el => {
     const w = wordAt(id, el.textContent, from); let t = last + .12;
@@ -346,7 +350,8 @@ const punch = (t, k) => PUNCH.push([t, k]);
 const CAPS = [];
 function cap(id, text, firstWord, lastWord, from = 0) {
   const a = wordAt(id, firstWord, from), b = wordAt(id, lastWord, a ? a.i : from);
-  CAPS.push({ t0: VO_AT[id] + (a ? a.t : 0) - .05, t1: VO_AT[id] + (b ? b.e : line(id).dur) + .25, text });
+  CAPS.push({ t0: Math.max(VO_AT[id] + (a ? a.t : 0) - .05, VO_AT[id] + LEAD),   // never before its own picture
+              t1: VO_AT[id] + (b ? b.e : line(id).dur) + .25, text });
 }
 function plane(t, y0 = 760, y1 = 300) {          // flies left → right in 0.55 s; the cut happens under it at t
   const P = $('#plane'), path = $('#trailP'), t0 = t - .3, dur = .55, o = { p: 0 };
@@ -496,7 +501,7 @@ drift('s-res', T_RES, T_FILL, 1.04);
 
 // ---- the real filler at work -----------------------------------------------------------------------------
 scene('s-fill', T_FILL, T_SHOT);
-cap('fill', 'Then it fills out the whole application.', 'then', 'application');
+cap('fill', 'Then it fills out the whole application automatically.', 'then', 'automatically');
 land('#fillT', 'fill');
 ['every', 'single', 'dropdown'].forEach((w, i) => { const t = at('fill', w, 6); sfx(t, 'thump', .55); punch(t, .02); });
 pop('#win', T_FILL, { scale: .9, opacity: 0, y: 80 }, .4); sfx(T_FILL, 'thump', .7);
@@ -543,7 +548,7 @@ land('#shotT', 'shot');
 drift('s-shot', T_SHOT, T_OK, 1.04);
 
 // ---- 04 YOU DECIDE (ok – reply) ------------------------------------------------------------------------------
-scene('s-ok', T_OK, VO_AT.reply);
+scene('s-ok', T_OK, VO_AT.reply + LEAD);
 land('#okT', 'ok');
 pop('#approve', T_OK + .1, { scale: .7, opacity: 0, y: 100 }, .45); pop('#reject', T_OK + .25, { scale: .7, opacity: 0, y: 100 }, .45); sfx(T_OK + .1, 'thump', .6);
 tl.fromTo('#cursor', { x: 1700, y: 1100 }, { x: 1180, y: 860, duration: .8, ease: 'power2.inOut', immediateRender: true }, T_APPROVE - 1.6);   // human: in-out, a pause, then the press
@@ -555,12 +560,12 @@ flash(T_APPROVE, .6); sfx(T_APPROVE, 'boom', 1); punch(T_APPROVE, .06);
 tl.fromTo('#okRing circle', { attr: { r: 60 }, opacity: 1, strokeWidth: 14 }, { attr: { r: 820 }, opacity: 0, strokeWidth: 2, duration: .8, ease: 'expo.out', immediateRender: true }, T_APPROVE);
 pop('#toast', T_APPROVE + .15, { scale: .8, opacity: 0, y: 40 }, .35);
 tl.to('#reject', { opacity: .35, duration: .3 }, T_APPROVE + .05);
-drift('s-ok', T_OK, VO_AT.reply, 1.04);
+drift('s-ok', T_OK, VO_AT.reply + LEAD, 1.04);
 
 // ---- 05 REPLIES ------------------------------------------------------------------------------------------
-scene('s-reply', VO_AT.reply, T_STILL);
+scene('s-reply', VO_AT.reply + LEAD, T_STILL);
 land('#replyT', 'reply');
-pop('#mail', VO_AT.reply + .1, { scale: .9, opacity: 0, y: 90 }, .4); sfx(VO_AT.reply + .1, 'thump', .6);
+pop('#mail', VO_AT.reply + LEAD + .1, { scale: .9, opacity: 0, y: 90 }, .4); sfx(VO_AT.reply + LEAD + .1, 'thump', .6);
 const T_STAMP = snap(at('reply', 'back') + .2, B);
 [['#c1', T_STAMP - 1.0, '#2563EB'], ['#c2', T_STAMP - .5, '#F27420'], ['#c3', T_STAMP, '#16A34A']].forEach(([c, t, col]) => {
   tl.to(c, { color: '#1C1917', borderColor: col, duration: .1 }, t); tl.to(c + ' i', { backgroundColor: col, scale: 1.4, duration: .2, ease: 'back.out(3)' }, t);
@@ -568,12 +573,12 @@ const T_STAMP = snap(at('reply', 'back') + .2, B);
 });
 tl.fromTo('#stamp', { scale: 2.6, opacity: 0, rotation: -2 }, { scale: 1, opacity: 1, rotation: -9, duration: .22, ease: 'power4.in', immediateRender: true }, T_STAMP - .2);
 sfx(T_STAMP, 'stamp', 1); punch(T_STAMP, .05);
-drift('s-reply', VO_AT.reply, T_STILL, 1.035);
+drift('s-reply', VO_AT.reply + LEAD, T_STILL, 1.035);
 tl.to('#s-reply .world', { scale: .96, opacity: 0, duration: .3, ease: 'power2.in' }, T_STILL - .2);
 
 // ---- END: a beat of stillness, then the two-step lockup -----------------------------------------------------
 scene('s-end', T_STILL + .1, T_END + 1);
-const T_MARK = T_STILL + .5;
+const T_MARK = T_STILL + .4;
 pop('#endIcon', T_MARK, { scale: 0, opacity: 0, y: 0 }, .5); sfx(T_MARK, 'hit', 1); punch(T_MARK, .03);
 land('#endName', 'end'); land('#endTag', 'end');
 tl.fromTo('#endUrl', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .4, immediateRender: true }, VO_AT.end + line('end').dur - .2);
