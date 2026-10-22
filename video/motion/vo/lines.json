@@ -1,0 +1,301 @@
+[
+ {
+  "id": "hook",
+  "text": "Job hunting is a full-time job. With zero pay.",
+  "dur": 3.375,
+  "heard": "Job hunting is a full-time job with zero pay.",
+  "words": [
+   {
+    "w": "Job",
+    "t0": 0.0,
+    "t1": 0.52
+   },
+   {
+    "w": "hunting",
+    "t0": 0.52,
+    "t1": 0.76
+   },
+   {
+    "w": "is",
+    "t0": 0.76,
+    "t1": 1.0
+   },
+   {
+    "w": "a",
+    "t0": 1.0,
+    "t1": 1.08
+   },
+   {
+    "w": "full",
+    "t0": 1.08,
+    "t1": 1.26
+   },
+   {
+    "w": "-time",
+    "t0": 1.26,
+    "t1": 1.46
+   },
+   {
+    "w": "job",
+    "t0": 1.46,
+    "t1": 1.8
+   },
+   {
+    "w": "with",
+    "t0": 1.8,
+    "t1": 2.26
+   },
+   {
+    "w": "zero",
+    "t0": 2.26,
+    "t1": 2.54
+   },
+   {
+    "w": "pay.",
+    "t0": 2.54,
+    "t1": 2.84
+   }
+  ]
+ },
+ {
+  "id": "dump",
+  "text": "Dump everything on it. Or just ramble.",
+  "dur": 2.725,
+  "heard": "Dump everything on it, or just ramble.",
+  "words": [
+   {
+    "w": "Dump",
+    "t0": 0.0,
+    "t1": 0.54
+   },
+   {
+    "w": "everything",
+    "t0": 0.54,
+    "t1": 0.9
+   },
+   {
+    "w": "on",
+    "t0": 0.9,
+    "t1": 1.14
+   },
+   {
+    "w": "it,",
+    "t0": 1.14,
+    "t1": 1.32
+   },
+   {
+    "w": "or",
+    "t0": 1.42,
+    "t1": 1.62
+   },
+   {
+    "w": "just",
+    "t0": 1.62,
+    "t1": 1.84
+   },
+   {
+    "w": "ramble.",
+    "t0": 1.84,
+    "t1": 2.24
+   }
+  ]
+ },
+ {
+  "id": "find",
+  "text": "It finds the jobs.",
+  "dur": 1.625,
+  "heard": "It finds the jobs.",
+  "words": [
+   {
+    "w": "It",
+    "t0": 0.0,
+    "t1": 0.4
+   },
+   {
+    "w": "finds",
+    "t0": 0.4,
+    "t1": 0.66
+   },
+   {
+    "w": "the",
+    "t0": 0.66,
+    "t1": 0.78
+   },
+   {
+    "w": "jobs.",
+    "t0": 0.78,
+    "t1": 1.04
+   }
+  ]
+ },
+ {
+  "id": "nope",
+  "text": "Nope.",
+  "dur": 1.175,
+  "heard": "Nope.",
+  "words": [
+   {
+    "w": "Nope.",
+    "t0": 0.0,
+    "t1": 0.58
+   }
+  ]
+ },
+ {
+  "id": "fill",
+  "text": "Every. Single. Dropdown.",
+  "dur": 2.25,
+  "heard": "Every single dropdown.",
+  "words": [
+   {
+    "w": "Every",
+    "t0": 0.0,
+    "t1": 0.6
+   },
+   {
+    "w": "single",
+    "t0": 0.6,
+    "t1": 1.1
+   },
+   {
+    "w": "dropdown.",
+    "t0": 1.1,
+    "t1": 1.58
+   }
+  ]
+ },
+ {
+  "id": "ok",
+  "text": "Nothing goes out until you say so.",
+  "dur": 2.375,
+  "heard": "Nothing goes out until you say so.",
+  "words": [
+   {
+    "w": "Nothing",
+    "t0": 0.0,
+    "t1": 0.62
+   },
+   {
+    "w": "goes",
+    "t0": 0.62,
+    "t1": 0.84
+   },
+   {
+    "w": "out",
+    "t0": 0.84,
+    "t1": 1.04
+   },
+   {
+    "w": "until",
+    "t0": 1.04,
+    "t1": 1.26
+   },
+   {
+    "w": "you",
+    "t0": 1.26,
+    "t1": 1.4
+   },
+   {
+    "w": "say",
+    "t0": 1.4,
+    "t1": 1.6
+   },
+   {
+    "w": "so.",
+    "t0": 1.6,
+    "t1": 1.88
+   }
+  ]
+ },
+ {
+  "id": "reply",
+  "text": "Then it tells you who wrote back.",
+  "dur": 1.925,
+  "heard": "Then it tells you who wrote back.",
+  "words": [
+   {
+    "w": "Then",
+    "t0": 0.0,
+    "t1": 0.38
+   },
+   {
+    "w": "it",
+    "t0": 0.38,
+    "t1": 0.5
+   },
+   {
+    "w": "tells",
+    "t0": 0.5,
+    "t1": 0.68
+   },
+   {
+    "w": "you",
+    "t0": 0.68,
+    "t1": 0.84
+   },
+   {
+    "w": "who",
+    "t0": 0.84,
+    "t1": 1.0
+   },
+   {
+    "w": "wrote",
+    "t0": 1.0,
+    "t1": 1.16
+   },
+   {
+    "w": "back.",
+    "t0": 1.16,
+    "t1": 1.48
+   }
+  ]
+ },
+ {
+  "id": "end",
+  "text": "It does the grind. You do the talking.",
+  "dur": 2.5,
+  "heard": "It does the grind, you do the talking.",
+  "words": [
+   {
+    "w": "It",
+    "t0": 0.0,
+    "t1": 0.38
+   },
+   {
+    "w": "does",
+    "t0": 0.38,
+    "t1": 0.54
+   },
+   {
+    "w": "the",
+    "t0": 0.54,
+    "t1": 0.66
+   },
+   {
+    "w": "grind,",
+    "t0": 0.66,
+    "t1": 0.98
+   },
+   {
+    "w": "you",
+    "t0": 1.22,
+    "t1": 1.4
+   },
+   {
+    "w": "do",
+    "t0": 1.4,
+    "t1": 1.5
+   },
+   {
+    "w": "the",
+    "t0": 1.5,
+    "t1": 1.6
+   },
+   {
+    "w": "talking.",
+    "t0": 1.6,
+    "t1": 1.88
+   }
+  ]
+ }
+]

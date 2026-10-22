@@ -30,3 +30,8 @@ video/*.mp4
 
 # files dropped into the demo storybook
 profile.example/uploads/
+
+# motion film: renders and generated voice
+video/motion/out/
+video/motion/vo/*.wav
+video/motion/fonts/
