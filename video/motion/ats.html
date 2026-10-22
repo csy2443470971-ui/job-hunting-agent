@@ -1,0 +1,96 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Northwind Energy · Product Designer, Grid Tools</title>
+<!-- A demo job application in the shape of a Greenhouse board (fictional company), for filming the real filler
+     (agent/apply/fill.py). Labels are tied to inputs; the dropdowns are comboboxes with role="option" lists. -->
+<style>
+  body { margin:0; background:#fff; font:16px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; color:#1d1d1f; }
+  .top { border-bottom:1px solid #e6e6e6; padding:22px 0; }
+  .wrap { width:760px; margin:0 auto; }
+  .logo { display:flex; align-items:center; gap:12px; font-weight:700; font-size:20px; }
+  .logo i { width:34px; height:34px; border-radius:8px; background:#0F5132; display:inline-block; }
+  h1 { font-size:30px; margin:34px 0 4px; letter-spacing:-.01em; } .meta { color:#6e6e73; margin-bottom:28px; }
+  h2 { font-size:20px; margin:30px 0 16px; padding-top:22px; border-top:1px solid #eee; }
+  .field { margin-bottom:18px; position:relative; }
+  label { display:block; font-size:14px; font-weight:600; margin-bottom:6px; }
+  input[type=text], input[type=email], input[type=tel], input[type=url], textarea { width:100%; box-sizing:border-box; border:1px solid #c9c9ce; border-radius:6px; padding:10px 12px; font:inherit; }
+  textarea { height:92px; resize:none; }
+  .cb { position:relative; } .cb input { padding-right:36px; }
+  .cb::after { content:"▾"; position:absolute; right:12px; top:9px; color:#8e8e93; pointer-events:none; }
+  [role=listbox] { position:absolute; left:0; right:0; top:100%; margin-top:4px; background:#fff; border:1px solid #c9c9ce; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:5; max-height:220px; overflow:auto; display:none; }
+  [role=listbox].open { display:block; } [role=option] { padding:9px 12px; cursor:pointer; } [role=option]:hover { background:#eef4ff; }
+  .file { display:flex; align-items:center; gap:12px; } .file .btn { border:1px solid #c9c9ce; border-radius:6px; padding:8px 14px; background:#f5f5f7; font-size:14px; font-weight:600; }
+  .file .name { font-size:14px; color:#0F5132; font-weight:600; }
+  .row2 { display:flex; gap:16px; } .row2 > .field { flex:1; }
+  .submit { margin:28px 0 60px; background:#0F5132; color:#fff; border:0; border-radius:6px; padding:12px 22px; font:600 16px inherit; }
+  .filled { background:#f3fbf6; border-color:#3a9a62 !important; transition:none; }
+</style></head>
+<body>
+<div class="top"><div class="wrap logo"><i></i>Northwind Energy</div></div>
+<div class="wrap">
+  <h1>Product Designer, Grid Tools</h1>
+  <div class="meta">New York, NY · Full-time · $150K – $180K</div>
+  <form onsubmit="return false">
+    <div class="row2">
+      <div class="field"><label for="first_name">First Name *</label><input type="text" id="first_name" required></div>
+      <div class="field"><label for="last_name">Last Name *</label><input type="text" id="last_name" required></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="email">Email *</label><input type="email" id="email" required></div>
+      <div class="field"><label for="phone">Phone *</label><input type="tel" id="phone" required></div>
+    </div>
+    <div class="field"><label for="location">Location (City) *</label><div class="cb"><input type="text" id="location" role="combobox" aria-autocomplete="list" required>
+      <div role="listbox" data-for="location"></div></div></div>
+    <div class="field"><label id="upload-label-resume">Resume/CV *</label><div class="file"><label class="btn" for="resume">Attach</label><input type="file" id="resume" hidden required><span class="name" id="resume_name"></span></div></div>
+    <div class="row2">
+      <div class="field"><label for="linkedin">LinkedIn Profile</label><input type="url" id="linkedin"></div>
+      <div class="field"><label for="website">Website</label><input type="url" id="website"></div>
+    </div>
+    <div class="field"><label for="auth">Are you legally authorized to work in the United States? *</label><div class="cb"><input type="text" id="auth" role="combobox" aria-autocomplete="list" required>
+      <div role="listbox" data-opts="Yes|No"></div></div></div>
+    <div class="field"><label for="sponsor">Will you now or in the future require visa sponsorship? *</label><div class="cb"><input type="text" id="sponsor" role="combobox" aria-autocomplete="list" required>
+      <div role="listbox" data-opts="Yes|No"></div></div></div>
+    <div class="field"><label for="heard">How did you hear about this job?</label><div class="cb"><input type="text" id="heard" role="combobox" aria-autocomplete="list">
+      <div role="listbox" data-opts="LinkedIn|Company website|Referral|Job board|Other"></div></div></div>
+    <div class="field"><label for="why">Why Northwind? *</label><textarea id="why" required></textarea></div>
+    <h2>Voluntary Self-Identification</h2>
+    <div class="row2">
+      <div class="field"><label for="gender">Gender</label><div class="cb"><input type="text" id="gender" role="combobox" aria-autocomplete="list">
+        <div role="listbox" data-opts="Male|Female|Non-binary|I don't wish to answer"></div></div></div>
+      <div class="field"><label for="hispanic">Are you Hispanic/Latino?</label><div class="cb"><input type="text" id="hispanic" role="combobox" aria-autocomplete="list">
+        <div role="listbox" data-opts="Yes|No|I don't wish to answer"></div></div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="veteran">Veteran Status</label><div class="cb"><input type="text" id="veteran" role="combobox" aria-autocomplete="list">
+        <div role="listbox" data-opts="I am a protected veteran|I am not a protected veteran|I don't wish to answer"></div></div></div>
+      <div class="field"><label for="disability">Disability Status</label><div class="cb"><input type="text" id="disability" role="combobox" aria-autocomplete="list">
+        <div role="listbox" data-opts="Yes, I have a disability|No, I do not have a disability|I don't wish to answer"></div></div></div>
+    </div>
+    <button class="submit">Submit application</button>
+  </form>
+</div>
+<script>
+const CITIES = ['Brooklyn, New York, United States', 'Brookline, Massachusetts, United States', 'Brooklyn Park, Minnesota, United States',
+                'New York, New York, United States', 'Boston, Massachusetts, United States', 'Denver, Colorado, United States'];
+document.querySelectorAll('.cb').forEach(cb => {
+  const input = cb.querySelector('input'), list = cb.querySelector('[role=listbox]');
+  const all = list.dataset.opts ? list.dataset.opts.split('|') : CITIES;
+  const show = () => {
+    const q = input.value.trim().toLowerCase();
+    const opts = list.dataset.opts ? all : (q.length < 2 ? [] : all.filter(o => o.toLowerCase().includes(q)));   // the city list loads as you type
+    list.innerHTML = opts.map(o => `<div role="option">${o}</div>`).join('');
+    list.classList.toggle('open', opts.length > 0);
+    list.querySelectorAll('[role=option]').forEach(o => o.onmousedown = e => { e.preventDefault(); input.value = o.textContent; input.classList.add('filled'); list.classList.remove('open'); });
+  };
+  input.addEventListener('click', show); input.addEventListener('input', show); input.addEventListener('focus', show);
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 80));
+});
+document.querySelectorAll('input[type=text]:not([role]), input[type=email], input[type=tel], input[type=url], textarea').forEach(el =>
+  el.addEventListener('change', () => el.classList.toggle('filled', !!el.value)));
+document.getElementById('resume').addEventListener('change', e => { document.getElementById('resume_name').textContent = '📄 ' + (e.target.files[0] || {}).name; });
+// what the camera follows in the film: which field is active, when (epoch ms) and where (page px)
+window.__log = [];
+const note = (el, kind) => { const r = (el.closest('.field') || el).getBoundingClientRect(); window.__log.push({ t: Date.now(), kind, id: el.id, x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }); };
+document.addEventListener('focusin', e => note(e.target, 'focus'), true);
+document.addEventListener('change', e => note(e.target, 'change'), true);
+</script>
+</body></html>

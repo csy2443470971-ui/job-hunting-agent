@@ -1,19 +1,19 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Job Hunter Agent · film</title>
 <!--
-  Job Hunter Agent, 27 s launch film. 120 BPM: a beat is 0.5 s, a bar 2 s; every cut and hit sits on the grid.
-  Frame = pure function of time: window.seek(t). render.py steps it frame by frame; window.SFX lists the hits for
-  the sound mix and window.VO where each voice line starts. Concept A: the dropdown runs through the film; the
-  paper plane is the one transition device (it flies across, the cut happens under it).
-  Colour: red = the agent acting, orange = you, green = done. Everything shown is the product's own UI and its
-  demo output (fictional applicant, fictional companies).
+  Job Hunter Agent, a 52 s launch film. 120 BPM: a beat is 0.5 s; cuts and hits sit on the grid, words land on the voice.
+  Frame = pure function of time: window.seek(t). render.py steps it frame by frame; window.SFX lists the hits, window.VO_AT
+  where each voice line starts and window.MUSIC the groove, the silences and the final hit, so the sound is built to match.
+  Concept A: the dropdown runs through the film; the paper plane is the transition between steps.
+  Colour: red = the agent acting, orange = you, green = done. Everything shown is the product's own UI and output on the demo
+  profile (fictional applicant, fictional companies); the application form is filled by the real filler (record_fill.py).
 -->
 <style>
 @font-face { font-family: R; font-weight: 700; src: url("fonts/Roobert-Bold.ttf"); }
 @font-face { font-family: R; font-weight: 600; src: url("fonts/Roobert-SemiBold.ttf"); }
 @font-face { font-family: R; font-weight: 400; src: url("fonts/Roobert-Regular.ttf"); }
 :root { --bg:#F3EEE6; --ink:#1C1917; --ink2:#57534E; --mute:#8A817A; --line:#DDD6CC; --card:#FFFFFF;
-        --red:#E5372A; --red-soft:#FDECEA; --orange:#F27420; --orange-soft:#FEF1E7; --green:#16A34A; --green-soft:#E8F6EC; }
+        --red:#E5372A; --red-soft:#FDECEA; --orange:#F27420; --orange-soft:#FEF1E7; --green:#16A34A; --green-soft:#E8F6EC; --blue:#2563EB; }
 html, body { margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--bg); }
 body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased; }
 #stage { position:absolute; inset:0; overflow:hidden; background:var(--bg); }
@@ -24,6 +24,7 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
 .label { position:absolute; left:64px; top:52px; font:600 22px "SF Mono", Menlo, monospace; letter-spacing:.12em; color:var(--ink2); }
 .label b { color:var(--red); font-weight:600; }
 .big { font-weight:700; font-size:132px; letter-spacing:-.04em; line-height:.98; }
+.mid { font-weight:700; font-size:92px; letter-spacing:-.035em; line-height:1.02; }
 .w { display:inline-block; overflow:hidden; vertical-align:top; padding:0 .02em .1em; margin-bottom:-.1em; }
 .w > i { display:inline-block; font-style:normal; }
 .red { color:var(--red); } .orange { color:var(--orange); } .green { color:var(--green); } .muted { color:var(--mute); }
@@ -34,7 +35,7 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
 .pill { position:absolute; display:flex; align-items:center; gap:14px; background:#fff; border:2px solid var(--line); border-radius:999px; padding:14px 26px; font-size:30px; font-weight:600; box-shadow:0 10px 24px rgba(60,40,20,.08); white-space:nowrap; }
 .file { position:absolute; width:560px; height:120px; background:#fff; border:2px solid var(--line); border-radius:22px; display:flex; align-items:center; gap:22px; padding:0 26px; box-sizing:border-box; box-shadow:0 22px 50px rgba(60,40,20,.14); font-size:28px; font-weight:600; }
 .file .pdf { width:60px; height:74px; border-radius:10px; background:var(--red); color:#fff; font-size:19px; font-weight:700; display:flex; align-items:center; justify-content:center; flex:none; }
-.row { display:flex; gap:22px; align-items:flex-start; padding:26px 0; border-top:2px solid #EFE9E1; font-size:32px; font-weight:600; line-height:1.25; }
+.row { display:flex; gap:22px; align-items:flex-start; padding:22px 0; border-top:2px solid #EFE9E1; font-size:31px; font-weight:600; line-height:1.25; }
 .row .plus { color:var(--green); font-weight:700; width:30px; flex:none; }
 .row .src { display:block; font:500 19px "SF Mono", Menlo, monospace; color:var(--mute); letter-spacing:.03em; margin-top:8px; font-weight:400; }
 .job { position:absolute; width:520px; height:370px; box-sizing:border-box; padding:38px 38px; }
@@ -44,179 +45,229 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
 .job .lo { font-size:24px; color:var(--mute); margin-top:12px; }
 .job svg { position:absolute; right:30px; top:28px; }
 .ring-n { position:absolute; right:30px; top:28px; width:120px; height:120px; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:700; }
-.field { margin-bottom:26px; }
-.field .lb { font-size:24px; color:var(--ink2); font-weight:600; margin-bottom:10px; }
-.field .dd { position:relative; height:76px; font-size:28px; border-radius:16px; box-shadow:none; }
-.field .val { position:absolute; left:28px; color:var(--ink); font-weight:600; }
-.field .ph { color:var(--mute); }
-.field .ok { color:var(--green); font-size:30px; font-weight:700; position:absolute; right:26px; }
-.hl { position:absolute; inset:-2px; border-radius:16px; border:3px solid var(--red); background:color-mix(in srgb, var(--red) 7%, transparent); }
+.src-card { position:absolute; width:520px; padding:34px 38px; box-sizing:border-box; }
+.src-card h4 { margin:0 0 18px; font-size:24px; letter-spacing:.1em; font-family:"SF Mono", Menlo, monospace; font-weight:600; }
+.src-card p { margin:0 0 12px; font-size:27px; font-weight:600; line-height:1.3; }
 .btn { position:absolute; display:flex; align-items:center; justify-content:center; gap:22px; border-radius:36px; font-size:64px; font-weight:700; letter-spacing:-.02em; }
 .toast { position:absolute; background:var(--ink); color:#fff; border-radius:20px; padding:22px 34px; font-size:30px; font-weight:600; display:flex; gap:16px; align-items:center; }
 .stage-chip { display:inline-flex; align-items:center; gap:12px; padding:14px 26px; border-radius:999px; font-size:28px; font-weight:600; background:#fff; border:2px solid var(--line); color:var(--mute); margin-right:18px; }
 .stage-chip i { width:14px; height:14px; border-radius:50%; background:var(--line); display:inline-block; }
 .stamp { position:absolute; border:8px solid var(--green); color:var(--green); border-radius:26px; padding:10px 40px; font-size:112px; font-weight:700; letter-spacing:-.02em; background:rgba(255,255,255,.85); }
+.browser { position:absolute; background:#fff; border-radius:22px; overflow:hidden; box-shadow:0 40px 100px rgba(60,40,20,.22), 0 0 0 2px #DDD6CC; }
+.browser .bar { height:56px; background:#F4F1EC; border-bottom:2px solid #E6E0D7; display:flex; align-items:center; gap:12px; padding:0 22px; }
+.browser .bar i { width:16px; height:16px; border-radius:50%; display:inline-block; }
+.browser .url { margin-left:24px; flex:1; height:34px; border-radius:10px; background:#fff; border:1px solid #E6E0D7; font:500 19px "SF Mono", Menlo, monospace; color:var(--ink2); display:flex; align-items:center; padding:0 16px; }
+.ffb { position:absolute; right:150px; top:96px; background:rgba(28,25,23,.9); color:#fff; border-radius:30px; padding:12px 24px; font-size:30px; font-weight:700; display:flex; gap:12px; align-items:center; }
+#cap { position:absolute; left:0; right:0; top:978px; text-align:center; font-size:38px; font-weight:600; letter-spacing:-.01em; color:var(--ink); }
+#cap span { background:rgba(243,238,230,.88); padding:6px 18px; border-radius:12px; }
 #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
 #plane, #trail { position:absolute; left:0; top:0; }
 </style></head>
 <body>
 <div id="stage">
 
-  <!-- 0 · HOOK: one dropdown, then the pile ------------------------------------------------------------------ -->
+  <!-- HOOK: one dropdown, then the pile --------------------------------------------------------------------- -->
   <section class="scene" id="s-hook"><div class="world">
     <div class="abs" id="hookA" style="left:150px; top:200px">
       <div class="big"><span class="w"><i>Job</i></span> <span class="w"><i>hunting</i></span></div>
       <div class="big"><span class="w"><i>is</i></span> <span class="w"><i>a</i></span> <span class="w"><i class="red">full-time</i></span> <span class="w"><i class="red">job.</i></span></div>
     </div>
     <div class="abs" id="hookField" style="left:980px; top:612px; width:640px">
-      <div id="hookLb" style="font-size:28px; color:var(--ink2); font-weight:600; margin-bottom:18px">How did you hear about us? <span class="red">*</span></div>
-      <div class="dd" id="hookDD" style="position:relative; width:640px">Select…<span class="chev">▾</span></div>
+      <div style="font-size:28px; color:var(--ink2); font-weight:600; margin-bottom:18px">How did you hear about us? <span class="red">*</span></div>
+      <div class="dd" style="position:relative; width:640px">Select…<span class="chev">▾</span></div>
     </div>
     <div id="pile"></div>
     <div class="abs" id="hookB" style="left:0; width:1920px; top:330px; text-align:center; visibility:hidden">
       <div class="big" style="font-size:168px"><span class="w"><i>With</i></span> <span class="w"><i class="red">zero</i></span> <span class="w"><i class="red">pay.</i></span></div>
     </div>
-  </div></section>
-
-  <!-- 1 · BOOM: the plane is born -------------------------------------------------------------------------- -->
-  <section class="scene" id="s-boom"><div class="world">
-    <svg class="abs" id="shock" width="1920" height="1080" style="left:0;top:0"><circle cx="960" cy="540" r="10" fill="none" stroke="var(--red)" stroke-width="10"/></svg>
-    <img class="abs" id="boomIcon" src="img/icon.webp" style="left:810px; top:390px; width:300px; height:300px; border-radius:68px; box-shadow:0 30px 80px rgba(229,55,42,.28)">
-  </div></section>
-
-  <!-- 2 · DUMP: files land in the drop zone, then the mic -------------------------------------------------- -->
-  <section class="scene" id="s-dump"><div class="world">
-    <div class="label">01 / <b>TELL IT EVERYTHING</b></div>
-    <div class="abs" id="dumpT" style="left:140px; top:300px">
-      <div class="big"><span class="w"><i>Dump</i></span></div>
-      <div class="big"><span class="w"><i class="red">everything</i></span></div>
-      <div class="big"><span class="w"><i>on</i></span> <span class="w"><i>it.</i></span></div>
+    <div class="abs" id="hookC" style="left:0; width:1920px; top:340px; text-align:center; visibility:hidden">
+      <div class="big" style="font-size:120px"><span class="w"><i>And</i></span> <span class="w"><i>about</i></span> <span class="w"><i>a</i></span> <span class="w"><i class="red">thousand</i></span></div>
+      <div class="big" style="font-size:120px"><span class="w"><i class="red">dropdowns.</i></span></div>
     </div>
-    <div class="card" id="zone" style="left:1030px; top:230px; width:720px; height:600px; border:4px dashed #CFC6BA; box-shadow:none; background:#FBF8F4">
+  </div></section>
+
+  <!-- MEET: the plane is born, and the name ------------------------------------------------------------------ -->
+  <section class="scene" id="s-boom"><div class="world">
+    <svg class="abs" id="shock" width="1920" height="1080" style="left:0;top:0"><circle cx="960" cy="400" r="10" fill="none" stroke="var(--red)" stroke-width="10"/></svg>
+    <img class="abs" id="boomIcon" src="img/icon.webp" style="left:830px; top:270px; width:260px; height:260px; border-radius:60px; box-shadow:0 30px 80px rgba(229,55,42,.28)">
+    <div class="abs" id="meetT" style="left:0; width:1920px; top:600px; text-align:center">
+      <div class="mid" style="font-size:54px; color:var(--ink2)"><span class="w"><i>Meet</i></span></div>
+      <div class="big" style="font-size:136px"><span class="w"><i>Job</i></span> <span class="w"><i>Hunter</i></span> <span class="w"><i class="red">Agent.</i></span></div>
+    </div>
+  </div></section>
+
+  <!-- 01 TELL: your whole life story, files, the mic ---------------------------------------------------------- -->
+  <section class="scene" id="s-tell"><div class="world">
+    <div class="label">01 / <b>TELL IT EVERYTHING</b></div>
+    <div class="abs" id="tellT" style="left:140px; top:250px; width:900px">
+      <div class="mid" style="font-size:44px; color:var(--red)"><span class="w"><i>Step</i></span> <span class="w"><i>one:</i></span></div>
+      <div class="big" style="font-size:118px"><span class="w"><i>Tell</i></span> <span class="w"><i>it</i></span> <span class="w"><i>your</i></span> <span class="w"><i>whole</i></span></div>
+      <div class="big red" style="font-size:118px"><span class="w"><i>life</i></span> <span class="w"><i>story.</i></span></div>
+    </div>
+    <div class="card" id="zone" style="left:1060px; top:200px; width:720px; height:640px; border:4px dashed #CFC6BA; box-shadow:none; background:#FBF8F4">
       <div class="abs" style="left:0; right:0; top:48px; text-align:center; font-size:38px; font-weight:700">Drop anything</div>
       <div class="abs" style="left:0; right:0; top:102px; text-align:center; font-size:24px; color:var(--mute)">Old résumés, references, papers, voice memos</div>
     </div>
     <div class="file" id="f1"><div class="pdf">PDF</div>Alex_Rivera_Resume_2021.pdf</div>
     <div class="file" id="f2"><div class="pdf">PDF</div>Reference_Letter_Fieldwork.pdf</div>
     <div class="file" id="f3"><div class="pdf">PDF</div>Thesis_Irrigation_Dashboards.pdf</div>
-    <div class="abs" id="badge" style="left:1700px; top:196px; width:84px; height:84px; border-radius:50%; background:var(--red); color:#fff; font-size:44px; font-weight:700; display:flex; align-items:center; justify-content:center">3</div>
+    <div class="abs" id="badge" style="left:1730px; top:166px; width:84px; height:84px; border-radius:50%; background:var(--red); color:#fff; font-size:44px; font-weight:700; display:flex; align-items:center; justify-content:center">3</div>
   </div></section>
 
   <section class="scene" id="s-mic"><div class="world">
     <div class="label">01 / <b>TELL IT EVERYTHING</b></div>
-    <div class="abs" id="micT" style="left:0; width:1920px; top:150px; text-align:center">
-      <div class="big"><span class="w"><i>Or</i></span> <span class="w"><i>just</i></span> <span class="w"><i class="orange">ramble.</i></span></div>
+    <div class="abs" id="micT" style="left:0; width:1920px; top:120px; text-align:center">
+      <div class="big"><span class="w"><i>Or</i></span> <span class="w"><i>just</i></span> <span class="w"><i class="orange">talk.</i></span></div>
     </div>
     <svg class="abs" id="rings" width="1920" height="1080" style="left:0;top:0">
-      <circle cx="960" cy="560" r="130" fill="none" stroke="var(--orange)" stroke-width="6"/>
-      <circle cx="960" cy="560" r="130" fill="none" stroke="var(--orange)" stroke-width="6"/>
-      <circle cx="960" cy="560" r="130" fill="none" stroke="var(--orange)" stroke-width="6"/>
+      <circle cx="960" cy="540" r="130" fill="none" stroke="var(--orange)" stroke-width="6"/>
+      <circle cx="960" cy="540" r="130" fill="none" stroke="var(--orange)" stroke-width="6"/>
+      <circle cx="960" cy="540" r="130" fill="none" stroke="var(--orange)" stroke-width="6"/>
     </svg>
-    <div class="abs" id="micB" style="left:830px; top:430px; width:260px; height:260px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; box-shadow:0 30px 70px rgba(242,116,32,.35)">
+    <div class="abs" id="micB" style="left:830px; top:410px; width:260px; height:260px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; box-shadow:0 30px 70px rgba(242,116,32,.35)">
       <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
     </div>
-    <div class="abs" id="wave" style="left:1150px; top:520px; height:80px; display:flex; gap:10px; align-items:center"></div>
-    <div class="abs" id="wave2" style="left:470px; top:520px; height:80px; display:flex; gap:10px; align-items:center; flex-direction:row-reverse"></div>
-    <div class="card" style="left:360px; top:790px; width:1200px; height:120px; display:flex; align-items:center; padding:0 40px; box-sizing:border-box; font-size:32px; font-weight:400">
-      <span id="said"></span><span id="caret" style="display:inline-block; width:3px; height:40px; background:var(--orange); margin-left:4px"></span>
+    <div class="abs" id="wave" style="left:1150px; top:500px; height:80px; display:flex; gap:10px; align-items:center"></div>
+    <div class="abs" id="wave2" style="left:470px; top:500px; height:80px; display:flex; gap:10px; align-items:center; flex-direction:row-reverse"></div>
+    <div class="card" style="left:360px; top:740px; width:1200px; height:116px; display:flex; align-items:center; padding:0 40px; box-sizing:border-box; font-size:31px; font-weight:400">
+      <span id="said"></span><span style="display:inline-block; width:3px; height:40px; background:var(--orange); margin-left:4px"></span>
+    </div>
+    <div class="abs" id="listen" style="left:0; width:1920px; top:880px; text-align:center">
+      <div class="mid" style="font-size:56px; color:var(--ink2)"><span class="w"><i>It's</i></span> <span class="w"><i>a</i></span> <span class="w"><i>great</i></span> <span class="w"><i>listener.</i></span></div>
     </div>
   </div></section>
 
-  <!-- 3 · STORYBOOK: what it learned --------------------------------------------------------------------- -->
   <section class="scene" id="s-book"><div class="world">
     <div class="label">01 / <b>TELL IT EVERYTHING</b></div>
-    <div class="card" id="book" style="left:300px; top:150px; width:1320px; height:800px; padding:44px 56px; box-sizing:border-box">
+    <div class="card" id="book" style="left:300px; top:110px; width:1320px; height:820px; padding:40px 56px; box-sizing:border-box">
       <div style="display:flex; justify-content:space-between; align-items:center">
-        <div style="font-size:40px; font-weight:700; letter-spacing:-.02em">Storybook updated</div>
+        <div style="font-size:40px; font-weight:700; letter-spacing:-.02em">Your storybook</div>
         <div class="mono" style="font-size:20px; color:var(--mute)">3 files · your note</div>
       </div>
-      <div style="height:8px; background:#F1ECE5; border-radius:8px; margin:22px 0 14px; overflow:hidden"><div id="bar" style="height:100%; width:0; background:var(--red)"></div></div>
+      <div style="height:8px; background:#F1ECE5; border-radius:8px; margin:20px 0 12px; overflow:hidden"><div id="bar" style="height:100%; width:0; background:var(--red)"></div></div>
       <div class="row" id="r1"><span class="plus">+</span><span>Taught a UX workshop at Pratt to 30 students.<span class="src">from your note</span></span></div>
       <div class="row" id="r2"><span class="plus">+</span><span>Cut the time to a watering decision from 74 to 31 seconds.<span class="src">from Thesis_Irrigation_Dashboards.pdf</span></span></div>
       <div class="row" id="r3"><span class="plus">+</span><span>Mentored two junior designers through their first year.<span class="src">from Reference_Letter_Fieldwork.pdf</span></span></div>
-      <div class="row" id="r4" style="color:var(--mute)"><span class="plus" style="color:var(--mute)">–</span><span><s>Nobody fell asleep.</s><span class="src">skipped · not a fact</span></span></div>
+      <div class="row" id="r4" style="color:var(--mute)"><span class="plus" style="color:var(--red)">×</span><span><s id="phd">PhD, Harvard</s><span class="src" style="color:var(--red)">not in your files · not on your résumé</span></span></div>
     </div>
   </div></section>
 
-  <!-- 4 · FIND: scored roles, and one that isn't --------------------------------------------------------- -->
+  <!-- 02 FIND: scored roles, and one that isn't ------------------------------------------------------------ -->
   <section class="scene" id="s-find"><div class="world">
     <div class="label">02 / <b>IT FINDS THE JOBS</b></div>
-    <div class="abs" id="findT" style="left:140px; top:150px">
-      <div class="big"><span class="w"><i>It</i></span> <span class="w"><i>finds</i></span> <span class="w"><i>the</i></span> <span class="w"><i class="red">jobs.</i></span></div>
+    <div class="abs" id="findT" style="left:110px; top:130px">
+      <div class="mid"><span class="w"><i>Every</i></span> <span class="w"><i>morning,</i></span> <span class="w"><i>it</i></span> <span class="w"><i>finds</i></span> <span class="w"><i>jobs</i></span></div>
+      <div class="mid"><span class="w"><i>that</i></span> <span class="w"><i class="red">actually</i></span> <span class="w"><i class="red">fit</i></span> <span class="w"><i class="red">you.</i></span></div>
     </div>
     <div id="jobs"></div>
   </div></section>
 
   <section class="scene" id="s-nope"><div class="world">
     <div class="label">02 / <b>IT FINDS THE JOBS</b></div>
-    <div class="card job" id="bad" style="left:660px; top:330px; width:600px; height:380px">
+    <div class="card job" id="bad" style="left:560px; top:300px; width:800px; height:420px">
       <div class="co"><span class="ini">M</span>Megacorp Inc.</div>
-      <div class="ti">Junior Designer<br><span style="font-size:30px; color:var(--ink2); font-weight:600">Entry level · 10+ years required</span></div>
-      <div class="lo">Anywhere, on-site, 6 days a week</div>
+      <div class="ti" style="font-size:52px">Junior Designer<br><span style="font-size:40px; color:var(--red)">Entry level · 10 years required</span></div>
+      <div class="lo">On-site, six days a week</div>
     </div>
-    <div class="abs" id="nopeT" style="left:1240px; top:180px; transform:rotate(-8deg)">
-      <div class="big red" style="font-size:190px"><span class="w"><i>Nope.</i></span></div>
+    <div class="abs" id="nopeT" style="left:1250px; top:150px; transform:rotate(-8deg)">
+      <div class="big red" style="font-size:200px"><span class="w"><i>Nope.</i></span></div>
     </div>
   </div></section>
 
-  <!-- 5 · FILL: every single dropdown, then the résumé ---------------------------------------------------- -->
+  <!-- 03 RÉSUMÉ + APPLICATION --------------------------------------------------------------------------------- -->
+  <section class="scene" id="s-res"><div class="world">
+    <div class="label">03 / <b>RÉSUMÉ + APPLICATION</b></div>
+    <div class="card src-card" id="sb" style="left:120px; top:250px">
+      <h4 class="red">YOUR STORYBOOK</h4>
+      <p>Redesigned the irrigation scheduler; retention 41% → 63%</p><p>24 field interviews, three states</p><p>Grid Map: 7 US regions, TypeScript</p>
+    </div>
+    <div class="card src-card" id="jd" style="left:120px; top:600px">
+      <h4 style="color:var(--blue)">JOB DESCRIPTION</h4>
+      <p>Northwind Energy · Product Designer, Grid Tools</p><p>Design tools for grid planners</p>
+    </div>
+    <div class="abs mid" id="plus" style="left:690px; top:470px; font-size:120px; color:var(--mute)">→</div>
+    <img class="abs" id="resume" src="img/resume.png" style="left:930px; top:70px; width:700px; border-radius:10px; box-shadow:0 40px 90px rgba(60,40,20,.25); border:1px solid var(--line)">
+    <div class="pill" id="tail" style="left:1010px; top:940px"><span class="green" style="font-weight:700">✓</span>Tailored to Northwind Energy · 1 page</div>
+  </div></section>
+
   <section class="scene" id="s-fill"><div class="world">
-    <div class="label">03 / <b>IT FILLS THE FORM</b></div>
-    <div class="abs" id="fillT" style="left:140px; top:250px">
-      <div class="big" style="font-size:150px"><span class="w"><i>Every.</i></span></div>
-      <div class="big" style="font-size:150px"><span class="w"><i>Single.</i></span></div>
-      <div class="big red" style="font-size:150px"><span class="w"><i>Dropdown.</i></span></div>
+    <div class="label">03 / <b>RÉSUMÉ + APPLICATION</b></div>
+    <div class="abs" id="fillT" style="left:110px; top:250px">
+      <div class="big" style="font-size:116px"><span class="w"><i>Every.</i></span></div>
+      <div class="big" style="font-size:116px"><span class="w"><i>Single.</i></span></div>
+      <div class="big red" style="font-size:116px"><span class="w"><i>Dropdown.</i></span></div>
     </div>
-    <div class="card" id="form" style="left:1020px; top:90px; width:760px; height:900px; padding:44px 48px; box-sizing:border-box"></div>
-    <img class="abs" id="resume" src="img/resume.png" style="left:1060px; top:120px; width:680px; border-radius:10px; box-shadow:0 40px 90px rgba(60,40,20,.25); border:1px solid var(--line)">
-    <div class="pill" id="tail" style="left:1180px; top:930px"><span class="green" style="font-weight:700">✓</span>Tailored to Northwind Energy</div>
+    <div class="browser" id="win" style="left:770px; top:70px; width:1040px; height:880px">
+      <div class="bar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><div class="url">boards.northwind.example/jobs/grid-tools</div></div>
+      <canvas id="fillCv" width="1040" height="824"></canvas>
+    </div>
+    <div class="ffb" id="ffb"><span>▶▶</span><span id="ffx">3×</span></div>
   </div></section>
 
-  <!-- 6 · YOU: the Approve button ------------------------------------------------------------------------ -->
+  <section class="scene" id="s-shot"><div class="world">
+    <div class="label">03 / <b>RÉSUMÉ + APPLICATION</b></div>
+    <div class="abs" id="shotT" style="left:110px; top:300px">
+      <div class="mid"><span class="w"><i>So</i></span> <span class="w"><i>you</i></span> <span class="w"><i>can</i></span> <span class="w"><i>check</i></span></div>
+      <div class="mid"><span class="w"><i class="orange">every</i></span> <span class="w"><i class="orange">answer.</i></span></div>
+    </div>
+    <div class="card" id="review" style="left:900px; top:110px; width:900px; height:840px; padding:40px 44px; box-sizing:border-box">
+      <div style="font-size:24px; color:var(--mute); font-weight:600">Ready for review</div>
+      <div style="font-size:40px; font-weight:700; letter-spacing:-.02em; margin-top:6px">Northwind Energy · Product Designer</div>
+      <div style="display:flex; gap:30px; margin-top:34px">
+        <div><img src="img/resume.png" style="width:330px; height:427px; object-fit:cover; object-position:top; border:2px solid var(--line); border-radius:10px"><div style="font-size:24px; font-weight:600; margin-top:10px">Résumé <span class="muted">· 1 page</span></div></div>
+        <div><img id="shotImg" src="img/shot.jpg" style="width:330px; height:427px; object-fit:cover; object-position:top; border:2px solid var(--line); border-radius:10px"><div style="font-size:24px; font-weight:600; margin-top:10px">Application <span class="muted">· filled form</span></div></div>
+      </div>
+      <div style="margin-top:30px; font-size:26px; color:var(--ink2)"><span class="green" style="font-weight:700">✓</span> 16 answers filled by the agent</div>
+    </div>
+    <img class="abs" id="shotBig" src="img/shot.jpg" style="left:770px; top:126px; width:1040px; border-radius:0 0 22px 22px">
+  </div></section>
+
+  <!-- 04 YOU DECIDE: the Approve button --------------------------------------------------------------------- -->
   <section class="scene" id="s-ok"><div class="world">
     <div class="label">04 / <b>YOU DECIDE</b></div>
-    <div class="abs" id="okT" style="left:0; width:1920px; top:170px; text-align:center">
-      <div class="big"><span class="w"><i>Nothing</i></span> <span class="w"><i>goes</i></span> <span class="w"><i>out</i></span></div>
-      <div class="big"><span class="w"><i>until</i></span> <span class="w"><i class="orange">you</i></span> <span class="w"><i class="orange">say</i></span> <span class="w"><i class="orange">so.</i></span></div>
+    <div class="abs" id="okT" style="left:0; width:1920px; top:160px; text-align:center">
+      <div class="big"><span class="w"><i>Nothing</i></span> <span class="w"><i>gets</i></span> <span class="w"><i>sent</i></span></div>
+      <div class="big"><span class="w"><i>until</i></span> <span class="w"><i>you</i></span> <span class="w"><i>hit</i></span> <span class="w"><i class="orange">Approve.</i></span></div>
     </div>
     <svg class="abs" id="okRing" width="1920" height="1080" style="left:0;top:0"><circle cx="910" cy="700" r="10" fill="none" stroke="var(--red)" stroke-width="10"/></svg>
     <div class="btn" id="approve" style="left:600px; top:610px; width:620px; height:180px; background:var(--red); color:#fff; box-shadow:0 30px 70px rgba(229,55,42,.35)">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>Approve</div>
     <div class="btn" id="reject" style="left:1260px; top:610px; width:340px; height:180px; background:#fff; border:3px solid var(--line); color:var(--ink2); font-size:56px">Reject</div>
-    <div class="toast" id="toast" style="left:690px; top:860px"><span style="color:#7BE39B">✓</span>Approved. Submitting now.</div>
+    <div class="toast" id="toast" style="left:690px; top:850px"><span style="color:#7BE39B">✓</span>Approved. Submitting now.</div>
     <svg class="abs" id="cursor" width="78" height="96" viewBox="0 0 22 28" style="left:0; top:0">
       <path d="M2 2 L2 21 L7 16.5 L10.5 24.5 L14 23 L10.6 15.2 L17.2 15.2 Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg>
   </div></section>
 
-  <!-- 7 · REPLY: who wrote back ------------------------------------------------------------------------- -->
+  <!-- 05 REPLIES ------------------------------------------------------------------------------------------- -->
   <section class="scene" id="s-reply"><div class="world">
     <div class="label">05 / <b>IT TRACKS REPLIES</b></div>
-    <div class="abs" id="replyT" style="left:140px; top:150px">
-      <div class="big" style="font-size:112px"><span class="w"><i>Then</i></span> <span class="w"><i>it</i></span> <span class="w"><i>tells</i></span> <span class="w"><i>you</i></span></div>
-      <div class="big" style="font-size:112px"><span class="w"><i>who</i></span> <span class="w"><i class="green">wrote</i></span> <span class="w"><i class="green">back.</i></span></div>
+    <div class="abs" id="replyT" style="left:140px; top:140px">
+      <div class="mid"><span class="w"><i>Then</i></span> <span class="w"><i>it</i></span> <span class="w"><i>watches</i></span> <span class="w"><i>your</i></span> <span class="w"><i>inbox</i></span></div>
+      <div class="mid"><span class="w"><i>and</i></span> <span class="w"><i>tells</i></span> <span class="w"><i>you</i></span> <span class="w"><i>who</i></span> <span class="w"><i class="green">wrote</i></span> <span class="w"><i class="green">back.</i></span></div>
     </div>
-    <div class="card" id="mail" style="left:300px; top:480px; width:1320px; height:300px; padding:40px 50px; box-sizing:border-box">
+    <div class="card" id="mail" style="left:300px; top:440px; width:1320px; height:300px; padding:40px 50px; box-sizing:border-box">
       <div style="display:flex; justify-content:space-between; font-size:26px; color:var(--ink2); font-weight:600"><span>Copperleaf Recruiting</span><span class="mono" style="font-size:20px; color:var(--mute)">9:41 AM</span></div>
       <div style="font-size:42px; font-weight:700; letter-spacing:-.02em; margin-top:16px">Copperleaf · Product Designer: let's talk</div>
       <div style="font-size:28px; color:var(--ink2); margin-top:16px">Hi Alex, thanks for applying! We'd love to set up a 30-minute intro call this week.</div>
     </div>
-    <div class="abs" id="chips" style="left:300px; top:830px">
+    <div class="abs" id="chips" style="left:300px; top:790px">
       <span class="stage-chip" id="c1"><i></i>Received</span><span class="stage-chip" id="c2"><i></i>Next step</span><span class="stage-chip" id="c3"><i></i>Interview</span>
     </div>
-    <div class="stamp" id="stamp" style="left:1230px; top:330px; transform:rotate(-9deg)">Interview!</div>
+    <div class="stamp" id="stamp" style="left:1230px; top:300px; transform:rotate(-9deg)">Interview!</div>
   </div></section>
 
-  <!-- 8 · END: two-step lockup -------------------------------------------------------------------------- -->
+  <!-- END: two-step lockup ---------------------------------------------------------------------------------- -->
   <section class="scene" id="s-end"><div class="world">
     <img class="abs" id="endIcon" src="img/icon.webp" style="left:870px; top:200px; width:180px; height:180px; border-radius:42px; box-shadow:0 24px 60px rgba(229,55,42,.22)">
-    <div class="abs" id="endName" style="left:0; width:1920px; top:420px; text-align:center; font-size:120px; font-weight:700; letter-spacing:-.04em">Job Hunter <span class="red">Agent</span></div>
+    <div class="abs" id="endName" style="left:0; width:1920px; top:420px; text-align:center">
+      <div class="big" style="font-size:120px"><span class="w"><i>Job</i></span> <span class="w"><i>Hunter</i></span> <span class="w"><i class="red">Agent</i></span></div></div>
     <div class="abs" id="endTag" style="left:0; width:1920px; top:590px; text-align:center; font-size:58px; font-weight:700; letter-spacing:-.02em">
       <span class="w"><i>It</i></span> <span class="w"><i>does</i></span> <span class="w"><i>the</i></span> <span class="w"><i>grind.</i></span>
       <span class="w"><i class="red">You</i></span> <span class="w"><i class="red">do</i></span> <span class="w"><i class="red">the</i></span> <span class="w"><i class="red">talking.</i></span></div>
     <div class="abs mono" id="endUrl" style="left:0; width:1920px; top:740px; text-align:center; font-size:28px; color:var(--ink2)">Open source · github.com/csy2443470971-ui/job-hunting-agent</div>
   </div></section>
 
-  <!-- the one transition device: the paper plane and its dashed trail -->
+  <div id="cap"><span></span></div>
   <svg id="trail" width="1920" height="1080"><path id="trailP" d="" fill="none" stroke="var(--red)" stroke-width="6" stroke-dasharray="18 16" stroke-linecap="round"/></svg>
   <svg id="plane" width="230" height="170" viewBox="0 0 190 140">
     <path d="M6 64 L184 6 L82 82 Z" fill="#fff" stroke="#1C1917" stroke-width="6" stroke-linejoin="round"/>
@@ -228,37 +279,68 @@ body { font-family:R, Helvetica, sans-serif; color:var(--ink); -webkit-font-smoo
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
-const B = .5;                                   // one beat at 120 BPM
-const VO_AT = { hook: .25, dump: 5.0, find: 10.0, nope: 12.7, fill: 14.5, ok: 18.0, reply: 21.0, end: 24.6 };
-const LINES = window.VO_LINES || [];            // word times from vo/lines.json (render.py injects them)
-const wordsOf = id => (LINES.find(l => l.id === id) || {words: []}).words
-  .filter(w => !/^[-–'’.,!?]/.test(w.w))            // Whisper splits "full-time" into "full" + "-time": keep one time per word
-  .map(w => VO_AT[id] + w.t0);
+const B = .5;                                    // one beat at 120 BPM
+const snap = (t, q = B / 2) => Math.round(t / q) * q;
+const LINES = window.VO_LINES || [];             // word times from vo/lines.json (render.py injects them)
+const FILL = window.FILL || { frames: [], fields: [] };
+const line = id => LINES.find(l => l.id === id) || { words: [], dur: 2 };
+const norm = s => s.toLowerCase().replace(/é/g, 'e').replace(/[^a-z0-9]/g, '');
+const tok = id => line(id).words.filter(w => norm(w.w));
+// when a word is said: the next token (from `from`) whose text starts like it; Whisper may split or merge words
+function wordAt(id, word, from = 0) {
+  const ws = tok(id), n = norm(word).replace(/^(one|two|three|ten)$/, m => ({ one: '1', two: '2', three: '3', ten: '10' })[m]);
+  for (let i = from; i < ws.length; i++) { const k = norm(ws[i].w); if (k && (k.startsWith(n.slice(0, 4)) || n.startsWith(k.slice(0, 4)))) return { i, t: ws[i].t0, e: ws[i].t1 }; }
+  return null;
+}
+
+// ---- where each voice line starts (on the beat grid) ------------------------------------------------------
+const VO_AT = { hook: .25, pile: 4.0, meet: 7.0, tell: 9.0, dump: 11.5, book: 17.75, find: 22.5, nope: 25.5, resume: 28.5, fill: 33.25, shot: 37.75 };
+const T_APPROVE = Math.ceil(Math.max(VO_AT.shot + line('shot').dur + .3 + ((wordAt('ok', 'approve') || { t: 2 }).t), 41.5));   // the press lands on the next downbeat
+VO_AT.ok = T_APPROVE - (wordAt('ok', 'approve') || { t: 2 }).t;
+VO_AT.reply = snap(VO_AT.ok + line('ok').dur + .4, B);
+const T_STILL = snap(VO_AT.reply + line('reply').dur + .3, B);
+VO_AT.end = T_STILL + 1.0;
+const T_END = VO_AT.end + line('end').dur + 1.4;
+const at = (id, word, from) => { const w = wordAt(id, word, from); return VO_AT[id] + (w ? w.t : 0); };
+
 const tl = gsap.timeline({ paused: true, defaults: { ease: 'expo.out', duration: .32 } });
 const SFX = [];
 const sfx = (t, type, gain = 1) => SFX.push({ t: +t.toFixed(3), type, gain });
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 
 function scene(id, t0, t1) { tl.set('#' + id, { visibility: 'visible' }, t0); tl.set('#' + id, { visibility: 'hidden' }, t1); }
-function land(sel, times, d = .3) {             // words rise into their masks, each on its own time
-  $$(sel + ' .w > i').forEach((el, i) => tl.fromTo(el, { yPercent: 115 }, { yPercent: 0, duration: d, ease: 'expo.out', immediateRender: true }, times[Math.min(i, times.length - 1)] - .04));
+// words rise into their masks as they are said
+function land(sel, id, { d = .3, minT = 0, lead = .04 } = {}) {
+  let from = 0, last = VO_AT[id];
+  $$(sel + ' .w > i').forEach(el => {
+    const w = wordAt(id, el.textContent, from); let t = last + .12;
+    if (w) { t = VO_AT[id] + w.t; from = w.i + 1; }
+    last = t;
+    tl.fromTo(el, { yPercent: 115 }, { yPercent: 0, duration: d, ease: 'expo.out', immediateRender: true }, Math.max(minT, t - lead));
+  });
 }
-function drift(id, t0, t1, z = 1.045) {         // a slow push keeps every hold alive
-  tl.fromTo('#' + id + ' .world', { scale: 1 }, { scale: z, duration: t1 - t0, ease: 'none', immediateRender: false }, t0);
-}
+function drift(id, t0, t1, z = 1.045) { tl.fromTo('#' + id + ' .world', { scale: 1 }, { scale: z, duration: t1 - t0, ease: 'none', immediateRender: false }, t0); }
 function pop(sel, t, from = { scale: .6, opacity: 0, y: 40 }, d = .45) {
   const { endRot = 0, ...f } = from;
   tl.fromTo(sel, f, { scale: 1, opacity: 1, y: 0, x: 0, rotation: endRot, duration: d, ease: 'back.out(1.8)', immediateRender: true }, t);
 }
 function flash(t, a = .85) { tl.fromTo('#flash', { opacity: a }, { opacity: 0, duration: .12, ease: 'none', immediateRender: false }, t); }
-function plane(t, y0 = 760, y1 = 300) {         // flies left → right in 0.55 s; the cut happens under it at t
+const PUNCH = [];
+const punch = (t, k) => PUNCH.push([t, k]);
+// captions for the lines whose words are not all on screen
+const CAPS = [];
+function cap(id, text, firstWord, lastWord, from = 0) {
+  const a = wordAt(id, firstWord, from), b = wordAt(id, lastWord, a ? a.i : from);
+  CAPS.push({ t0: VO_AT[id] + (a ? a.t : 0) - .05, t1: VO_AT[id] + (b ? b.e : line(id).dur) + .25, text });
+}
+function plane(t, y0 = 760, y1 = 300) {          // flies left → right in 0.55 s; the cut happens under it at t
   const P = $('#plane'), path = $('#trailP'), t0 = t - .3, dur = .55, o = { p: 0 };
-  const at = p => ({ x: -220 + p * 2360, y: y0 + (y1 - y0) * p - Math.sin(p * Math.PI) * 120 });
+  const pos = p => ({ x: -220 + p * 2360, y: y0 + (y1 - y0) * p - Math.sin(p * Math.PI) * 120 });
   tl.set([P, '#trail'], { visibility: 'visible' }, t0);
   tl.to(o, { p: 1, duration: dur, ease: 'power2.inOut', onUpdate() {
-    const q = at(o.p), q2 = at(Math.max(0, o.p - .02));
+    const q = pos(o.p), q2 = pos(Math.max(0, o.p - .02));
     gsap.set(P, { x: q.x - 115, y: q.y - 85, rotation: Math.atan2(q.y - q2.y, q.x - q2.x) * 57.3 + 18 });
-    let d = ''; for (let i = 0; i <= 40; i++) { const pp = Math.max(0, o.p - .45) + (o.p - Math.max(0, o.p - .45)) * i / 40, r = at(pp); d += (i ? 'L' : 'M') + r.x.toFixed(1) + ' ' + r.y.toFixed(1); }
+    let d = ''; for (let i = 0; i <= 40; i++) { const pp = Math.max(0, o.p - .45) + (o.p - Math.max(0, o.p - .45)) * i / 40, r = pos(pp); d += (i ? 'L' : 'M') + r.x.toFixed(1) + ' ' + r.y.toFixed(1); }
     path.setAttribute('d', d);
   } }, t0);
   tl.set([P, '#trail'], { visibility: 'hidden' }, t0 + dur + .02);
@@ -266,183 +348,235 @@ function plane(t, y0 = 760, y1 = 300) {         // flies left → right in 0.55 
 }
 gsap.set(['#plane', '#trail'], { visibility: 'hidden' });
 
-// ---- 0 · HOOK (0 – 4) ------------------------------------------------------------------------------------
-scene('s-hook', 0, 4.0);
-land('#hookA', wordsOf('hook').slice(0, 6));
-tl.set('#hookA', { visibility: 'hidden' }, 2.0); tl.set('#hookB', { visibility: 'visible' }, 2.0);
-land('#hookB', wordsOf('hook').slice(6).map(t => Math.max(t, 2.02)), .28);
+// ---- HOOK (0 – 6.5) --------------------------------------------------------------------------------------
+scene('s-hook', 0, 6.5);
 tl.fromTo('#hookField', { x: -340, y: -150, scale: 1.5 }, { x: 0, y: 0, scale: 1, duration: .6, ease: 'power3.inOut', immediateRender: true }, .12);   // frame 0: the field is the poster
+land('#hookA', 'hook');
+const T_PAY = snap(at('hook', 'with'), B / 2);
+tl.set('#hookA', { visibility: 'hidden' }, T_PAY); tl.set('#hookB', { visibility: 'visible' }, T_PAY);
+land('#hookB', 'hook', { minT: T_PAY + .01 });
 tl.to('#hookField', { y: -14, duration: .18, ease: 'power2.out', yoyo: true, repeat: 1 }, 1.0); sfx(1.0, 'tick', .7);
+tl.set('#hookB', { visibility: 'hidden' }, 4.0); tl.set('#hookC', { visibility: 'visible' }, 4.0);
+land('#hookC', 'pile', { minT: 4.0 });
 const LAB = ['Select…', 'Visa status', 'Years of experience', 'How did you hear?', 'Pronouns', 'Start date', 'Salary range', 'Choose one…',
-             'Degree', 'Country', 'Relocate?', 'Please select', 'Select…', 'Race / ethnicity', 'Select…', 'Notice period'];
-const SPOTS = [[80,80],[480,150],[900,70],[1330,120],[1560,200],[100,590],[470,640],[180,820],[620,860],[1000,840],[1400,900],[1640,780],
-               [60,960],[800,980],[1120,215],[300,240]];   // clear of the headline band (y 320–520) and the first dropdown
-const pile = $('#pile');
+             'Degree', 'Country', 'Relocate?', 'Please select', 'Select…', 'Race / ethnicity', 'Select…', 'Notice period', 'Select…', 'Choose…'];
+const SPOTS = [[80,80],[480,150],[900,70],[1330,120],[1560,200],[100,620],[470,700],[180,850],[620,880],[1000,840],[1400,900],[1640,780],
+               [60,960],[800,980],[1120,215],[300,240],[1500,640],[1300,980]];   // clear of the headline band (y 320–600) and the field
 LAB.forEach((l, i) => {
   const d = document.createElement('div'); d.className = 'dd'; d.style.cssText = `left:${SPOTS[i][0]}px; top:${SPOTS[i][1]}px; height:76px; font-size:26px; border-radius:16px; padding:0 24px`;
-  d.innerHTML = l + '<span class="chev">▾</span>'; pile.appendChild(d);
-  const t = 2.0 + i * .095; pop(d, t, { scale: .4, opacity: 0, y: 30, rotation: (i % 2 ? 7 : -6), endRot: (i % 3 - 1) * 3 }, .38);
+  d.innerHTML = l + '<span class="chev">▾</span>'; $('#pile').appendChild(d);
+  const t = 4.0 + i * .11; pop(d, t, { scale: .4, opacity: 0, y: 30, rotation: (i % 2 ? 7 : -6), endRot: (i % 3 - 1) * 3 }, .38);
   if (i % 2 === 0) sfx(t, 'tick', .55);
 });
-tl.to(['#pile .dd', '#hookField', '#hookB'], { x: (i, el) => 960 - (el.offsetLeft + el.offsetWidth / 2), y: (i, el) => 540 - (el.offsetTop + el.offsetHeight / 2),
-  scale: 0, opacity: 0, duration: .42, ease: 'power3.in', stagger: .008 }, 3.5);
-sfx(2.9, 'riser', .9);
-drift('s-hook', 0, 3.5, 1.03);
+tl.to(['#pile .dd', '#hookField', '#hookC'], { x: (i, el) => 960 - (el.offsetLeft + el.offsetWidth / 2), y: (i, el) => 540 - (el.offsetTop + el.offsetHeight / 2),
+  scale: 0, opacity: 0, duration: .42, ease: 'power3.in', stagger: .006 }, 6.02);
+sfx(5.4, 'riser', .9);
+drift('s-hook', 0, 6.0, 1.03);
 
-// ---- 1 · BOOM (4 – 5) ------------------------------------------------------------------------------------
-scene('s-boom', 4.0, 5.0);
-flash(4.0); sfx(4.0, 'boom', 1);
-tl.fromTo('#boomIcon', { scale: 0, rotation: -20 }, { scale: 1, rotation: 0, duration: .55, ease: 'back.out(2.2)', immediateRender: true }, 4.0);
-tl.fromTo('#shock circle', { attr: { r: 40 }, opacity: 1, strokeWidth: 16 }, { attr: { r: 900 }, opacity: 0, strokeWidth: 2, duration: .8, ease: 'expo.out', immediateRender: true }, 4.0);
-tl.to('#boomIcon', { scale: .2, x: 700, y: -260, rotation: 30, opacity: 0, duration: .35, ease: 'power3.in' }, 4.62);
-plane(5.0, 700, 320);
+// ---- MEET (6.5 – 9) ---------------------------------------------------------------------------------------
+scene('s-boom', 6.5, 9.0);
+flash(6.5); sfx(6.5, 'boom', 1); punch(6.5, .06);
+tl.fromTo('#boomIcon', { scale: 0, rotation: -20 }, { scale: 1, rotation: 0, duration: .55, ease: 'back.out(2.2)', immediateRender: true }, 6.5);
+tl.fromTo('#shock circle', { attr: { r: 40 }, opacity: 1, strokeWidth: 16 }, { attr: { r: 900 }, opacity: 0, strokeWidth: 2, duration: .8, ease: 'expo.out', immediateRender: true }, 6.5);
+land('#meetT', 'meet');
+drift('s-boom', 6.5, 9.0, 1.04);
+plane(9.0, 700, 320);
 
-// ---- 2 · DUMP (5 – 6.5) and the mic (6.5 – 8) --------------------------------------------------------------
-scene('s-dump', 5.0, 6.5);
-land('#dumpT', wordsOf('dump').slice(0, 4));
-const FROM = [[1900, -160, 18], [-300, 1150, -14], [1900, 1100, 10]], LANDAT = [[1110, 410, -5], [1100, 530, 3], [1110, 650, -2]];
+// ---- 01 TELL (9 – mic) ------------------------------------------------------------------------------------
+const T_MIC = snap(at('dump', 'or', 6) - .05, B);
+scene('s-tell', 9.0, T_MIC);
+land('#tellT', 'tell');
+const FROM = [[1900, -160, 18], [-300, 1150, -14], [1900, 1100, 10]], LANDAT = [[1110, 380, -5], [1100, 510, 3], [1110, 640, -2]];
+const FILE_AT = [snap(at('dump', 'old')), snap(at('dump', 'reference')), snap(at('dump', 'paper'))];
 ['#f1', '#f2', '#f3'].forEach((f, i) => {
-  const t = 5.0 + i * B;
+  const t = FILE_AT[i];
   tl.fromTo(f, { x: FROM[i][0], y: FROM[i][1], rotation: FROM[i][2], scale: 1.1 }, { x: LANDAT[i][0], y: LANDAT[i][1], rotation: LANDAT[i][2], scale: 1,
     duration: .4, ease: 'power3.out', immediateRender: true }, t - .25);
-  tl.fromTo(f, { scale: 1.06 }, { scale: 1, duration: .25, ease: 'back.out(3)', immediateRender: false }, t + .15);
-  sfx(t + .13, 'thump', .9);
+  sfx(t + .13, 'thump', .9); punch(t + .13, .015);
 });
-tl.to('#zone', { borderColor: '#F27420', backgroundColor: '#FEF1E7', duration: .15 }, 4.95);
-pop('#badge', 6.15, { scale: 0, opacity: 0, y: 0 }); sfx(6.15, 'pop', .8);
-drift('s-dump', 5.0, 6.5, 1.04);
+tl.to('#zone', { borderColor: '#F27420', backgroundColor: '#FEF1E7', duration: .15 }, FILE_AT[0] - .3);
+pop('#badge', FILE_AT[2] + .4, { scale: 0, opacity: 0, y: 0 }); sfx(FILE_AT[2] + .4, 'pop', .8);
+cap('dump', 'Old résumés, reference letters, that paper nobody read.', 'old', 'read');
+drift('s-tell', 9.0, T_MIC, 1.04);
 
-scene('s-mic', 6.5, 8.0);
-land('#micT', wordsOf('dump').slice(4).map(t => Math.max(t, 6.52)));
-pop('#micB', 6.5, { scale: .3, opacity: 0, y: 0 }, .4); sfx(6.5, 'thump', .7);
+scene('s-mic', T_MIC, 17.75);
+land('#micT', 'dump', { minT: T_MIC + .01 }); land('#listen', 'dump', { minT: T_MIC + .3 });
+pop('#micB', T_MIC, { scale: .3, opacity: 0, y: 0 }, .4); sfx(T_MIC, 'thump', .7); punch(T_MIC, .03);
 $$('#rings circle').forEach((c, i) => {
-  for (let k = 0; k < 3; k++) tl.fromTo(c, { attr: { r: 130 }, opacity: .7 }, { attr: { r: 330 }, opacity: 0, duration: B * 1.4, ease: 'power2.out', immediateRender: k === 0 && i === 0 ? true : false }, 6.6 + k * B + i * .16);
+  for (let k = 0; k < 4; k++) tl.fromTo(c, { attr: { r: 130 }, opacity: .7 }, { attr: { r: 330 }, opacity: 0, duration: B * 1.4, ease: 'power2.out', immediateRender: k === 0 && i === 0 }, T_MIC + .1 + k * B + i * .16);
 });
 for (const id of ['#wave', '#wave2']) for (let i = 0; i < 16; i++) {
   const b = document.createElement('i'); b.style.cssText = 'display:block; width:10px; height:16px; border-radius:6px; background:var(--orange)'; $(id).appendChild(b);
-  const o = { a: 0 }; tl.to(o, { a: 1, duration: 1.3, ease: 'none', onUpdate() { const t = 6.65 + o.a * 1.3; b.style.height = (16 + 64 * Math.abs(Math.sin(t * 9 + i * .9) * Math.sin(t * 3.1 + i * .37)) * Math.min(1, o.a * 6)).toFixed(1) + 'px'; } }, 6.65);
+  const o = { a: 0 }, d = 17.5 - T_MIC;
+  tl.to(o, { a: 1, duration: d, ease: 'none', onUpdate() { const t = T_MIC + o.a * d; b.style.height = (16 + 64 * Math.abs(Math.sin(t * 9 + i * .9) * Math.sin(t * 3.1 + i * .37)) * Math.min(1, o.a * 8)).toFixed(1) + 'px'; } }, T_MIC + .1);
 }
 const SAID = 'Oh, and I taught a UX workshop at Pratt last spring. Thirty students. Nobody fell asleep.';
-const said = { n: 0 }; tl.to(said, { n: SAID.length, duration: 1.15, ease: 'none', onUpdate() { $('#said').textContent = SAID.slice(0, Math.round(said.n)); } }, 6.75);
-drift('s-mic', 6.5, 8.0, 1.06);
+const said = { n: 0 }; tl.to(said, { n: SAID.length, duration: 1.8, ease: 'none', onUpdate() { $('#said').textContent = SAID.slice(0, Math.round(said.n)); } }, T_MIC + .3);
+drift('s-mic', T_MIC, 17.75, 1.06);
 
-// ---- 3 · STORYBOOK (8 – 10) -------------------------------------------------------------------------------
-scene('s-book', 8.0, 10.0);
-pop('#book', 8.0, { scale: .92, opacity: 0, y: 60 }, .4); sfx(8.0, 'thump', .7);
-tl.fromTo('#bar', { width: '0%' }, { width: '100%', duration: .5, ease: 'power2.out', immediateRender: true }, 8.0);
-['#r1', '#r2', '#r3'].forEach((r, i) => { tl.fromTo(r, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, 8.5 + i * B); sfx(8.5 + i * B, 'pop', .8); });
-tl.fromTo('#r4', { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, 9.5 - .01);
-tl.fromTo('#r4 s', { textDecorationColor: 'transparent' }, { textDecorationColor: '#8A817A', duration: .01, immediateRender: true }, 9.62); sfx(9.62, 'tick', .6);
-tl.fromTo('#s-book .world', { scale: 1, y: 0 }, { scale: 1.07, y: -30, duration: 2, ease: 'none', immediateRender: false }, 8.0);
-plane(10.0, 280, 820);
+// ---- the storybook (book) ---------------------------------------------------------------------------------
+scene('s-book', 17.75, 22.5);
+pop('#book', 17.75, { scale: .92, opacity: 0, y: 60 }, .4); sfx(17.75, 'thump', .7);
+tl.fromTo('#bar', { width: '0%' }, { width: '100%', duration: .6, ease: 'power2.out', immediateRender: true }, 17.75);
+['#r1', '#r2', '#r3'].forEach((r, i) => { const t = 18.25 + i * B; tl.fromTo(r, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, t); sfx(t, 'pop', .8); });
+const T_PHD = snap(at('book', 'phd'), B / 2);
+tl.fromTo('#r4', { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: .25, immediateRender: true }, T_PHD - .5);
+tl.fromTo('#phd', { textDecorationColor: 'transparent' }, { textDecorationColor: '#E5372A', duration: .01, immediateRender: true }, T_PHD); sfx(T_PHD, 'stamp', .7); punch(T_PHD, .03);
+cap('book', 'It turns all of it into your storybook.', 'it', 'storybook');
+cap('book', 'True stuff only. No surprise PhD.', 'true', 'phd');
+tl.fromTo('#s-book .world', { scale: 1, y: 0 }, { scale: 1.06, y: -24, duration: 4.75, ease: 'none', immediateRender: false }, 17.75);
+plane(22.5, 280, 820);
 
-// ---- 4 · FIND (10 – 12) and NOPE (12 – 14) ----------------------------------------------------------------
-scene('s-find', 10.0, 12.0);
-land('#findT', wordsOf('find'));
+// ---- 02 FIND (22.5 – 25.5) and NOPE (25.5 – 28.5) --------------------------------------------------------
+scene('s-find', 22.5, 25.5);
+land('#findT', 'find');
+cap('find', 'Step two.', 'step', 'two');
 const JOBS = [['T', 'Tidewater', 'Senior Product Designer', 'Boston, MA · $170K – $195K', 91, 'var(--green)'],
-              ['O', 'Open Circuit', 'Product Designer, Platform', 'Remote (US)', 88, 'var(--blue, #2563EB)'],
-              ['H', 'Halden Studio', 'Creative Technologist', 'New York, NY', 83, 'var(--blue, #2563EB)']];
+              ['O', 'Open Circuit', 'Product Designer, Platform', 'Remote (US)', 88, 'var(--blue)'],
+              ['H', 'Halden Studio', 'Creative Technologist', 'New York, NY', 83, 'var(--blue)']];
 JOBS.forEach((j, i) => {
-  const c = document.createElement('div'); c.className = 'card job'; c.style.cssText = `left:${110 + i * 580}px; top:470px`;
+  const c = document.createElement('div'); c.className = 'card job'; c.style.cssText = `left:${110 + i * 580}px; top:520px`;
   const C = 2 * Math.PI * 50;
   c.innerHTML = `<div class="co"><span class="ini">${j[0]}</span>${j[1]}</div><div class="ti">${j[2]}</div><div class="lo">${j[3]}</div>
     <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#EFE9E1" stroke-width="10"/>
     <circle class="arc" cx="60" cy="60" r="50" fill="none" stroke="${j[5]}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 60 60)"/></svg>
     <div class="ring-n"><span class="n">0</span></div>`;
   $('#jobs').appendChild(c);
-  const t = 10.0 + i * B;
-  pop(c, t, { scale: .7, opacity: 0, y: 160 }, .45); sfx(t, 'thump', .75);
+  const t = 23.5 + i * B;
+  pop(c, t, { scale: .7, opacity: 0, y: 160 }, .45); sfx(t, 'thump', .75); punch(t, .02);
   tl.fromTo(c.querySelector('.arc'), { attr: { 'stroke-dashoffset': C } }, { attr: { 'stroke-dashoffset': C * (1 - j[4] / 100) }, duration: .7, ease: 'power2.out', immediateRender: true }, t + .15);
   const o = { v: 0 }; tl.to(o, { v: j[4], duration: .7, ease: 'power2.out', onUpdate() { c.querySelector('.n').textContent = Math.round(o.v); } }, t + .15);
   sfx(t + .85, 'tick', .8);
 });
-tl.fromTo('#s-find .world', { scale: 1, x: 0 }, { scale: 1.06, x: 60, duration: 2, ease: 'none', immediateRender: false }, 10.0);
+tl.fromTo('#s-find .world', { scale: 1, x: 0 }, { scale: 1.05, x: 40, duration: 3, ease: 'none', immediateRender: false }, 22.5);
 
-scene('s-nope', 12.0, 14.0);
-pop('#bad', 12.0, { scale: .8, opacity: 0, y: 80 }, .4); sfx(12.0, 'thump', .7);
+scene('s-nope', 25.5, 28.5);
+pop('#bad', 25.5, { scale: .8, opacity: 0, y: 80 }, .4); sfx(25.5, 'thump', .7);
 (() => {
   const C = 2 * Math.PI * 50, card = $('#bad');
   card.insertAdjacentHTML('beforeend', `<svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#EFE9E1" stroke-width="10"/>
     <circle class="arc" cx="60" cy="60" r="50" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 60 60)"/></svg>
     <div class="ring-n red"><span class="n">0</span></div>`);
-  tl.fromTo(card.querySelector('.arc'), { attr: { 'stroke-dashoffset': C } }, { attr: { 'stroke-dashoffset': C * .88 }, duration: .5, ease: 'power2.out', immediateRender: true }, 12.2);
-  const o = { v: 0 }; tl.to(o, { v: 12, duration: .5, ease: 'power2.out', onUpdate() { card.querySelector('.n').textContent = Math.round(o.v); } }, 12.2);
+  tl.fromTo(card.querySelector('.arc'), { attr: { 'stroke-dashoffset': C } }, { attr: { 'stroke-dashoffset': C * .88 }, duration: .6, ease: 'power2.out', immediateRender: true }, 25.75);
+  const o = { v: 0 }; tl.to(o, { v: 12, duration: .6, ease: 'power2.out', onUpdate() { card.querySelector('.n').textContent = Math.round(o.v); } }, 25.75);
 })();
-land('#nopeT', wordsOf('nope').map(t => t + .02), .22); sfx(12.72, 'stamp', .9);
-tl.to('#bad', { x: 1500, y: -140, rotation: 28, duration: .38, ease: 'power3.in' }, 13.0); sfx(13.0, 'swipe', .9);
-tl.to('#nopeT', { scale: 1.08, duration: .2, ease: 'power2.out', yoyo: true, repeat: 1 }, 13.25);
-plane(14.0, 820, 260);
+const T_NOPE = at('nope', 'nope');
+land('#nopeT', 'nope', { d: .22 }); sfx(T_NOPE, 'stamp', .9); punch(T_NOPE, .04);
+cap('nope', 'Entry level, ten years required?', 'entry', 'required');
+const T_FLICK = snap(T_NOPE + .45, B);
+tl.to('#bad', { x: 1500, y: -140, rotation: 28, duration: .38, ease: 'power3.in' }, T_FLICK); sfx(T_FLICK, 'swipe', .9);
+plane(28.5, 820, 260);
 
-// ---- 5 · FILL (14 – 18) ---------------------------------------------------------------------------------
-scene('s-fill', 14.0, 18.0);
-const FIELDS = [['Location', 'Brooklyn, NY'], ['Authorized to work in the US?', 'Yes'], ['Will you need sponsorship?', 'No'],
-                ['How did you hear about us?', 'Company website'], ['Gender', 'Prefer not to say'], ['Earliest start date', 'Within 2 weeks']];
-FIELDS.forEach(([lb, v], i) => {
-  const f = document.createElement('div'); f.className = 'field';
-  f.innerHTML = `<div class="lb">${lb} <span class="red">*</span></div><div class="dd"><span class="ph">Select…</span><span class="val">${v}</span><span class="chev">▾</span><span class="ok">✓</span><div class="hl"></div></div>`;
-  $('#form').appendChild(f);
-  const t = 14.25 + i * .25;
-  tl.fromTo(f.querySelector('.hl'), { opacity: 0 }, { opacity: 1, duration: .05, ease: 'none', immediateRender: true }, t - .06);
-  tl.to(f.querySelector('.hl'), { opacity: 0, duration: .25, ease: 'power2.out' }, t + .08);
-  tl.fromTo(f.querySelector('.ph'), { opacity: 1 }, { opacity: 0, duration: .04, immediateRender: true }, t);
-  tl.fromTo(f.querySelector('.val'), { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: .22, immediateRender: true }, t);
-  tl.fromTo(f.querySelector('.chev'), { opacity: 1 }, { opacity: 0, duration: .04, immediateRender: true }, t);
-  tl.fromTo(f.querySelector('.ok'), { opacity: 0, scale: .2 }, { opacity: 1, scale: 1, duration: .3, ease: 'back.out(3)', immediateRender: true }, t + .02);
-  sfx(t, 'tick', .9);
-});
-pop('#form', 14.0, { scale: .9, opacity: 0, y: 80 }, .35);
-land('#fillT', wordsOf('fill').map(t => t - .02), .24);
-['Every', 'Single', 'Dropdown'].forEach((_, i) => sfx(wordsOf('fill')[i], 'thump', .55));
-tl.fromTo('#resume', { y: 1100, rotation: 6, opacity: 1 }, { y: 0, rotation: -3, duration: .42, ease: 'power3.out', immediateRender: true }, 16.0 - .2); sfx(16.0, 'boomlite', .9);
-tl.to('#form', { scale: .94, opacity: .5, duration: .3 }, 16.0);
-pop('#tail', 16.5, { scale: .5, opacity: 0, y: 30 }); sfx(16.5, 'pop', .8);
-tl.fromTo('#s-fill .world', { scale: 1 }, { scale: 1.05, duration: 4, ease: 'none', immediateRender: false }, 14.0);
-plane(18.0, 300, 760);
+// ---- 03 RÉSUMÉ (28.5 – 33.25) ------------------------------------------------------------------------------
+scene('s-res', 28.5, 33.25);
+cap('resume', 'Step three: for each job, it writes a résumé', 'step', 'resume');
+cap('resume', 'from your storybook and the job description.', 'from', 'description', 8);
+pop('#sb', 28.75, { scale: .8, opacity: 0, x: -200 }, .4); sfx(28.75, 'thump', .7);          // what goes in first, then what comes out
+pop('#jd', 29.25, { scale: .8, opacity: 0, x: -200 }, .4); sfx(29.25, 'thump', .7);
+tl.fromTo('#plus', { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: .3, immediateRender: true }, 29.75);
+tl.fromTo('#resume', { y: 1100, rotation: 6 }, { y: 0, rotation: -2, duration: .42, ease: 'power3.out', immediateRender: true }, snap(at('resume', 'writes')) - .2);
+sfx(snap(at('resume', 'writes')), 'boomlite', .9); punch(snap(at('resume', 'writes')), .04);
+pop('#tail', 32.0, { scale: .5, opacity: 0, y: 30 }); sfx(32.0, 'pop', .8);
+drift('s-res', 28.5, 33.25, 1.04);
 
-// ---- 6 · YOU DECIDE (18 – 21) ----------------------------------------------------------------------------
-scene('s-ok', 18.0, 21.0);
-land('#okT', wordsOf('ok'));
-pop('#approve', 18.1, { scale: .7, opacity: 0, y: 100 }, .45); pop('#reject', 18.25, { scale: .7, opacity: 0, y: 100 }, .45); sfx(18.1, 'thump', .6);
-tl.fromTo('#cursor', { x: 1700, y: 1100 }, { x: 1180, y: 860, duration: .8, ease: 'power2.inOut', immediateRender: true }, 18.7);   // human: in-out, a pause, then the press
-tl.to('#cursor', { x: 930, y: 710, duration: .55, ease: 'power3.inOut' }, 19.4);
-tl.to('#approve', { y: -8, duration: .2, ease: 'power2.out' }, 19.75);
-tl.to('#approve', { scale: .93, y: 0, duration: .07, ease: 'power2.in' }, 19.95); tl.to('#cursor', { scale: .85, duration: .07 }, 19.95);
-tl.to('#approve', { scale: 1, duration: .35, ease: 'back.out(3)' }, 20.02); tl.to('#cursor', { scale: 1, duration: .2 }, 20.02);
-flash(20.0, .6); sfx(20.0, 'boom', 1);
-tl.fromTo('#okRing circle', { attr: { r: 60 }, opacity: 1, strokeWidth: 14 }, { attr: { r: 820 }, opacity: 0, strokeWidth: 2, duration: .8, ease: 'expo.out', immediateRender: true }, 20.0);
-pop('#toast', 20.15, { scale: .8, opacity: 0, y: 40 }, .35);
-tl.to('#reject', { opacity: .35, duration: .3 }, 20.05);
-drift('s-ok', 18.0, 21.0, 1.04);
-plane(21.0, 760, 300);
+// ---- the real filler at work (33.25 – 37.75) ---------------------------------------------------------------
+scene('s-fill', 33.25, 37.75);
+cap('fill', 'Then it fills out the whole application.', 'then', 'application');
+land('#fillT', 'fill');
+['every', 'single', 'dropdown'].forEach((w, i) => { const t = at('fill', w, 6); sfx(t, 'thump', .55); punch(t, .02); });
+pop('#win', 33.25, { scale: .9, opacity: 0, y: 80 }, .4); sfx(33.25, 'thump', .7);
+(() => {
+  // recording time → film time: the résumé upload, a jump over the 4 s the form takes to settle after it, then the fill at FFX×
+  const fr = FILL.frames, fl = FILL.fields, cv = $('#fillCv'), g = cv.getContext('2d'), imgs = fr.map(f => { const im = new Image(); im.src = f.f; return im; });
+  window.FILL_IMGS = imgs;
+  const first = (fl.find(e => e.id === 'first_name') || { t: 6 }).t, upload = (fl.find(e => e.id === 'resume') || { t: 2 }).t, endT = fr.length ? fr[fr.length - 1].t : 15;
+  const T0 = 33.5, T1 = 37.5, UP = .5, FFX = (endT - first) / (T1 - T0 - UP);
+  $('#ffx').textContent = (Math.round(FFX * 2) / 2) + '×';
+  const src = t => t < T0 ? upload - .2 : t < T0 + UP ? upload - .2 + (t - T0) : Math.min(endT, first + (t - T0 - UP) * FFX);
+  const SX = 230, SW = 820, SH = SW * 824 / 1040;                     // crop: the form column, 1.32× its page size
+  const focus = fl.filter(e => e.kind === 'focus' || e.id === 'resume');
+  const camY = s => {
+    let prev = 0, cur = 0, ts = -1;
+    for (const e of focus) { if (e.t > s) break; prev = cur; cur = Math.max(0, Math.min(1600 - SH, e.y - SH * .38)); ts = e.t; }
+    const p = ts < 0 ? 1 : Math.min(1, (s - ts) / (.35 * FFX));
+    return prev + (cur - prev) * (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
+  };
+  const o = { t: 0 };
+  tl.fromTo(o, { t: 33.25 }, { t: 37.75, duration: 4.5, ease: 'none', immediateRender: true, onUpdate() {
+    const s = src(o.t); let k = 0; while (k + 1 < fr.length && fr[k + 1].t <= s) k++;
+    const im = imgs[k]; if (!im || !im.complete) return;
+    g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+    g.drawImage(im, SX, camY(s), SW, SH, 0, 0, cv.width, cv.height);
+  } }, 33.25);
+  tl.fromTo('#ffb', { opacity: 0, scale: .8 }, { opacity: 1, scale: 1, duration: .2, immediateRender: true }, T0 + UP);
+  tl.to('#ffb', { opacity: 0, duration: .15 }, T1);
+  for (const e of fl.filter(e => e.kind === 'change')) {           // a tick for every answer the filler sets
+    const t = e.t <= upload + .1 ? T0 + .1 : T0 + UP + (e.t - first) / FFX;
+    if (t < T1) sfx(t, 'tick', .7);
+  }
+})();
+drift('s-fill', 33.25, 37.75, 1.03);
 
-// ---- 7 · REPLY (21 – 23.5) -------------------------------------------------------------------------------
-scene('s-reply', 21.0, 23.6);
-land('#replyT', wordsOf('reply'));
-pop('#mail', 21.1, { scale: .9, opacity: 0, y: 90 }, .4); sfx(21.1, 'thump', .6);
-[['#c1', 21.5, '#2563EB'], ['#c2', 22.0, '#F27420'], ['#c3', 22.5, '#16A34A']].forEach(([c, t, col]) => {
+// ---- the screenshot for review (37.75 – ok) ----------------------------------------------------------------
+const T_OK = VO_AT.ok - .25;
+scene('s-shot', 37.75, T_OK);
+cap('shot', 'And takes a screenshot', 'and', 'screenshot');
+flash(37.75, .95); sfx(37.75, 'shutter', 1); punch(37.75, .03);
+tl.fromTo('#shotBig', { opacity: 1, x: 0, y: 0, scale: 1 }, { opacity: 0, x: 150, y: 140, scale: .35, duration: .5, ease: 'power3.inOut', immediateRender: true }, 38.1);
+pop('#review', 38.25, { scale: .9, opacity: 0, y: 60 }, .4); sfx(38.25, 'thump', .6);
+land('#shotT', 'shot');
+drift('s-shot', 37.75, T_OK, 1.04);
+
+// ---- 04 YOU DECIDE (ok – reply) ------------------------------------------------------------------------------
+scene('s-ok', T_OK, VO_AT.reply);
+land('#okT', 'ok');
+pop('#approve', T_OK + .1, { scale: .7, opacity: 0, y: 100 }, .45); pop('#reject', T_OK + .25, { scale: .7, opacity: 0, y: 100 }, .45); sfx(T_OK + .1, 'thump', .6);
+tl.fromTo('#cursor', { x: 1700, y: 1100 }, { x: 1180, y: 860, duration: .8, ease: 'power2.inOut', immediateRender: true }, T_APPROVE - 1.6);   // human: in-out, a pause, then the press
+tl.to('#cursor', { x: 930, y: 710, duration: .55, ease: 'power3.inOut' }, T_APPROVE - .7);
+tl.to('#approve', { y: -8, duration: .2, ease: 'power2.out' }, T_APPROVE - .25);
+tl.to('#approve', { scale: .93, y: 0, duration: .07, ease: 'power2.in' }, T_APPROVE - .07); tl.to('#cursor', { scale: .85, duration: .07 }, T_APPROVE - .07);
+tl.to('#approve', { scale: 1, duration: .35, ease: 'back.out(3)' }, T_APPROVE); tl.to('#cursor', { scale: 1, duration: .2 }, T_APPROVE);
+flash(T_APPROVE, .6); sfx(T_APPROVE, 'boom', 1); punch(T_APPROVE, .06);
+tl.fromTo('#okRing circle', { attr: { r: 60 }, opacity: 1, strokeWidth: 14 }, { attr: { r: 820 }, opacity: 0, strokeWidth: 2, duration: .8, ease: 'expo.out', immediateRender: true }, T_APPROVE);
+pop('#toast', T_APPROVE + .15, { scale: .8, opacity: 0, y: 40 }, .35);
+tl.to('#reject', { opacity: .35, duration: .3 }, T_APPROVE + .05);
+drift('s-ok', T_OK, VO_AT.reply, 1.04);
+
+// ---- 05 REPLIES ------------------------------------------------------------------------------------------
+scene('s-reply', VO_AT.reply, T_STILL);
+land('#replyT', 'reply');
+pop('#mail', VO_AT.reply + .1, { scale: .9, opacity: 0, y: 90 }, .4); sfx(VO_AT.reply + .1, 'thump', .6);
+const T_STAMP = snap(at('reply', 'back') + .2, B);
+[['#c1', T_STAMP - 1.0, '#2563EB'], ['#c2', T_STAMP - .5, '#F27420'], ['#c3', T_STAMP, '#16A34A']].forEach(([c, t, col]) => {
   tl.to(c, { color: '#1C1917', borderColor: col, duration: .1 }, t); tl.to(c + ' i', { backgroundColor: col, scale: 1.4, duration: .2, ease: 'back.out(3)' }, t);
   sfx(t, 'tick', .8);
 });
-tl.fromTo('#stamp', { scale: 2.6, opacity: 0, rotation: -2 }, { scale: 1, opacity: 1, rotation: -9, duration: .22, ease: 'power4.in', immediateRender: true }, 22.5 - .2);
-tl.fromTo('#s-reply .world', { x: 0, y: 0 }, { x: 0, y: 10, duration: .06, ease: 'none', yoyo: true, repeat: 3, immediateRender: false }, 22.5);
-sfx(22.5, 'stamp', 1);
-drift('s-reply', 21.0, 23.5, 1.035);
-tl.to('#s-reply .world', { scale: .96, opacity: 0, duration: .3, ease: 'power2.in' }, 23.3);
+tl.fromTo('#stamp', { scale: 2.6, opacity: 0, rotation: -2 }, { scale: 1, opacity: 1, rotation: -9, duration: .22, ease: 'power4.in', immediateRender: true }, T_STAMP - .2);
+sfx(T_STAMP, 'stamp', 1); punch(T_STAMP, .05);
+drift('s-reply', VO_AT.reply, T_STILL, 1.035);
+tl.to('#s-reply .world', { scale: .96, opacity: 0, duration: .3, ease: 'power2.in' }, T_STILL - .2);
 
-// ---- 8 · END (23.6 – 27.5): a beat of stillness, then the two-step lockup ----------------------------------
-scene('s-end', 23.6, 27.6);
-pop('#endIcon', 24.0, { scale: 0, opacity: 0, y: 0 }, .5); sfx(24.0, 'hit', 1);
-tl.fromTo('#endName', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .4, immediateRender: true }, 24.3);
-land('#endTag', wordsOf('end'), .3);
-tl.fromTo('#endUrl', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .4, immediateRender: true }, 26.0);
-tl.set({}, {}, 27.5);
+// ---- END: a beat of stillness, then the two-step lockup -----------------------------------------------------
+scene('s-end', T_STILL + .1, T_END + 1);
+const T_MARK = T_STILL + .5;
+pop('#endIcon', T_MARK, { scale: 0, opacity: 0, y: 0 }, .5); sfx(T_MARK, 'hit', 1); punch(T_MARK, .03);
+land('#endName', 'end'); land('#endTag', 'end');
+tl.fromTo('#endUrl', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .4, immediateRender: true }, VO_AT.end + line('end').dur - .2);
+tl.set({}, {}, T_END);
 
+// captions, one at a time
+CAPS.sort((a, b) => a.t0 - b.t0).forEach((c, i, A) => {
+  const t1 = Math.min(c.t1, A[i + 1] ? A[i + 1].t0 : c.t1);
+  tl.call(() => { $('#cap span').textContent = c.text; $('#cap').style.visibility = 'visible'; }, null, c.t0);
+  tl.call(() => { if ($('#cap span').textContent === c.text) $('#cap').style.visibility = 'hidden'; }, null, t1);
+});
+$('#cap').style.visibility = 'hidden';
 // camera punches: the frame itself takes the hit
-for (const [t, k] of [[4.0, .06], [5.13, .015], [5.63, .015], [6.13, .015], [6.5, .03], [10.0, .02], [10.5, .02], [11.0, .02], [12.72, .04],
-                      [14.5, .02], [15.1, .02], [15.6, .03], [16.0, .04], [20.0, .06], [22.5, .05], [24.0, .03]])
-  tl.fromTo('#stage', { scale: 1 + k }, { scale: 1, duration: .28, ease: 'power3.out', immediateRender: false }, t);
+for (const [t, k] of PUNCH) tl.fromTo('#stage', { scale: 1 + k }, { scale: 1, duration: .28, ease: 'power3.out', immediateRender: false }, t);
+
 window.SFX = SFX; window.VO_AT = VO_AT; window.DUR = tl.duration();
+window.MUSIC = { groove: [6.5, T_STILL], gaps: [[6.25, 6.5], [T_APPROVE - .25, T_APPROVE], [T_STILL, T_MARK]], hit: T_MARK, intro: [[0, 4.0], [4.0, 6.0]] };
 window.seek = t => { tl.seek(Math.min(Math.max(t, .0001), tl.duration()), false); };   // .0001: sets placed at 0 render on frame 0
-window.ready = document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.decode().catch(() => 0)))).then(() => true);
+window.ready = document.fonts.ready.then(() => Promise.all([...document.images, ...(window.FILL_IMGS || [])].map(i => i.decode().catch(() => 0)))).then(() => true);
 </script>
 </body></html>

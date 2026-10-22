@@ -35,3 +35,11 @@ profile.example/uploads/
 video/motion/out/
 video/motion/vo/*.wav
 video/motion/fonts/
+video/motion/rec_fill/
+video/motion/img/fill/
+video/motion/img/shot.jpg
+video/motion/voices/*.wav
+video/motion/voices/*.png
+video/motion/voices/*.txt
+video/motion/voices/*.mp4
+video/motion/vo/raw/

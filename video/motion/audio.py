@@ -70,29 +70,29 @@ def reverb(x, d=1.1, mix=.18):
 
 CHORDS = [(57, [57, 60, 64]), (53, [53, 57, 60]), (48, [55, 60, 64]), (55, [55, 59, 62])]   # Am F C G (root, triad)
 music = np.zeros((N, 2)); drums = np.zeros((N, 2))
-GROOVE = (4.0, 23.5)
-GAPS = [(3.78, 4.0), (19.78, 20.0), (23.5, 24.0)]          # silence before the booms, and the beat of stillness
+M = cues["music"]                                          # from film.html: the groove, the silences before the booms, the final hit
+GROOVE = tuple(M["groove"]); GAPS = [tuple(g) for g in M["gaps"]]; HIT = M["hit"]
 in_gap = lambda t: any(a <= t < b for a, b in GAPS)
 
-steps = int(24.0 / (BEAT / 4))
+steps = int(HIT / (BEAT / 4))
 for s in range(steps):
     t = s * BEAT / 4; b4, beat = s % 4, s // 4
     if in_gap(t): continue
     bar = int(t // 2); root, triad = CHORDS[bar % 4]
     full = GROOVE[0] <= t < GROOVE[1]
     if full and b4 == 0: place(drums, kick(), t, .95)
-    if (full or t >= 2.0) and b4 == 0 and beat % 2 == 1: place(drums, clap(), t, .55, .05)
+    if (full or t >= GROOVE[0] - 4) and b4 == 0 and beat % 2 == 1: place(drums, clap(), t, .55, .05)
     if b4 == 2: place(drums, hat(open_=full and beat % 2 == 1), t, .22 if full else .16, .25)
-    elif full or t >= 2.0: place(drums, hat(), t, .09, -.2)
+    elif full or t >= GROOVE[0] - 4: place(drums, hat(), t, .09, -.2)
     if full and b4 in (0, 2): place(music, bass(note(root - 12), BEAT / 2 - .01), t, .5)
     if b4 == 2: place(music, stab([note(m + 12) for m in triad]), t, .17 if full else .12, -.15)
-music[: int(4.0 * SR)] += 0                                 # intro pad under the first 4 s
-place(music, pad([note(m) for m in CHORDS[0][1]], 2.0), 0.0, .12); place(music, pad([note(m) for m in CHORDS[1][1]], 1.8), 2.0, .12)
+for k in range(int(GROOVE[0] // 2)):                         # intro: pads under the hook, one chord per bar
+    place(music, pad([note(m) for m in CHORDS[k % 4][1]], 2.0 if (k + 1) * 2 < GROOVE[0] - .3 else GROOVE[0] - .3 - k * 2), k * 2.0, .12)
 
 # ending: one hit chord that rings out
-place(drums, kick(), 24.0, 1.0)
-place(music, reverb(pad([note(m) for m in (57, 60, 64, 71)], 3.4), 1.6, .3), 24.0, .22)
-place(music, stab([note(m + 12) for m in (57, 60, 64, 71)], .9), 24.0, .25)
+place(drums, kick(), HIT, 1.0)
+place(music, reverb(pad([note(m) for m in (57, 60, 64, 71)], min(4.5, DUR - HIT)), 1.6, .3), HIT, .22)
+place(music, stab([note(m + 12) for m in (57, 60, 64, 71)], .9), HIT, .25)
 
 # sidechain pump: everything but the drums breathes with the kick
 pump = np.ones(N)
@@ -123,6 +123,9 @@ def sfx(kind):
         x[: int(.4 * SR)] += lp(noise(.4), 1200) * env(.4, .001, 12) * .7
         x[: int(1.2 * SR) if big else int(.5 * SR)] += hp(noise(1.2 if big else .5), 5000) * env(1.2 if big else .5, .001, 3.5 if big else 7) * (.35 if big else .2)
         return x
+    if kind == "shutter":                                   # camera: two clicks and a short spring
+        x = np.zeros(int(.18 * SR)); a = hp(noise(.012), 2500) * env(.012, .0005, 300); x[: len(a)] += a; x[int(.07 * SR): int(.07 * SR) + len(a)] += a * .8
+        return x + over(np.zeros(int(.18 * SR)), bp(noise(.12), 1500, 6000) * env(.12, .001, 30) * .3)
     if kind == "stamp":
         return np.concatenate([sweep(180, 60, .2, 7) * env(.2, .001, 16) + bp(noise(.2), 600, 3000) * env(.2, .001, 45) * .6])
     raise KeyError(kind)
@@ -136,7 +139,7 @@ for c in cues["sfx"]:
         half = len(x) // 2
         place(fx, x[:half], c["t"], .55 * c["gain"], -.7); place(fx, x[half:], c["t"] + half / SR, .55 * c["gain"], .7)
     else:
-        place(fx, x, c["t"], {"tick": .35, "pop": .45, "thump": .7, "riser": .5, "boom": .9, "boomlite": .7, "hit": .8, "stamp": .8}[c["type"]] * c["gain"])
+        place(fx, x, c["t"], {"tick": .35, "pop": .45, "thump": .7, "riser": .5, "boom": .9, "boomlite": .7, "hit": .8, "stamp": .8, "shutter": .8}[c["type"]] * c["gain"])
 
 # ---- voice, and the duck --------------------------------------------------------------------------------
 vo = np.zeros((N, 2)); voenv = np.zeros(N)

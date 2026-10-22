@@ -30,6 +30,7 @@ def page_of(p):
     b = p.chromium.launch()
     pg = b.new_page(viewport={"width": W, "height": H}, device_scale_factor=1)
     pg.add_init_script("window.VO_LINES = " + (ROOT / "vo" / "lines.json").read_text())
+    pg.add_init_script("window.FILL = " + (ROOT / "img" / "fill.json").read_text())          # the real filler's recording
     errors = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.on("console", lambda m: m.type in ("error", "warning") and errors.append(m.text))
@@ -61,7 +62,7 @@ def full():
     with sync_playwright() as p:
         b, pg, errors = page_of(p)
         dur = pg.evaluate("window.DUR")
-        cues = {"dur": dur, "sfx": pg.evaluate("window.SFX"), "vo": pg.evaluate("window.VO_AT")}
+        cues = {"dur": dur, "sfx": pg.evaluate("window.SFX"), "vo": pg.evaluate("window.VO_AT"), "music": pg.evaluate("window.MUSIC")}
         (OUT / "cues.json").write_text(json.dumps(cues, indent=1))
         n = int(round(dur * FPS))
         ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", str(FPS), "-c:v", "mjpeg", "-i", "-",
