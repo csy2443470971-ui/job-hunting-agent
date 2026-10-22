@@ -27,3 +27,6 @@ video/*.mp4
 
 # storybook version snapshots (local undo history)
 .versions/
+
+# files dropped into the demo storybook
+profile.example/uploads/

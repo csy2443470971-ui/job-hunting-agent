@@ -1,7 +1,10 @@
-"""Storybook versions and "learn from a résumé you like".
+"""Storybook versions, "tell it everything" and "learn from a résumé you like".
 
 - snapshot(reason): saves the storybook before any change (manual save, applied fix, style learning).
 - restore_previous(): puts back the most recent snapshot ("Back to previous version"). Press again to go further back.
+- add_from(files, note): reads whatever the person drops in (old résumés, reference letters, papers, notes) plus what
+  they typed or said, and adds the facts about them as résumé lines. Material about someone else adds nothing; a
+  single résumé of someone else is treated as a style reference instead.
 - learn_from(file, prompt): reads a résumé you admire and rewrites your storybook's résumé lines in that style, using
   only your own facts. Runs line block by line block and reports progress, so the page can show it changing.
 """
@@ -98,6 +101,93 @@ def learn_from(reference_text: str, reference_name: str, prompt: str) -> None:
         STATUS["state"] = "done"
     except Exception as ex:  # keep what was done; the snapshot can undo it
         STATUS.update(state="error", error=str(ex)[:300])
+
+
+class Addition(BaseModel):
+    file: str = Field(description="02-experience.md for jobs, 03-projects.md for projects, papers, talks, teaching")
+    entry: str = Field(description="heading of an existing entry copied exactly, or a new heading in the same format "
+                                   "('Org · Title · Location · MM/YYYY - MM/YYYY' or 'Name · venue or link · year')")
+    context: str = Field(description="one plain sentence for a new entry; '' when adding to an existing one")
+    line: str = Field(description="one résumé-ready line stating only what the material says")
+    lenses: list[str] = Field(description="lens tags from 06-roles.md")
+    source: str = Field(description="file name the fact came from, or 'your note'")
+
+
+class Additions(BaseModel):
+    additions: list[Addition]
+    about_someone_else: list[str] = Field(description="file names that describe a different person (e.g. a résumé they admire)")
+
+
+def _lenses() -> set[str]:
+    f = config.MASTER_DIR / "06-roles.md"
+    return set(re.findall(r"\(`([a-z_]+)`\)", f.read_text(encoding="utf-8"))) if f.exists() else set()
+
+
+def _add_line(path: Path, entry: str, context: str, line: str) -> bool:
+    text = path.read_text(encoding="utf-8") if path.exists() else f"# {path.stem.split('-', 1)[-1].title()}\n"
+    if line.split(" [")[0] in text:
+        return False
+    lines = text.splitlines()
+    key = entry.split(" · ")[0].strip().lower()
+    at = next((i for i, l in enumerate(lines) if l.startswith("## ") and l[3:].split(" · ")[0].strip().lower() == key), None)
+    if at is None:
+        text = text.rstrip() + f"\n\n## {entry}\n\n" + (f"**Context.** {context}\n\n" if context else "") + f"**Résumé lines**\n- {line}\n"
+    else:
+        end = next((i for i in range(at + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+        last = max((i for i in range(at, end) if LINE_RE.match(lines[i])), default=None)
+        if last is None:
+            lines[end:end] = ["**Résumé lines**", f"- {line}", ""]
+        else:
+            lines.insert(last + 1, f"- {line}")
+        text = "\n".join(lines) + "\n"
+    path.write_text(text, encoding="utf-8")
+    return True
+
+
+def add_from(files: list[tuple[str, str]], note: str, person: str = "") -> None:
+    """Background job: add what the dropped files and the note say about the person. Updates STATUS as it goes."""
+    from .llm import _system
+    from .providers import structured
+    names = [n for n, _ in files]
+    STATUS.clear(); STATUS.update(state="running", mode="add", reference=" · ".join(names + (["your note"] if note.strip() else [])),
+                                  prompt=note, total=len(files) + 1, done=0, changes=[], current="")
+    snapshot(f"before adding from {', '.join(names) or 'your note'}")
+    task = ("Add what this material says about the person to their storybook. Use only facts the material states: never "
+            "guess numbers, titles, dates, degrees or tools. Skip anything the storybook already says. One fact per line, "
+            "résumé-ready, result first when the material gives one. In reference letters keep what the writer says the "
+            "person did, not the praise. A file about someone else adds nothing: list it in about_someone_else.")
+    try:
+        corpus = []
+        for name, text in files:
+            STATUS["current"] = f"Reading {name}"
+            corpus.append(f"<<<FILE {name}>>>\n{text[:30000]}")
+            STATUS["done"] += 1
+        STATUS["current"] = "Writing your story"
+        book = "\n\n".join(f"<<<{f.name}>>>\n{f.read_text(encoding='utf-8')}" for f in sorted(config.MASTER_DIR.glob("0[23]-*.md")))
+        body = (f"## The person\n{person or '(name not given)'}\n\n## Their note\n{note or '(none)'}\n\n"
+                f"## Their storybook now\n{book}\n\n## Material\n" + "\n\n".join(corpus))
+        res = structured(_system(task), body, Additions, effort="medium", max_tokens=6000)
+        ok = _lenses()
+        for a in res.additions:
+            f = config.MASTER_DIR / ("03-projects.md" if a.file.startswith("03") else "02-experience.md")
+            tags = [t for t in a.lenses if t in ok or t == "climate"]
+            if a.line.strip() and _add_line(f, a.entry.strip(), a.context.strip(), a.line.strip() + (f" [{', '.join(tags)}]" if tags else "")):
+                STATUS["changes"].append({"where": a.entry.split(" · ")[0], "before": "", "after": a.line.strip(), "why": f"from {a.source}"})
+        STATUS["done"] += 1
+        others = [t for n, t in files if n in res.about_someone_else]
+        if not STATUS["changes"] and len(others) == 1:   # one résumé they like and nothing about them: learn its style
+            restore_previous()
+            return learn_from(others[0], res.about_someone_else[0], note)
+        STATUS["state"] = "done"
+    except Exception as ex:  # keep what was done; the snapshot can undo it
+        STATUS.update(state="error", error=str(ex)[:300])
+
+
+def start_add_from(files: list[tuple[str, str]], note: str, person: str = "") -> bool:
+    if STATUS.get("state") == "running":
+        return False
+    threading.Thread(target=add_from, args=(files, note, person), daemon=True).start()
+    return True
 
 
 def start_learn_from(reference_text: str, reference_name: str, prompt: str) -> bool:

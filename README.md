@@ -18,7 +18,7 @@ application stops in the dashboard, where you approve it, edit it, or send it ba
 
 | # | Step | Who | Module | What happens |
 |---|---|---|---|---|
-| 01 | Read your files | agent | `agent/intake.py` | Old résumés, notes and voice memos in `inbox/` become a storybook draft. You edit it; nothing is merged for you. |
+| 01 | Read your files | agent | `agent/storybook.py`, `agent/intake.py` | Old résumés, reference letters, papers, notes and voice memos dropped on the Storybook page (or said into the mic) become résumé lines, each with its source; Back undoes them. Files in `inbox/` give a draft to edit instead. |
 | 02 | Find public postings | agent | `agent/sources/` | Public job boards (Greenhouse, Lever, Ashby) and Hacker News; a keyword filter drops obvious misses. |
 | 03 | Score the fit | agent | `agent/jev.py`, `agent/llm.py` | Jev (TypeSafe) rates every posting; a model reviews the best and picks the role lens. Weak fits are skipped. |
 | 04 | Build the résumé | agent | `agent/assemble.py`, `agent/resume/` | Storybook lines tagged for the role, one page, links embedded. Failed wording checks get one rewrite. |

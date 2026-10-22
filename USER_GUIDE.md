@@ -21,10 +21,12 @@ For Gmail: turn on 2-Step Verification, then Google Account → Security → App
 marked read, moved or deleted); you can revoke the app password any time.
 
 **1. Feed it everything. It reads, you decide.**
-Drop whatever you have into `inbox/`: old résumés, a LinkedIn PDF, portfolio text, cover letters you were proud of,
-even voice memos. (Yes, you can just talk. Ramble about your last job on a walk, save the recording, drop it in.
-It gets transcribed locally.) Then run `python -m agent.run intake`. You get a storybook draft back, and you edit it
-like a document. Nothing goes into your storybook until you put it there.
+Open the dashboard's **Storybook** page and drop whatever you have on *Drop anything*: old résumés, reference letters,
+papers, portfolio text, cover letters you were proud of, even voice memos. Or tap the mic and just talk. Hit Send.
+The agent adds what the material says about you as résumé lines, each shown with the file it came from, and invents
+nothing. Don't like what it added? *Back to previous version* undoes all of it. (Drop a résumé that isn't yours and
+it learns that résumé's style instead.) Prefer a draft to edit by hand? Put the files in `inbox/` and run
+`python -m agent.run intake`.
 
 **2. A storybook is a story, not your autobiography.**
 Leave out what doesn't serve the story. If you're applying as a design engineer and as a strategist, those are two

@@ -152,8 +152,8 @@
   .composer .try { display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 12px; }
   .pill { all:unset; cursor:pointer; font-size:13px; padding:5px 11px; border:1px solid var(--line); border-radius:999px; color:var(--ink2); background:var(--surface); transition:all .12s; }
   .pill:hover { border-color:var(--orange); color:var(--orange); background:var(--orange-soft); }
-  .composer .bar { display:flex; align-items:center; gap:8px; border-top:1px solid var(--line2); padding-top:10px; }
-  .attached { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--ink2); background:var(--sunk); border-radius:8px; padding:4px 6px 4px 9px; max-width:260px; }
+  .composer .bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; border-top:1px solid var(--line2); padding-top:10px; }
+  .attached { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--ink2); background:var(--sunk); border-radius:8px; padding:4px 6px 4px 9px; max-width:220px; }
   .attached span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .attached button { all:unset; cursor:pointer; color:var(--mute); display:flex; } .attached button:hover { color:var(--red); }
   .mic { all:unset; cursor:pointer; width:34px; height:34px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:var(--ink2); border:1px solid var(--line); margin-left:auto; }
@@ -168,6 +168,7 @@
   .spin { width:14px; height:14px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--red); animation:sp .8s linear infinite; } @keyframes sp { to { transform:rotate(360deg); } }
   .panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:18px 20px; margin-bottom:16px; }
   .progress { height:5px; background:var(--sunk); border-radius:5px; overflow:hidden; margin:12px 0 8px; } .progress i { display:block; height:100%; background:linear-gradient(90deg, var(--orange), var(--red)); border-radius:5px; transition:width .4s; }
+  .change .plus { color:var(--green); font-weight:600; }
   .change { font-size:13.5px; padding:10px 0; border-top:1px solid var(--line2); } .change s { color:var(--faint); } .change .w { font-size:12px; color:var(--mute); margin-bottom:3px; }
   .sec { font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; font-weight:600; color:var(--mute); margin:28px 0 10px; }
   .sugg { display:flex; gap:16px; align-items:flex-start; } .sugg .x { flex:1; min-width:0; font-size:14px; } .sugg .x .w { font-size:12.5px; color:var(--mute); margin-bottom:4px; }
@@ -458,9 +459,9 @@ async function renderStorybook(p) {
   const doc = pbFile && pbFile !== '@standing' ? await api('/api/playbook/' + pbFile) : {text: ''};
   const pend = props.filter(x => x.status === 'pending');
   const running = st.state === 'running';
-  const progress = st.state && st.state !== 'idle' ? `<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><b>${running ? 'Adjusting your storybook' : st.state === 'done' ? 'Storybook updated' : 'Stopped'}</b><span style="font-size:12.5px;color:var(--mute)">${esc(st.reference || '')}</span></div>
+  const progress = st.state && st.state !== 'idle' ? `<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><b>${running ? (st.mode === 'add' ? 'Adding to your storybook' : 'Adjusting your storybook') : st.state === 'done' ? 'Storybook updated' : 'Stopped'}</b><span style="font-size:12.5px;color:var(--mute)">${esc(st.reference || '')}</span></div>
       <div class="progress"><i style="width:${st.total ? Math.round(100 * st.done / st.total) : 0}%"></i></div><div style="font-size:12.5px;color:var(--mute)">${running ? 'Now: ' + esc(st.current) : ''} ${st.error ? esc(st.error) : ''}</div>
-      ${(st.changes || []).slice(-8).reverse().map(c => `<div class="change"><div class="w">${esc(c.where)} · ${esc(c.why)}</div><s>${esc(c.before)}</s><div>${esc(c.after)}</div></div>`).join('')}</div>` : '';
+      ${(st.changes || []).slice(-8).reverse().map(c => `<div class="change"><div class="w">${esc(c.where)} · ${esc(c.why)}</div>${c.before ? `<s>${esc(c.before)}</s>` : ''}<div>${c.before ? '' : '<b class="plus">+</b> '}${esc(c.after)}</div></div>`).join('')}</div>` : '';
   const examples = ['Improve my storybook', 'Change how my résumé is written', 'Change my application strategy'];
   const label = f => f.replace(/^\d+-/, '').replace(/\.md$/, '').replace(/-/g, ' ').replace(/^readme$/i, 'Sources');
   p.innerHTML = `<div class="ph"><div><h1>Storybook</h1><p class="sub">Everything your agent knows about you. Tell it what to change.</p></div></div>
@@ -468,10 +469,10 @@ async function renderStorybook(p) {
       <div class="composer"><h2>What should your agent know?</h2>
         <textarea id="ask" placeholder="Type, or tap the mic and talk."></textarea>
         <div class="try">${examples.map(x => `<button class="pill" onclick="useEx('${x}')">${x}?</button>`).join('')}</div>
-        <div class="bar">${picked ? `<span class="attached">${I.clip}<span>${esc(picked.name)}</span><button onclick="picked=null;render()" title="Remove">${I.x}</button></span>` : ''}
+        <div class="bar">${picked.map((f, i) => `<span class="attached">${I.clip}<span>${esc(f.name)}</span><button onclick="picked.splice(${i},1);render()" title="Remove">${I.x}</button></span>`).join('')}
           <button class="mic" id="mic" title="Speak" onclick="speak()">${I.mic}</button>
           <button class="btn primary" ${running ? 'disabled' : ''} onclick="tellAgent()">Send${I.send}</button></div></div>
-      <div class="drop" id="drop"><div class="di">${I.up}</div><b>Drop a file</b><span>Any file: a résumé you like, notes, a portfolio<br>or <u>browse</u></span><input type="file" id="file" hidden></div>
+      <div class="drop" id="drop"><div class="di">${I.up}</div><b>Drop anything</b><span>Old résumés, references, papers, notes, voice memos<br>or <u>browse</u></span><input type="file" id="file" multiple hidden></div>
     </div>
     ${tell.thinking ? '<div class="status"><span class="spin"></span>Thinking about what you said…</div>' : ''}
     ${progress}
@@ -488,19 +489,22 @@ async function renderStorybook(p) {
   const drop = $('#drop'), file = $('#file');
   drop.onclick = () => file.click();
   drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave = () => drop.classList.remove('over');
-  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); };
-  file.onchange = () => pick(file.files[0]);
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files); };
+  file.onchange = () => pick(file.files);
   if (draft) $('#ask').value = draft;
   $('#ask').oninput = e => { draft = e.target.value; };
   if (tell.thinking) { clearInterval(poll); poll = setInterval(async () => { const t = await api('/api/agent/tell-status'); if (!t.thinking) { clearInterval(poll); if (tab === 'storybook') render(); } }, 3000); }
   if (running) { clearInterval(poll); poll = setInterval(async () => { const s = await api('/api/storybook/learn-status'); if (s.state !== 'running' || tab !== 'storybook') clearInterval(poll); if (tab === 'storybook') render(); }, 2500); }
 }
-let picked = null, draft = '';
+let picked = [], draft = '';
 function useEx(x) { const a = $('#ask'); a.value = x + ': '; draft = a.value; a.focus(); }
-function pick(f) { if (!f) return; const r = new FileReader(); r.onload = () => { picked = {name: f.name, data_b64: r.result}; render(); }; r.readAsDataURL(f); }
+async function pick(list) {
+  const read = f => new Promise(ok => { const r = new FileReader(); r.onload = () => ok({name: f.name, data_b64: r.result}); r.readAsDataURL(f); });
+  picked = picked.concat(await Promise.all(Array.from(list || []).map(read))); render();
+}
 async function tellAgent() {
-  const text = $('#ask').value.trim(); if (!text && !picked) return;
-  const res = await post('/api/agent/tell', {text, ...(picked || {})}); picked = null; draft = '';
+  const text = $('#ask').value.trim(); if (!text && !picked.length) return;
+  const res = await post('/api/agent/tell', {text, files: picked}); picked = []; draft = '';
   if (res && res.ok === false) alert(res.msg); render();
 }
 let rec = null;

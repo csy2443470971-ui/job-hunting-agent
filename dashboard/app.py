@@ -500,22 +500,48 @@ def learn_from(ref: Reference):
     return {"ok": start_learn_from(text, path.name, ref.prompt), "msg": "started"}
 
 
+class Upload(BaseModel):
+    name: str
+    data_b64: str
+
+
 class Tell(BaseModel):
     text: str = ""
     name: str = ""
     data_b64: str = ""
+    files: list[Upload] = []
 
 
 TELL = {}
+STYLE_ASK = re.compile(r"\b(style|tone|formatting|how my résumé is written|write like|written like|like \w+ (does|do|did|writes|wrote))\b", re.I)
 
 
 @app.post("/api/agent/tell")
 def tell(t: Tell):
-    """The Storybook chat box. With a file: learn from it (prompt = the message). Without: save the note and
-    propose patches in a separate process; they come back as suggested changes to approve."""
-    import subprocess, sys
-    if t.data_b64:
-        return learn_from(Reference(name=t.name or "reference.txt", data_b64=t.data_b64, prompt=t.text))
+    """The Storybook chat box. With files: one file plus a style request rewrites the storybook in its style; anything
+    else (old résumés, reference letters, papers, notes) is read and its facts added to the storybook. Without files:
+    save the note and propose patches in a separate process; they come back as suggested changes to approve."""
+    import base64, subprocess, sys
+    files = t.files or ([Upload(name=t.name or "reference.txt", data_b64=t.data_b64)] if t.data_b64 else [])
+    if len(files) == 1 and STYLE_ASK.search(t.text):
+        return learn_from(Reference(name=files[0].name, data_b64=files[0].data_b64, prompt=t.text))
+    if files:
+        from agent import config, setup_answers
+        from agent.intake import read_any
+        from agent.storybook import start_add_from
+        folder = config.PROFILE_DIR / "uploads"; folder.mkdir(exist_ok=True)
+        texts = []
+        for u in files:
+            path = folder / re.sub(r"[^A-Za-z0-9._-]+", "_", u.name)[:80]
+            path.write_bytes(base64.b64decode(u.data_b64.split(",")[-1]))
+            texts.append((u.name, read_any(path)))
+        if not any(x.strip() for _, x in texts):
+            return {"ok": False, "msg": "Couldn't read text from those files. Try PDF, DOCX, text or audio."}
+        sa = setup_answers.load()
+        person = " ".join(x for x in (sa.get("legal_first"), sa.get("legal_last")) if x)
+        if sa.get("preferred_name"):
+            person += f" (goes by {sa['preferred_name']})"
+        return {"ok": start_add_from([x for x in texts if x[1].strip()], t.text, person), "msg": "started"}
     if not t.text.strip():
         return {"ok": False, "msg": "Write something first."}
     from agent.learn import add_feedback
