@@ -44,3 +44,7 @@ video/motion/voices/*.txt
 video/motion/voices/*.mp4
 video/motion/vo/raw/
 video/motion/voices/jev/
+
+# the deck: brand font copy and the live editor stay local
+deck/fonts/
+deck/live-editor.js

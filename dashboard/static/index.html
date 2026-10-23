@@ -201,6 +201,21 @@
   .stg { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--c); border:1px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius:999px; padding:1px 8px; }
   .stg::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--c); }
   .chips { display:flex; gap:6px; flex-wrap:wrap; margin:-6px 0 14px; }
+  /* Applied: replies on top, three outcome boxes below */
+  .aw, .box { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:16px 18px; }
+  .aw-h { display:flex; align-items:center; gap:8px; margin-bottom:8px; } .aw-h h3 { margin:0; font-size:15px; font-weight:620; } .aw-h .n { font:500 12px/1 var(--mono); color:var(--faint); }
+  .aw-h .bd { width:9px; height:9px; border-radius:50%; }
+  .rp { all:unset; box-sizing:border-box; width:100%; display:flex; gap:12px; align-items:flex-start; padding:11px 8px; border-top:1px solid var(--line2); cursor:pointer; border-radius:10px; }
+  .rp:first-of-type { border-top:0; } .rp:hover { background:var(--hover); }
+  .rp-t { flex:1; min-width:0; font-size:13.5px; } .rp-t p { margin:3px 0 0; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rp .rs { color:var(--mute); font-size:12.5px; white-space:nowrap; }
+  .rp-empty { color:var(--mute); font-size:13.5px; padding:6px 2px; }
+  .boxes { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; margin-top:14px; }
+  .bi { all:unset; box-sizing:border-box; width:100%; display:grid; grid-template-columns:1fr auto; gap:2px 10px; padding:10px 8px; border-top:1px solid var(--line2); cursor:pointer; border-radius:10px; font-size:13.5px; }
+  .bi:first-of-type { border-top:0; } .bi:hover, .bi.on { background:var(--hover); }
+  .bi span { color:var(--mute); grid-column:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .bi .stg { grid-column:2; grid-row:1 / span 2; align-self:center; }
+  .ap-detail { display:flex !important; margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+  @media (max-width: 900px) { .boxes { grid-template-columns:1fr; } }
   .reply { padding:12px 0; border-top:1px solid var(--line2); font-size:13.5px; } .reply:first-child { border-top:0; }
   .reply .rh { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:4px; } .reply .rs { color:var(--mute); font-size:12.5px; }
   .reply p { margin:4px 0 0; color:var(--ink2); }
@@ -336,7 +351,6 @@ function stageChip(c) {
   const [l, col] = STAGE[s] || STAGE.applied;
   return `<span class="stg" style="--c:${col}">${l}</span>`;
 }
-let stageFilter = 'all';
 
 function queueItem(c) {
   const needs = (c.needs || []).length;
@@ -406,8 +420,7 @@ async function renderJobs(p) {
   $('#c-jobs').textContent = rv.length || '';
   const lists = {review: rv, todo: td, applied: ap};
   const names = {review: 'Waiting for review', todo: 'Not started', applied: 'Applied'};
-  const counts = {}; ap.forEach(c => { const s = stageOf(c); counts[s] = (counts[s] || 0) + 1; });
-  const list = sub === 'applied' && stageFilter !== 'all' ? ap.filter(c => stageOf(c) === stageFilter) : lists[sub];
+  const list = lists[sub];
   if (!list.some(c => keyOf(c) === sel[sub])) sel[sub] = list.length ? keyOf(list[0]) : null;
   const cur = list.find(c => keyOf(c) === sel[sub]);
   const sa = await api('/api/standing');
@@ -419,13 +432,27 @@ async function renderJobs(p) {
   p.innerHTML = `<div class="ph"><div><h1>Job applications</h1></div>
       <div class="seg" style="margin:0">${Object.keys(names).map(k => `<button class="${k === sub ? 'on' : ''}" onclick="sub='${k}';editing=false;mobileOpen=false;render()">${names[k]}<span class="n">${lists[k].length}</span></button>`).join('')}</div></div>
     ${banner}
-    ${sub === 'applied' && ap.length ? `<div class="chips">${[['all', 'All'], ['interview', 'Interview'], ['next_step', 'Next step'], ['offer', 'Offer'], ['confirmation', 'Received'], ['applied', 'Applied'], ['quiet', 'No reply 3+ wks'], ['rejected', 'Rejected']]
-        .filter(([k]) => k === 'all' || counts[k]).map(([k, l]) => `<button class="pill" style="${stageFilter === k ? 'border-color:var(--red);color:var(--red)' : ''}" onclick="stageFilter='${k}';render()">${l} ${k === 'all' ? ap.length : counts[k]}</button>`).join('')}</div>` : ''}
-    ${list.length ? `<div class="split ${mobileOpen ? 'open' : ''}"><div class="queue">${list.map(queueItem).join('')}</div>
+    ${sub === 'applied' && ap.length ? appliedBoard(ap, cur) : list.length ? `<div class="split ${mobileOpen ? 'open' : ''}"><div class="queue">${list.map(queueItem).join('')}</div>
       <section class="detail" id="detail">${cur ? (sub === 'todo' ? detailTodo(cur) : detailApp(cur, sub === 'applied')) : ''}</section></div>` : `<div class="empty">${empty}</div>`}`;
   if ($('.queue')) $('.queue').scrollTop = keepScroll;
   if (sub === 'todo' && cur) api(`/api/jobs/${cur.job_id}/description`).then(d => { const el = $('#jd'); if (el) el.textContent = d.text || 'No description saved.'; });
   if (td.some(x => x.preparing === 'running')) watchPrep();
+}
+
+// Applied: what came back on top, then where every application stands: heard back, rejected, no reply yet
+function appliedBoard(ap, cur) {
+  const bucket = c => { const s = stageOf(c); return ['next_step', 'interview', 'offer'].includes(s) ? 'heard' : s === 'rejected' ? 'rejected' : 'waiting'; };
+  const replies = ap.flatMap(c => (c.replies || []).map(r => ({ ...r, c }))).sort((a, b) => (b.at || '').localeCompare(a.at || '')).slice(0, 6);
+  const top = `<section class="aw"><div class="aw-h"><h3>Replies</h3><span class="n">${replies.length}</span></div>
+    ${replies.length ? replies.map(r => `<button class="rp" onclick="sel.applied=${r.c.app_id};render()">${stageChip({status: 'sent', stage: r.kind === 'other' ? 'applied' : r.kind})}
+      <div class="rp-t"><b>${esc(r.c.company)}</b> · ${esc(r.subject)}<p>${esc(r.snippet || '')}</p></div><span class="rs">${day(r.at)}</span></button>`).join('')
+      : '<div class="rp-empty">No replies yet. The inbox is checked once a day.</div>'}</section>`;
+  const boxes = [['heard', 'Heard back', 'var(--green)'], ['rejected', 'Rejected', 'var(--ink2)'], ['waiting', 'No reply yet', 'var(--faint)']].map(([k, l, col]) => {
+    const xs = ap.filter(c => bucket(c) === k);
+    return `<section class="box"><div class="aw-h"><span class="bd" style="background:${col}"></span><h3>${l}</h3><span class="n">${xs.length}</span></div>
+      ${xs.map(c => `<button class="bi ${cur && c.app_id === cur.app_id ? 'on' : ''}" onclick="sel.applied=${c.app_id};render()"><b>${esc(c.company)}</b><span>${esc(c.title)}</span>${stageChip(c)}</button>`).join('') || '<div class="rp-empty">None yet.</div>'}</section>`;
+  }).join('');
+  return top + `<div class="boxes">${boxes}</div>` + (cur ? `<section class="detail ap-detail" id="detail">${detailApp(cur, true)}</section>` : '');
 }
 
 function standingForm(sa) {
