@@ -211,20 +211,19 @@
   .stg::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--c); }
   .chips { display:flex; gap:6px; flex-wrap:wrap; margin:-6px 0 14px; }
   /* Applied: replies on top, three outcome boxes below */
-  .aw, .box { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:16px 18px; }
+  .aw { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:16px 18px; }
   .aw-h { display:flex; align-items:center; gap:8px; margin-bottom:8px; } .aw-h h3 { margin:0; font-size:15px; font-weight:620; } .aw-h .n { font:500 12px/1 var(--mono); color:var(--faint); }
   .aw-h .bd { width:9px; height:9px; border-radius:50%; }
-  .rp { all:unset; box-sizing:border-box; width:100%; display:flex; gap:12px; align-items:flex-start; padding:11px 8px; border-top:1px solid var(--line2); cursor:pointer; border-radius:10px; }
-  .rp:first-of-type { border-top:0; } .rp:hover { background:var(--hover); }
-  .rp-t { flex:1; min-width:0; font-size:13.5px; } .rp-t p { margin:3px 0 0; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rp .rs { color:var(--mute); font-size:12.5px; white-space:nowrap; }
   .rp-empty { color:var(--mute); font-size:13.5px; padding:6px 2px; }
-  .boxes { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; margin-top:14px; }
-  .bi { all:unset; box-sizing:border-box; width:100%; display:grid; grid-template-columns:1fr auto; gap:2px 10px; padding:10px 8px; border-top:1px solid var(--line2); cursor:pointer; border-radius:10px; font-size:13.5px; }
-  .bi:first-of-type { border-top:0; } .bi:hover, .bi.on { background:var(--hover); }
-  .bi span { color:var(--mute); grid-column:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .bi .stg { grid-column:2; grid-row:1 / span 2; align-self:center; }
+  .aw-h.big h3 { font-size:17px; } .two { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; } .two .col { min-width:0; }
+  .two .col { background:var(--page); border:1px solid var(--line2); border-radius:12px; padding:12px 12px 6px; }
+  .ai { all:unset; box-sizing:border-box; width:100%; display:block; padding:11px 10px; border-top:1px solid var(--line2); cursor:pointer; border-radius:10px; }
+  .ai:first-of-type { border-top:0; } .ai:hover, .ai.on { background:var(--hover); }
+  .ai .ah { display:flex; align-items:center; gap:8px; font-size:13.5px; min-width:0; } .ai .tt { color:var(--mute); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ai .dt { color:var(--mute); font-size:12px; white-space:nowrap; }
+  .ai .em { margin-top:5px; font-size:13px; } .ai .em b { font-weight:560; } .ai .em p { margin:2px 0 0; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  @media (max-width: 900px) { .two { grid-template-columns:1fr; } }
   .ap-detail { display:flex !important; margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
-  @media (max-width: 900px) { .boxes { grid-template-columns:1fr; } }
   .reply { padding:12px 0; border-top:1px solid var(--line2); font-size:13.5px; } .reply:first-child { border-top:0; }
   .reply .rh { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:4px; } .reply .rs { color:var(--mute); font-size:12.5px; }
   .reply p { margin:4px 0 0; color:var(--ink2); }
@@ -461,20 +460,23 @@ async function renderJobs(p) {
   if (td.some(x => x.preparing === 'running')) watchPrep();
 }
 
-// Applied: what came back on top, then where every application stands: heard back, rejected, no reply yet
+// Applied: one box of replies (heard back | rejected), then one box of applications with no reply yet; every item shows its email
 function appliedBoard(ap, cur) {
   const bucket = c => { const s = stageOf(c); return ['next_step', 'interview', 'offer'].includes(s) ? 'heard' : s === 'rejected' ? 'rejected' : 'waiting'; };
-  const replies = ap.flatMap(c => (c.replies || []).map(r => ({ ...r, c }))).sort((a, b) => (b.at || '').localeCompare(a.at || '')).slice(0, 6);
-  const top = `<section class="aw"><div class="aw-h"><h3>Replies</h3><span class="n">${replies.length}</span></div>
-    ${replies.length ? replies.map(r => `<button class="rp" onclick="sel.applied=${r.c.app_id};render()">${stageChip({status: 'sent', stage: r.kind === 'other' ? 'applied' : r.kind})}
-      <div class="rp-t"><b>${esc(r.c.company)}</b> · ${esc(r.subject)}<p>${esc(r.snippet || '')}</p></div><span class="rs">${day(r.at)}</span></button>`).join('')
-      : '<div class="rp-empty">No replies yet. The inbox is checked once a day.</div>'}</section>`;
-  const boxes = [['heard', 'Heard back', 'var(--green)'], ['rejected', 'Rejected', 'var(--ink2)'], ['waiting', 'No reply yet', 'var(--faint)']].map(([k, l, col]) => {
-    const xs = ap.filter(c => bucket(c) === k);
-    return `<section class="box"><div class="aw-h"><span class="bd" style="background:${col}"></span><h3>${l}</h3><span class="n">${xs.length}</span></div>
-      ${xs.map(c => `<button class="bi ${cur && c.app_id === cur.app_id ? 'on' : ''}" onclick="sel.applied=${c.app_id};render()"><b>${esc(c.company)}</b><span>${esc(c.title)}</span>${stageChip(c)}</button>`).join('') || '<div class="rp-empty">None yet.</div>'}</section>`;
-  }).join('');
-  return top + `<div class="boxes">${boxes}</div>` + (cur ? `<section class="detail ap-detail" id="detail">${detailApp(cur, true)}</section>` : '');
+  const latest = c => (c.replies || []).slice().sort((a, b) => (b.at || '').localeCompare(a.at || ''))[0];
+  const item = c => {
+    const r = latest(c);
+    const mail = r ? `<div class="em"><b>${esc(r.subject)}</b><p>${esc(r.snippet || '')}</p></div>`
+                   : `<div class="em"><p>${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}. No email back yet.</p></div>`;
+    return `<button class="ai ${cur && c.app_id === cur.app_id ? 'on' : ''}" onclick="sel.applied=${c.app_id};render()">
+      <div class="ah"><b>${esc(c.company)}</b><span class="tt">${esc(c.title)}</span>${stageChip(c)}<span class="dt">${r ? day(r.at) : ''}</span></div>${mail}</button>`;
+  };
+  const col = (k, label, color) => { const xs = ap.filter(c => bucket(c) === k);
+    return `<div class="col"><div class="aw-h"><span class="bd" style="background:${color}"></span><h3>${label}</h3><span class="n">${xs.length}</span></div>
+      ${xs.map(item).join('') || '<div class="rp-empty">None yet.</div>'}</div>`; };
+  const replies = `<section class="aw"><div class="aw-h big"><h3>Replies</h3></div><div class="two">${col('heard', 'Heard back', 'var(--green)')}${col('rejected', 'Rejected', 'var(--ink2)')}</div></section>`;
+  const waiting = `<section class="aw" style="margin-top:14px">${col('waiting', 'No reply yet', 'var(--faint)')}</section>`;
+  return replies + waiting + (cur ? `<section class="detail ap-detail" id="detail">${detailApp(cur, true)}</section>` : '');
 }
 
 function standingForm(sa) {
