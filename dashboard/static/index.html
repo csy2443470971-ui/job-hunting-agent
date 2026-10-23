@@ -210,20 +210,11 @@
   .stg { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--c); border:1px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius:999px; padding:1px 8px; }
   .stg::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--c); }
   .chips { display:flex; gap:6px; flex-wrap:wrap; margin:-6px 0 14px; }
-  /* Applied: a Replies box (heard back | rejected) above a No reply yet box */
-  .aw { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:16px 18px; }
-  .aw-h { display:flex; align-items:center; gap:8px; margin-bottom:8px; } .aw-h h3 { margin:0; font-size:15px; font-weight:620; } .aw-h .n { font:500 12px/1 var(--mono); color:var(--faint); }
-  .aw-h .bd { width:9px; height:9px; border-radius:50%; }
-  .rp-empty { color:var(--mute); font-size:13.5px; padding:6px 2px; }
-  .aw-h.big h3 { font-size:17px; } .two { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; } .two .col { min-width:0; }
-  .two .col { background:var(--page); border:1px solid var(--line2); border-radius:12px; padding:12px 12px 6px; }
-  .ai { all:unset; box-sizing:border-box; width:100%; display:block; padding:11px 10px; border-top:1px solid var(--line2); cursor:pointer; border-radius:10px; }
-  .ai:first-of-type { border-top:0; } .ai:hover, .ai.on { background:var(--hover); }
-  .ai .ah { display:flex; align-items:center; gap:8px; font-size:13.5px; min-width:0; } .ai .tt { color:var(--mute); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .ai .dt { color:var(--mute); font-size:12px; white-space:nowrap; }
-  .ai .em { margin-top:5px; font-size:13px; } .ai .em b { font-weight:560; } .ai .em p { margin:2px 0 0; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  @media (max-width: 900px) { .two { grid-template-columns:1fr; } }
-  .ap-detail { display:flex !important; margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+  /* Applied: group headings inside the list */
+  .qh { padding:16px 16px 4px; font-size:13px; font-weight:650; color:var(--ink); border-top:1px solid var(--line); display:flex; gap:6px; } .qh:first-child { border-top:0; } .qh span { font:500 12px var(--mono); color:var(--faint); align-self:center; }
+  .qh2 { padding:8px 16px 4px; font-size:12px; font-weight:600; color:var(--mute); display:flex; gap:6px; } .qh2 span { font-family:var(--mono); color:var(--faint); }
+  .qnone { padding:4px 16px 10px; font-size:12.5px; color:var(--faint); }
+  .qi .st .sj { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   .reply { padding:12px 0; border-top:1px solid var(--line2); font-size:13.5px; } .reply:first-child { border-top:0; }
   .reply .rh { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:4px; } .reply .rs { color:var(--mute); font-size:12.5px; }
   .reply p { margin:4px 0 0; color:var(--ink2); }
@@ -376,7 +367,7 @@ function stageChip(c) {
 function queueItem(c) {
   const needs = (c.needs || []).length;
   const st = sub === 'review' ? (needs ? `<div class="st o"><span class="dot"></span>${needs} ${needs === 1 ? 'question' : 'questions'} for you</div>` : `<div class="st r"><span class="dot"></span>Ready to approve</div>`)
-    : sub === 'applied' ? `<div class="st">${stageChip(c)}<span style="margin-left:6px">${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}</span></div>`
+    : sub === 'applied' ? appliedLine(c)
     : c.preparing === 'running' ? `<div class="st o"><span class="spin"></span>Preparing…</div>` : (c.location ? `<div class="st" style="display:block">${esc(c.location)}</div>` : '');
   return `<button class="qi ${keyOf(c) === sel[sub] ? 'on' : ''}" onclick="pickJob(${keyOf(c)})">${mono(c.company)}<div class="t"><div class="c">${esc(c.company)}</div><div class="ti">${esc(c.title)}</div>${st}</div>${ring(c, true)}</button>`;
 }
@@ -441,7 +432,7 @@ async function renderJobs(p) {
   $('#c-jobs').textContent = rv.length || '';
   const lists = {review: rv, todo: td, applied: ap};
   const names = {review: 'Waiting for review', todo: 'Not started', applied: 'Applied'};
-  const list = lists[sub];
+  const list = sub === 'applied' ? appliedOrder(ap) : lists[sub];
   if (!list.some(c => keyOf(c) === sel[sub])) sel[sub] = list.length ? keyOf(list[0]) : null;
   const cur = list.find(c => keyOf(c) === sel[sub]);
   const sa = await api('/api/standing');
@@ -453,30 +444,30 @@ async function renderJobs(p) {
   p.innerHTML = `<div class="ph"><div><h1>Job applications</h1></div>
       <div class="seg" style="margin:0">${Object.keys(names).map(k => `<button class="${k === sub ? 'on' : ''}" onclick="sub='${k}';editing=false;mobileOpen=false;render()">${names[k]}<span class="n">${lists[k].length}</span></button>`).join('')}</div></div>
     ${banner}
-    ${sub === 'applied' && ap.length ? appliedBoard(ap, cur) : list.length ? `<div class="split ${mobileOpen ? 'open' : ''}"><div class="queue">${list.map(queueItem).join('')}</div>
+    ${list.length ? `<div class="split ${mobileOpen ? 'open' : ''}"><div class="queue">${sub === 'applied' ? appliedQueue(list) : list.map(queueItem).join('')}</div>
       <section class="detail" id="detail">${cur ? (sub === 'todo' ? detailTodo(cur) : detailApp(cur, sub === 'applied')) : ''}</section></div>` : `<div class="empty">${empty}</div>`}`;
   if ($('.queue')) $('.queue').scrollTop = keepScroll;
   if (sub === 'todo' && cur) api(`/api/jobs/${cur.job_id}/description`).then(d => { const el = $('#jd'); if (el) el.textContent = d.text || 'No description saved.'; });
   if (td.some(x => x.preparing === 'running')) watchPrep();
 }
 
-// Applied: one box of replies (heard back | rejected), then one box of applications with no reply yet; every item shows its email
-function appliedBoard(ap, cur) {
-  const bucket = c => { const s = stageOf(c); return ['next_step', 'interview', 'offer'].includes(s) ? 'heard' : s === 'rejected' ? 'rejected' : 'waiting'; };
-  const latest = c => (c.replies || []).slice().sort((a, b) => (b.at || '').localeCompare(a.at || ''))[0];
-  const item = c => {
-    const r = latest(c);
-    const mail = r ? `<div class="em"><b>${esc(r.subject)}</b><p>${esc(r.snippet || '')}</p></div>`
-                   : `<div class="em"><p>${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}. No email back yet.</p></div>`;
-    return `<button class="ai ${cur && c.app_id === cur.app_id ? 'on' : ''}" onclick="sel.applied=${c.app_id};render()">
-      <div class="ah"><b>${esc(c.company)}</b><span class="tt">${esc(c.title)}</span>${stageChip(c)}<span class="dt">${r ? day(r.at) : ''}</span></div>${mail}</button>`;
-  };
-  const col = (k, label, color) => { const xs = ap.filter(c => bucket(c) === k);
-    return `<div class="col"><div class="aw-h"><span class="bd" style="background:${color}"></span><h3>${label}</h3><span class="n">${xs.length}</span></div>
-      ${xs.map(item).join('') || '<div class="rp-empty">None yet.</div>'}</div>`; };
-  const replies = `<section class="aw"><div class="aw-h big"><h3>Replies</h3></div><div class="two">${col('heard', 'Heard back', 'var(--green)')}${col('rejected', 'Rejected', 'var(--ink2)')}</div></section>`;
-  const waiting = `<section class="aw" style="margin-top:14px">${col('waiting', 'No reply yet', 'var(--faint)')}</section>`;
-  return replies + waiting + (cur ? `<section class="detail ap-detail" id="detail">${detailApp(cur, true)}</section>` : '');
+// Applied: the same list as the other tabs, grouped. Replies (heard back, then rejected) first, then no reply yet;
+// each item's status line is its latest email's subject
+const appliedBucket = c => { const st = stageOf(c); return ['next_step', 'interview', 'offer'].includes(st) ? 'heard' : st === 'rejected' ? 'rejected' : 'waiting'; };
+const latestReply = c => (c.replies || []).slice().sort((a, b) => (b.at || '').localeCompare(a.at || ''))[0];
+const appliedOrder = ap => ['heard', 'rejected', 'waiting'].flatMap(k => ap.filter(c => appliedBucket(c) === k));
+function appliedLine(c) {
+  const r = latestReply(c), col = (STAGE[stageOf(c)] || STAGE.applied)[1];
+  return r ? `<div class="st" style="display:flex"><span class="dot" style="background:${col}"></span><span class="sj">${esc(r.subject)}</span></div>`
+           : `<div class="st"><span class="dot" style="background:var(--faint)"></span>${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)} · no reply yet</div>`;
+}
+function appliedQueue(list) {
+  const items = k => list.filter(c => appliedBucket(c) === k).map(queueItem).join('') || '<div class="qnone">None yet.</div>';
+  const n = k => list.filter(c => appliedBucket(c) === k).length;
+  return `<div class="qh">Replies</div>
+    <div class="qh2">Heard back<span>${n('heard')}</span></div>${items('heard')}
+    <div class="qh2">Rejected<span>${n('rejected')}</span></div>${items('rejected')}
+    <div class="qh">No reply yet<span>${n('waiting')}</span></div>${items('waiting')}`;
 }
 
 function standingForm(sa) {
