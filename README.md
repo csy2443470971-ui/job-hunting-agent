@@ -75,6 +75,8 @@ in a visible browser; CAPTCHAs are left to you.
 Try it without your own data: `JHA_PROFILE=profile.example JHA_DB=data/demo.sqlite python scripts/demo.py`, then start the
 dashboard with the same two variables (a fictional applicant and fictional companies).
 
+On a Mac, `mac/build.sh --install` puts **Job Hunter Agent** in Applications: one window on the dashboard with its own Dock icon (it starts the dashboard for you, and opening it again brings the same window back).
+
 Other commands: `intake`, `discover`, `score`, `compose <job_id>`, `tailor <job_id>`, `cover <job_id>`, `prepare`,
 `submit --app <id>`, `outbox`, `status`.
 

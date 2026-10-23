@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>Job Hunter Agent</string>
+  <key>CFBundleDisplayName</key><string>Job Hunter Agent</string>
+  <key>CFBundleIdentifier</key><string>local.jobhunteragent.dashboard</string>
+  <key>CFBundleExecutable</key><string>JobHunterAgent</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>2.0</string>
+  <key>CFBundleVersion</key><string>2</string>
+  <key>LSMinimumSystemVersion</key><string>13.0</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSPrincipalClass</key><string>NSApplication</string>
+  <key>CFBundleURLTypes</key>
+  <array><dict>
+    <key>CFBundleURLName</key><string>local.jobhunteragent.open</string>
+    <key>CFBundleURLSchemes</key><array><string>jobhunter</string></array>
+  </dict></array>
+  <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
+  <key>NSMicrophoneUsageDescription</key><string>Voice input: talk to your agent instead of typing.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Voice input: what you say is turned into text for your agent.</string>
+  <key>JHARepo</key><string>@REPO@</string>
+  <key>JHAPython</key><string>@PYTHON@</string>
+  <key>JHAPort</key><string>8765</string>
+</dict>
+</plist>

@@ -48,3 +48,6 @@ video/motion/voices/jev/
 # the deck: brand font copy and the live editor stay local
 deck/fonts/
 deck/live-editor.js
+
+# the Mac app build
+mac/build/
