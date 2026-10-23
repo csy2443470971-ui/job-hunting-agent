@@ -17,7 +17,9 @@ SYSTEM = ("## House rules (docs/00-house-rules.md)\n…the one-page writing brie
 STORYBOOK_ADD = ("Add what this material says about the person to their storybook. Use only facts the material states: never "
                  "guess numbers, titles, dates, degrees or tools. Skip anything the storybook already says. One fact per line, "
                  "résumé-ready, result first when the material gives one. In reference letters keep what the writer says the "
-                 "person did, not the praise. A file about someone else adds nothing: list it in about_someone_else.")
+                 "person did, not the praise. Never turn a relative date ('last spring') into a year. A talk, award or press about a project is a line under that project. Don't add a degree as an entry "
+                 "or a line: the résumé takes education from the standing answers. A file about someone else adds nothing: list it in "
+                 "about_someone_else.")
 
 STORYBOOK_STYLE = ("Rewrite the person's résumé lines in the style of the reference résumé, following their instruction. "
                    "Borrow structure, rhythm, verbs and how impact is framed. Keep every fact, number and name the same; add nothing. "

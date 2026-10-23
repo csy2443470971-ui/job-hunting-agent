@@ -98,6 +98,15 @@ Open the app and press **Refresh** (bottom left): it updates the app itself, fin
 Or run `python -m agent.run daily` on a schedule (cron, launchd, Task Scheduler) to also write résumés and fill forms
 overnight; it never submits. Then review in **Job applications**.
 
+## Live demo
+
+Show the whole flow without anyone's real data. Click the account name at the top of the sidebar → **New demo account**.
+It starts empty, and Setup offers **Use the sample answers** and **Show the sample material**: a fictional applicant,
+Taylor Brooks, with a résumé, a reference letter, a capstone paper and a voice memo to drag in. Press Refresh and prepare a
+real posting: the résumé is built and the company's real form is filled up to Submit. A demo account never submits,
+never uploads a file to a company's site, and never sends or reads email. Switch back from the same menu; **Remove** deletes
+a demo account. Presenter's guide: [demo/README.md](demo/README.md).
+
 ## Not autopilot
 
 The agent runs on your judgement. Your storybook decides what can be said, your taste decides what goes out, and every
@@ -113,7 +122,8 @@ one page (`agent/resume/render.py`).
 
 `profile/` (storybook, standing answers, preferences), `data/` (the database and the agent's browser profile), `out/`,
 `inbox/` and `.env` are git-ignored and stay on your computer. `profile.example/` holds a fictional person so you can see
-the format. Several stories at once: keep one storybook per story under `profiles/` and pick one with `JHA_PROFILE`.
+the format. Several stories at once: keep one storybook per story under `profiles/` and switch between them in the app's
+account menu, or pick one with `JHA_PROFILE`. Each account has its own database and browser profile.
 
 Try it without your own data: `JHA_PROFILE=profile.example JHA_DB=data/demo.sqlite python scripts/demo.py`, then start
 the dashboard with the same two variables.

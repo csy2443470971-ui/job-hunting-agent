@@ -29,6 +29,26 @@ def _sections(path, keep: set | None = None) -> dict[str, list[tuple[str, set[st
     return {k: v for k, v in out.items() if v}
 
 
+YEAR_RE = re.compile(r"\b(?:(\d{1,2})/)?((?:19|20)\d\d)\b")
+
+
+def _headings(path) -> dict[str, dict]:
+    """'## Org · Title · Location · MM/YYYY - MM/YYYY' → that entry's role, location and dates. A new profile's
+    profile.yaml lists no entries; its storybook headings (written by Tell it everything) are the record."""
+    out = {}
+    for line in (path.read_text(encoding="utf-8").splitlines() if path.exists() else []):
+        if not line.startswith("## ") or "[fill" in line:
+            continue
+        parts = [x.strip() for x in line[3:].split(" · ")]
+        dates = next((x for x in parts[1:] if YEAR_RE.search(x)), "")
+        rest = [x for x in parts[1:] if x != dates]
+        m = YEAR_RE.search(dates)
+        out[parts[0]] = {"role": rest[0] if rest else "", "location": rest[1] if len(rest) > 1 else "", "dates": dates, "link": "",
+                         "start": f"{m.group(2)}-{int(m.group(1) or 1):02d}" if m else "0000",
+                         "pinned": bool(re.search(r"present|now|current", dates, re.I))}
+    return out
+
+
 def _linkify(text: str) -> tuple[str, str]:
     for name, url in (_p().get("project_links") or {}).items():
         if name in text:
@@ -44,7 +64,8 @@ def _words(text: str) -> set[str]:
 
 
 def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_projects: int = 4, posting_text: str = "", posting_title: str = "") -> dict:
-    prof = _p(); ENTRIES = prof.get("entries", {}); PROJECT_LINKS = prof.get("project_links", {})
+    prof = _p(); PROJECT_LINKS = prof.get("project_links", {})
+    ENTRIES = {**_headings(config.MASTER_DIR / "02-experience.md"), **prof.get("entries", {})}
     PINNED = [n for n, m in ENTRIES.items() if m.get("pinned")]
     exp = _sections(config.MASTER_DIR / "02-experience.md", set(ENTRIES))
     proj = _sections(config.MASTER_DIR / "03-projects.md")
@@ -117,9 +138,10 @@ def assemble(lens: str, sector: str | None = None, n_entries: int = 4, n_project
         projects.append({"name": name, "blurb": text, "link": PROJECT_LINKS.get(name, ""), "provenance": "master"})
         if len(projects) >= n_projects:
             break
-    return {"name": prof.get("name", ""), "headline": "", "email": prof.get("email", ""), "phone": prof.get("phone", ""),
-            "location": prof.get("location", ""), "links": [], "summary": "",
-            "experience": experience, "projects": projects, "education": prof.get("education", []),
+    who = config.person()
+    return {"name": who["name"], "headline": "", "email": who["email"], "phone": who["phone"],
+            "location": who["location"], "links": [], "summary": "",
+            "experience": experience, "projects": projects, "education": who["education"],
             "skills": skills_for(lens, posting_text), "diy_ratio": 0.0, "diy_notes": [], "tailoring_notes": [f"assembled from playbook lines for lens {lens}"]}
 
 

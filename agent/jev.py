@@ -42,7 +42,7 @@ def _lens_lines() -> str:
 def profile_state() -> str:
     prefs = config.preferences()
     prof = config.profile()
-    return (f"Candidate: {prof.get('name', '')}. {prof.get('summary_for_ranker', '')}"
+    return (f"Candidate: {config._name()}. {prof.get('summary_for_ranker', '')}"
             "\n\nRole lenses and experience:\n" + _lens_lines() +
             "\n\nPreferences (yaml as json): " + json.dumps(prefs.get("targets", {}), ensure_ascii=False) +
             " Eligibility: " + json.dumps(prefs.get("eligibility", {}), ensure_ascii=False))

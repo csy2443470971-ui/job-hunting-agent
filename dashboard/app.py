@@ -1,8 +1,27 @@
 """Local review dashboard.  python -m dashboard.app  ->  http://127.0.0.1:8765"""
 from __future__ import annotations
 import json
+import os
 import re
 from pathlib import Path
+
+
+def _account_from_switcher() -> None:
+    """The app's account switcher (agent/accounts.py) leaves its choice in data/account.json. Use it unless this server
+    was started for a given profile (JHA_PROFILE set by hand); what the server starts (Refresh, Prepare) inherits it."""
+    if os.environ.get("JHA_PROFILE") and os.environ.get("JHA_ACCOUNT_SWITCHER") != "1":
+        return
+    f = Path(__file__).resolve().parent.parent / "data" / "account.json"
+    try:
+        a = json.loads(f.read_text(encoding="utf-8"))
+    except Exception:
+        a = {}
+    os.environ.pop("JHA_PROFILE", None); os.environ.pop("JHA_DB", None)
+    if a.get("profile"):
+        os.environ.update(JHA_PROFILE=a["profile"], JHA_ACCOUNT_SWITCHER="1")
+
+
+_account_from_switcher()
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,7 +39,7 @@ def rows(q, *args):
 
 @app.get("/")
 def index():
-    return FileResponse(HERE / "static" / "index.html")
+    return FileResponse(HERE / "static" / "index.html", headers={"Cache-Control": "no-cache"})   # an update shows at once
 
 
 @app.get("/api/stats")
@@ -91,7 +110,8 @@ def refresh_start():
 
 @app.get("/api/refresh")
 def refresh_status():
-    p = REFRESH.get("proc"); f = HERE.parent / "data" / "last_refresh.json"
+    from agent import config
+    p = REFRESH.get("proc"); f = config.REFRESHED
     last = json.loads(f.read_text()) if f.exists() else {}
     running = bool(p and p.poll() is None)
     restarting = False
@@ -149,6 +169,11 @@ def approve(app_id: int, d: Decision | None = None):
         a = con.execute("SELECT kind, answers_json FROM applications WHERE id=?", (app_id,)).fetchone()
         if a and (json.loads(a["answers_json"] or "{}").get("needs_human")):
             return {"ok": False, "msg": "Answer the open questions first."}
+        from agent import config
+        if config.is_demo():
+            db.update_application(con, app_id, status="approved", approved_at=db.now(), error="demo account: not sent")
+            log(con, "review", "approved (demo, not sent)", d.note if d else "", app_id=app_id)
+            return {"ok": True, "msg": "Demo account: nothing was sent. In your own account, Approve submits this exact form."}
         db.update_application(con, app_id, status="approved", approved_at=db.now())
         log(con, "review", "approved", d.note if d else "", app_id=app_id)
     if a and a["kind"] == "ats_web":
@@ -302,6 +327,71 @@ def setup_browser():
     return {"ok": True}
 
 
+# ---- accounts: yours, other stories, demo accounts; switching restarts this server on the chosen one -------------
+@app.get("/api/accounts")
+def accounts_list():
+    from agent import accounts, config
+    return {"accounts": accounts.listing(), "demo": config.is_demo()}
+
+
+class AccountPick(BaseModel):
+    id: str = ""
+
+
+def _restart_soon():
+    import sys, threading
+    threading.Timer(.5, lambda: os.execv(sys.executable, [sys.executable, "-m", "dashboard.app"])).start()
+
+
+@app.post("/api/accounts/switch")
+def accounts_switch(p: AccountPick):
+    from agent import accounts
+    try:
+        accounts.switch(p.id)
+    except ValueError as e:
+        return {"ok": False, "msg": str(e)}
+    _restart_soon()
+    return {"ok": True, "restarting": True}
+
+
+@app.post("/api/accounts/demo")
+def accounts_new_demo():
+    from agent import accounts
+    accounts.switch(accounts.create_demo())
+    _restart_soon()
+    return {"ok": True, "restarting": True}
+
+
+@app.post("/api/accounts/remove")
+def accounts_remove(p: AccountPick):
+    from agent import accounts
+    try:
+        accounts.remove_demo(p.id)
+    except PermissionError as e:
+        return {"ok": False, "msg": str(e)}
+    return {"ok": True}
+
+
+@app.post("/api/demo/answers")
+def demo_answers():
+    from agent import accounts
+    try:
+        return {"ok": True, "filled": accounts.demo_answers()}
+    except PermissionError as e:
+        return {"ok": False, "msg": str(e)}
+
+
+@app.post("/api/demo/materials")
+def demo_materials():
+    """Show the sample material (demo/materials) in Finder or Explorer, ready to drag onto Drop anything."""
+    import subprocess, sys
+    from agent.accounts import DEMO_DIR
+    folder = str(DEMO_DIR / "materials")
+    cmd = ["open", folder] if sys.platform == "darwin" else ["explorer", folder] if os.name == "nt" else ["xdg-open", folder]
+    subprocess.Popen(cmd)
+    return {"ok": True}
+
+
 class Revise(BaseModel):
     text: str
 
@@ -336,6 +426,9 @@ def revise_status(app_id: int):
     return REVISE.get(app_id, {"state": "idle"})
 
 
+FRESH = {"Cache-Control": "no-cache"}   # /screen/1 is a different file in each account, and changes when a résumé is revised
+
+
 @app.get("/screen/{app_id}")
 def screen(app_id: int):
     r = rows("SELECT sent_log FROM applications WHERE id=?", app_id)
@@ -343,7 +436,7 @@ def screen(app_id: int):
     m = _r.search(r"screenshot: (.+?\.png)", (r[0]["sent_log"] or "") if r else "")
     if not m or not Path(m.group(1)).exists():
         raise HTTPException(404)
-    return FileResponse(m.group(1), media_type="image/png")
+    return FileResponse(m.group(1), media_type="image/png", headers=FRESH)
 
 
 @app.get("/resume/{app_id}")
@@ -351,7 +444,7 @@ def resume(app_id: int):
     r = rows("SELECT resume_pdf FROM applications WHERE id=?", app_id)
     if not r or not r[0]["resume_pdf"] or not Path(r[0]["resume_pdf"]).exists():
         raise HTTPException(404)
-    return FileResponse(r[0]["resume_pdf"], media_type="application/pdf")
+    return FileResponse(r[0]["resume_pdf"], media_type="application/pdf", headers=FRESH)
 
 
 # ---- playbook (profile/master) -------------------------------------------
@@ -568,7 +661,7 @@ def resume_png(app_id: int):
     png = Path(r[0]["resume_pdf"]).with_suffix(".png") if r and r[0]["resume_pdf"] else None
     if not png or not png.exists():
         raise HTTPException(404)
-    return FileResponse(png, media_type="image/png")
+    return FileResponse(png, media_type="image/png", headers=FRESH)
 
 
 # ---- storybook: versions and learning from a résumé you like -------------------

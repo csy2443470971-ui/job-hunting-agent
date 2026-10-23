@@ -23,20 +23,25 @@ def init() -> list[str]:
     env, example = config.ROOT / ".env", config.ROOT / ".env.example"
     if not env.exists() and example.exists():
         shutil.copy(example, env); made.append(".env")
-    prof, src = config.ROOT / "profile", config.ROOT / "profile.example"
-    if not prof.exists():
-        (prof / "master").mkdir(parents=True)
-        for f in ("preferences.yaml", "roles.yaml", "companies.yaml"):
-            shutil.copy(src / f, prof / f)
-        for f in ("00-README.md", "06-roles.md", "07-voice.md"):
-            shutil.copy(src / "master" / f, prof / "master" / f)
-        (prof / "master" / "02-experience.md").write_text("# Experience\n", encoding="utf-8")
-        (prof / "master" / "03-projects.md").write_text("# Projects\n", encoding="utf-8")
-        (prof / "profile.yaml").write_text("# About you. Your name and contact details come from the standing answers.\n"
-                                           "summary_for_ranker: \"\"   # one line the ranker reads, e.g. 'Product designer, 4 years in climate'\n",
-                                           encoding="utf-8")
-        made.append("profile/")
+    if not (config.ROOT / "profile").exists():
+        new_profile(config.ROOT / "profile"); made.append("profile/")
     return made
+
+
+def new_profile(prof, demo: bool = False) -> None:
+    """An empty profile folder: the example's templates (role lenses, watchlist, preferences, guides), no person in it."""
+    src = config.ROOT / "profile.example"
+    (prof / "master").mkdir(parents=True)
+    for f in ("preferences.yaml", "roles.yaml", "companies.yaml"):
+        shutil.copy(src / f, prof / f)
+    for f in ("00-README.md", "06-roles.md", "07-voice.md"):
+        shutil.copy(src / "master" / f, prof / "master" / f)
+    (prof / "master" / "02-experience.md").write_text("# Experience\n", encoding="utf-8")
+    (prof / "master" / "03-projects.md").write_text("# Projects\n", encoding="utf-8")
+    (prof / "profile.yaml").write_text("# About you. Your name and contact details come from the standing answers.\n"
+                                       + ("demo: true   # a demo account: fills real forms up to Submit, never sends anything\n" if demo else "")
+                                       + "summary_for_ranker: \"\"   # one line the ranker reads, e.g. 'Product designer, 4 years in climate'\n",
+                                       encoding="utf-8")
 
 
 def write_env(values: dict) -> list[str]:
@@ -83,14 +88,15 @@ def status() -> dict:
         dict(id="storybook", title="Tell it everything", required=True, done=lines > 0,
              detail=f"{lines} résumé lines in your storybook." if lines else "Your storybook is empty: drop your old résumés, or just talk."),
         dict(id="mailbox", title="Connect your application mailbox", required=False, done=mailbox.configured(),
-             detail=(f"Reading replies at {mb['address']} (read-only)." if mailbox.configured() else
+             detail=("A demo account has no mailbox: nothing is sent, and there are no replies to read." if config.is_demo() else
+                     f"Reading replies at {mb['address']} (read-only)." if mailbox.configured() else
                      "So it can tell you who wrote back, and send the emails you approve.")),
         dict(id="browser", title="Sign in where you keep job accounts", required=False, done=signed,
              detail="Only for sites that need an account, like a company's Workday. Greenhouse, Lever and Ashby need none."),
         dict(id="jev", title="Rank with Jev", required=False, done=jev.available(),
              detail="Rates every posting before the model reads it: faster and cheaper. Without it, a keyword match ranks them."),
     ]
-    return {"steps": steps, "ready": all(s["done"] for s in steps if s["required"]), "models": m,
+    return {"steps": steps, "ready": all(s["done"] for s in steps if s["required"]), "models": m, "demo": config.is_demo(),
             "mailbox": {"address": mb["address"], "configured": mailbox.configured(), "gmail": mb["gmail"]},
             "browser": {"chrome": bool(browser.chrome())}, "providers": providers.PROVIDERS}
 

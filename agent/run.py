@@ -198,6 +198,8 @@ def tailor(con, job_id: int) -> int:
 
 
 def submit_approved(con, headed: bool = True, app_id: int | None = None) -> None:
+    if config.is_demo():
+        print("demo account: nothing is ever submitted"); return
     from .setup_answers import require
     require()
     """Submit every approved ats_web application: re-check the posting, refill, click Submit in a visible browser.
@@ -212,7 +214,7 @@ def submit_approved(con, headed: bool = True, app_id: int | None = None) -> None
             print(f"  app {a['id']} {j['company']}: still has unanswered questions, skipped"); continue
         if not still_open(j):
             db.update_application(con, a["id"], status="failed", error="posting closed"); con.commit(); continue
-        shot = str(config.OUT_DIR / "screens" / f"app{a['id']}-submit.png")
+        config.SCREENS.mkdir(parents=True, exist_ok=True); shot = str(config.SCREENS / f"app{a['id']}-submit.png")
         ans = {x["question"]: x["answer"] for x in aj.get("answers", []) if x.get("answer")}
         r = fill(j["apply_url"], ans, a["resume_pdf"], shot, submit=True, headed=headed)
         status = "sent" if r.get("submitted") else "failed"
@@ -256,7 +258,7 @@ def prepare(con, limit: int = 10, app_id: int | None = None) -> list[str]:
             for x in fa.answers:
                 if x.answer and len(x.answer.split()) > 25:
                     x.answer, _ = llm.clean_text(x.answer, "why_us" if llm.WHY_US.search(x.question) else "answer")
-            shot = str(config.OUT_DIR / "screens" / f"app{a['id']}.png")
+            config.SCREENS.mkdir(parents=True, exist_ok=True); shot = str(config.SCREENS / f"app{a['id']}.png")
             r = fill(j["apply_url"], {x.question: x.answer for x in fa.answers if x.answer}, a["resume_pdf"], shot)
             dump = fa.model_dump()
             opts = {q["label"]: q["options"] for q in qs if q.get("options")}
@@ -429,7 +431,7 @@ def main(argv=None):
                     print("replies:", got or "none new")
                 except Exception as e:
                     print("mail check failed:", e)
-            (config.DATA_DIR / "last_refresh.json").write_text(json.dumps({"at": db.now(), "new": new, "replies": replies, **update}))
+            config.REFRESHED.write_text(json.dumps({"at": db.now(), "new": new, "replies": replies, **update}))
             print(f"{new} new postings")
         elif a.cmd == "prefilter":
             k, d = prefilter(con); print(f"kept {k}, dropped {d}")

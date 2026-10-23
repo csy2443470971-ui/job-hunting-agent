@@ -11,17 +11,15 @@
       "port": 8765
     },
     {
-      "name": "dashboard-demo",
+      "name": "dashboard-test",
       "runtimeExecutable": "env",
       "runtimeArgs": [
-        "JHA_PROFILE=profile.example",
-        "JHA_DB=data/demo.sqlite",
-        "JHA_PORT=8766",
+        "JHA_PORT=8777",
         "python3",
         "-m",
         "dashboard.app"
       ],
-      "port": 8766
+      "port": 8777
     }
   ]
 }

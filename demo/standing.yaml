@@ -1,0 +1,34 @@
+# Standing answers for the demo applicant. Taylor Brooks is fictional: example.com email, a 555-01xx phone number.
+# "Use the sample answers" on a demo account's Setup page copies this file into the account.
+legal_first: Taylor
+legal_last: Brooks
+preferred_name: ''
+email: taylor.brooks@example.com
+phone: (555) 010-0199
+city: New York, NY
+website: https://taylorbrooks.example
+linkedin: ''
+github: ''
+authorized_in: United States
+sponsorship_now: 'No'
+sponsorship_future: 'No'
+relocate: 'Yes'
+relocate_where: Within my country
+relocate_places: ''
+onsite: In office or hybrid, either is fine
+earliest_start: two weeks after an offer
+degree: BFA Interaction Design
+school: Riverside College of Design
+grad_date: 05/2021
+undergrad_gpa: ''
+grad_gpa: ''
+transcript_file: ''
+gender: Prefer not to say
+pronouns: ''
+race: Prefer not to say
+race_detail: ''
+hispanic_latino: Prefer not to say
+veteran: Prefer not to say
+disability: Prefer not to say
+how_heard: Company website
+consent: Ask me each time

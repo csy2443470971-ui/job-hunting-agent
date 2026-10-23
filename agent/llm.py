@@ -159,8 +159,14 @@ def answer_form(job: dict, questions: list[dict]) -> FormAnswers:
     have = {a.question for a in fa.answers}
     from .apply.standing import SKIP_NEED
     fa.needs_human = list(dict.fromkeys(re.sub(r"\s*select\.{3}\s*$", "", q, flags=re.I) for q in fa.needs_human if not SKIP_NEED.search(q)))
+    req = {q.get("label"): q.get("required") for q in questions}
     for q in list(fa.needs_human):
+        base = re.sub(r"\s*\([a-z ]+\)$", "", q)   # "Name (text)" → "Name"
         v = standing_answer(q, opts.get(q))
+        if v is None:   # name, email and phone come from the standing answers too
+            v = identity_answer(base) or None
+        if v is None and not req.get(base, req.get(q, True)) and re.search(r"linkedin|github|website|portfolio", q, re.I):
+            fa.needs_human.remove(q); continue   # an optional link the standing answers leave empty stays empty
         if v is not None:
             fa.needs_human.remove(q)
             if q not in have:

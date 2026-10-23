@@ -16,7 +16,7 @@ CREATIVE_SECTORS = {"design_agency", "creative"}
 
 
 def header_links(role_family: str | None = None, sector: str | None = None) -> list[dict]:
-    links = config.profile().get("links") or (config.preferences().get("identity", {}) or {}).get("links", {}) or {}
+    links = config.person()["links"] or (config.preferences().get("identity", {}) or {}).get("links", {}) or {}
     creative = (role_family in CREATIVE_FAMILIES) or (sector in CREATIVE_SECTORS)
     out = []
     for k in ORDER:
@@ -39,7 +39,7 @@ def label_for(url: str) -> str:
     if "github.com" in u:
         parts = [x for x in re.sub(r"^https?://", "", u).split("/") if x]
         return parts[2].replace("-", " ").title() if len(parts) >= 3 else "GitHub"
-    prof = config.profile(); site = re.sub(r"^https?://(www\.)?", "", (prof.get("links") or {}).get("website", "")).rstrip("/")
+    prof = config.profile(); site = re.sub(r"^https?://(www\.)?", "", config.person()["links"].get("website", "")).rstrip("/")
     if site and re.sub(r"^https?://(www\.)?", "", u).rstrip("/") == site.lower(): return "Website"
     m = re.search(prof.get("case_study_pattern") or r"$^", u)
     if m: return m.group(1).replace("-", " ").title() + " case study"

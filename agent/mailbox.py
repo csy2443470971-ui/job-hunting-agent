@@ -36,6 +36,9 @@ def settings() -> dict:
 
 
 def configured() -> bool:
+    from . import config
+    if config.is_demo():          # a demo account has no mailbox: nothing is read or sent
+        return False
     s = settings()
     return bool(s["address"] and s["password"])
 
@@ -121,6 +124,9 @@ def fetch(days: int = 3, gmail_query: str = "") -> list[dict]:
 
 
 def send(to: list[str], subject: str, body: str, html: str | None = None, attachment: str | None = None) -> str:
+    from . import config
+    if config.is_demo():
+        raise PermissionError("demo account: emails are never sent")
     """Send one approved email from the application address. Returns the Message-ID."""
     s = settings()
     msg = EmailMessage()

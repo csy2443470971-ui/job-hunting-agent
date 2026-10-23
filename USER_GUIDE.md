@@ -23,8 +23,8 @@ the **agent's browser** to sign in to sites where you keep an account, and add a
 ## Three things to know
 
 **A storybook is a story, not your autobiography.** Leave out what doesn't serve the story. Applying as a designer and as a
-strategist? Keep two storybooks under `profiles/` and pick one with `JHA_PROFILE=profiles/<story>`. The agent only ever says
-what the active storybook says.
+strategist? Keep two storybooks under `profiles/` and switch between them in the account menu at the top of the sidebar.
+The agent only ever says what the active storybook says.
 
 **Nothing leaves without your yes.** The agent finds, ranks, writes and fills. It cannot submit or send until you click
 Approve. CAPTCHAs, emailed security codes, LinkedIn and Indeed, salary questions, and any answer an employer wants in your own
@@ -59,6 +59,12 @@ to block, a preference. Apply the ones you agree with; revert any time. It never
 | A placeholder like `[YOUR ANSWER]` in an email | The agent didn't have that fact. Write it, or add it to your storybook so it never asks again. |
 | A role you'd never take | Reject it, and say why: "no agencies" becomes a proposed preference. |
 | A model error | Setup → Connect a model → *Test* shows what's wrong. |
+
+## Show it to someone
+
+Click your name at the top of the sidebar → **New demo account**. It's an empty account, with a fictional applicant's
+answers and files ready to use ([demo/README.md](demo/README.md)). It finds real jobs and fills real forms up to Submit,
+and sends nothing. Switch back from the same menu, and remove the demo account when you're done.
 
 ## Where things live
 

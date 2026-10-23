@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from .. import config
 
-PROFILE = config.DATA_DIR / "browser"
+PROFILE = config.BROWSER_DIR                       # one per account: a demo account never sees your sign-ins
 START = config.DATA_DIR / "browser-start.html"
 
 

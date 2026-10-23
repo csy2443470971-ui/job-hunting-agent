@@ -79,6 +79,10 @@ def _search_terms(val: str) -> list[str]:
 def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: str, submit: bool = False,
          headed: bool = False) -> dict:
     log = []
+    from .. import config
+    demo = config.is_demo()
+    if demo:
+        submit = False            # a demo account fills right up to Submit and stops there
     with sync_playwright() as p:
         from .browser import open_page   # the agent's own browser profile, with any sign-ins you made there
         pg, close = open_page(p, headless=not headed, viewport={"width": 1280, "height": 1600})
@@ -98,6 +102,9 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
             if not sel or "recaptcha" in (f["label"] + f["name"]).lower():
                 continue
             lab = _norm(f["label"])
+            if f["type"] == "file" and demo and not url.startswith("file:"):
+                log.append(f"demo account: no file uploaded to {url.split('/')[2]} → {f['label'][:40]}")   # many forms upload on selection
+                continue
             if f["type"] == "file" and re.search(r"transcript", lab) and re.search(r"\bgraduate\b", lab) and not re.search(r"undergrad", lab):
                 if f["required"]: log.append(f"UNFILLED required: {f['label']} (only an undergraduate transcript is on file)")
                 continue

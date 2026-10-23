@@ -20,54 +20,76 @@ Every model call sends the same system prefix, then one task line, then the step
 
 **Who runs a step:** *you* in the dashboard; *the model* (`JHA_MODEL`); *the draft model* (`JHA_DRAFT_MODEL`, or the model when there is none); or plain *code*. Models are set in `.env` or on the dashboard's Setup page (see `agent/providers.py`).
 
+**Types:** PDF, DOCX, Audio, Text, Markdown, YAML, JSON, SQLite, PNG, Web page, API, IMAP, SMTP, Click. *Outside* means you, the web or your mailbox.
+
 ## 01 · Tell it everything
 
 ### Tell it everything
 
 **Runs:** You · `dashboard → Storybook`
 
-**Reads**
+**Input**
 
-- files you drop (old résumés, reference letters, papers, voice memos) and what you type or say
+| Type | What | From |
+|---|---|---|
+| PDF · DOCX | old résumés, letters, papers | outside |
+| Audio | voice memos (M4A, MP3, WAV) | outside |
+| Text | what you type or say | outside |
 
-**Hands on**
+**Output**
 
-- to **Add to the storybook**: the files' text and your note
-- to **Learn a style**: one résumé you like, and how to use it
+| Type | What | To |
+|---|---|---|
+| PDF · DOCX · Audio | the files (saved to profile/uploads/) | **Add to the storybook** |
+| Text | your note | **Add to the storybook** |
+| PDF | a résumé you like | **Learn a style** |
 
 ### Add to the storybook
 
-**Runs:** The model · `agent/storybook.py · add_from` · output: `Additions`
+**Runs:** The model · `agent/storybook.py · add_from` · output schema: `Additions`
 
-**Reads**
+**Input**
 
-- from **Tell it everything**: the text of each file (PDF, DOCX, audio transcribed locally) and your note
-- from **The storybook**: what it already says
+| Type | What | From |
+|---|---|---|
+| Text | each file's text (PDF and DOCX read, audio transcribed locally) | **Tell it everything** |
+| Text | your note | **Tell it everything** |
+| Markdown | profile/master/02-experience.md, 03-projects.md | **The storybook** |
 
-**Hands on**
+**Output**
 
-- to **The storybook**: new résumé lines, each with the file it came from; Back undoes the batch
+| Type | What | To |
+|---|---|---|
+| JSON | Additions {file, entry, line, lenses, source} | **The storybook** |
+| Markdown | new lines in profile/master/*.md | **The storybook** |
+| Markdown | profile/.versions/<time>/ (Back undoes) | outside |
 
 **Prompt** (`prompts.STORYBOOK_ADD`)
 
 ```text
-Add what this material says about the person to their storybook. Use only facts the material states: never guess numbers, titles, dates, degrees or tools. Skip anything the storybook already says. One fact per line, résumé-ready, result first when the material gives one. In reference letters keep what the writer says the person did, not the praise. A file about someone else adds nothing: list it in about_someone_else.
+Add what this material says about the person to their storybook. Use only facts the material states: never guess numbers, titles, dates, degrees or tools. Skip anything the storybook already says. One fact per line, résumé-ready, result first when the material gives one. In reference letters keep what the writer says the person did, not the praise. Never turn a relative date ('last spring') into a year. A talk, award or press about a project is a line under that project. Don't add a degree as an entry or a line: the résumé takes education from the standing answers. A file about someone else adds nothing: list it in about_someone_else.
 ```
 
 > A résumé that is about someone else adds nothing about you; on its own it goes to Learn a style instead.
 
 ### Learn a style
 
-**Runs:** The model · `agent/storybook.py · learn_from` · output: `Edits`
+**Runs:** The model · `agent/storybook.py · learn_from` · output schema: `Edits`
 
-**Reads**
+**Input**
 
-- from **Tell it everything**: a résumé you admire and your instruction ("lead with the result")
-- from **The storybook**: your résumé lines
+| Type | What | From |
+|---|---|---|
+| PDF | reference résumé | **Tell it everything** |
+| Text | your instruction | **Tell it everything** |
+| Markdown | résumé lines, entry by entry | **The storybook** |
 
-**Hands on**
+**Output**
 
-- to **The storybook**: the same facts reworded in that style, line by line; Back undoes it
+| Type | What | To |
+|---|---|---|
+| JSON | Edits {before, after, why} | **The storybook** |
+| Markdown | reworded lines | **The storybook** |
 
 **Prompt** (`prompts.STORYBOOK_STYLE`)
 
@@ -77,15 +99,19 @@ Rewrite the person's résumé lines in the style of the reference résumé, foll
 
 ### Intake draft (command line)
 
-**Runs:** The draft model (or the model) · `agent/intake.py · python -m agent.run intake` · output: `Storybook`
+**Runs:** The draft model (or the model) · `agent/intake.py · python -m agent.run intake` · output schema: `Storybook`
 
-**Reads**
+**Input**
 
-- every file in inbox/
+| Type | What | From |
+|---|---|---|
+| PDF · DOCX · Audio · Text | inbox/* | outside |
 
-**Hands on**
+**Output**
 
-- a draft storybook (_intake-draft-<date>.md) you edit and move in by hand
+| Type | What | To |
+|---|---|---|
+| Markdown | profile/master/_intake-draft-<date>.md (you edit it) | outside |
 
 **Prompt** (`prompts.INTAKE`)
 
@@ -95,30 +121,39 @@ Turn the raw material into storybook entries. Every line must be traceable to a 
 
 ### Standing answers
 
-**Runs:** You · `dashboard → Setup / Storybook · agent/setup_answers.py`
+**Runs:** You · `dashboard → Setup · agent/setup_answers.py`
 
-**Reads**
+**Input**
 
-- your answers, once: legal name, work authorization, sponsorship, relocation, self-identification…
+| Type | What | From |
+|---|---|---|
+| Click | Setup → Standing answers form | outside |
 
-**Hands on**
+**Output**
 
-- to **Answer the form**: answers that override the model's
-- to **Fill the form**: filled on every form as written
+| Type | What | To |
+|---|---|---|
+| YAML | profile/standing.yaml | **Answer the form**, **Fill the form** |
 
 ### The storybook
 
 **Runs:** Code, no model · `<profile>/master/*.md`
 
-**Reads**
+**Input**
 
-- from **Add to the storybook**: added lines
-- from **Learn a style**: reworded lines
-- from **Learn from notes**: fixes you applied
+| Type | What | From |
+|---|---|---|
+| Markdown | added lines | **Add to the storybook** |
+| Markdown | reworded lines | **Learn a style** |
+| Markdown · YAML | fixes you applied | **Learn from notes** |
 
-**Hands on**
+**Output**
 
-- every model call, as part of the system prefix: the only facts the agent may use about you
+| Type | What | To |
+|---|---|---|
+| Markdown | profile/master/*.md + preferences.yaml + docs/00-house-rules.md, sent as the system prefix | **Add to the storybook**, **Rank the fit**, **Write the résumé**, **Answer the form**, **Revise the résumé**, **Email applications**, **Cover letter (first version)** |
+
+> Files, not a step: every model call reads them, with the house rules and your preferences, as the system prefix.
 
 ## 02 · Find and rank
 
@@ -126,26 +161,40 @@ Turn the raw material into storybook entries. Every line must be traceable to a 
 
 **Runs:** Code, no model · `agent/sources/ · agent/run.py · discover, prefilter`
 
-**Reads**
+**Input**
 
-- public job boards: Greenhouse, Lever and Ashby boards of the companies you follow, Hacker News; no login
+| Type | What | From |
+|---|---|---|
+| API | Greenhouse · Lever · Ashby board APIs | outside |
+| Web page | Hacker News, Who is hiring | outside |
+| YAML | profile/companies.yaml (watchlist) | outside |
+| YAML | preferences.yaml (avoid_keywords) | outside |
 
-**Hands on**
+**Output**
 
-- to **Rank the fit**: new postings (company, title, location, description), after a keyword filter drops obvious misses
+| Type | What | To |
+|---|---|---|
+| SQLite | jobs: company, title, location, url, description | **Rank the fit** |
 
 ### Rank the fit
 
-**Runs:** The draft model (or the model) · `agent/jev.py (Jev, TypeSafe) · agent/llm.py · score_job` · output: `JobScore`
+**Runs:** The draft model (or the model) · `agent/jev.py (Jev, TypeSafe) · agent/llm.py · score_job` · output schema: `JobScore`
 
-**Reads**
+**Input**
 
-- from **Find postings**: each posting
-- from **The storybook**: your record and role lenses (06-roles.md)
+| Type | What | From |
+|---|---|---|
+| SQLite | jobs (new) | **Find postings** |
+| API | Jev P(fit) per posting, when TYPESAFE_API_KEY is set | outside |
+| YAML | profile/roles.yaml | outside |
+| Markdown | storybook | **The storybook** |
 
-**Hands on**
+**Output**
 
-- to **Write the résumé**: postings scoring at least min_score_to_queue, with the lens, reasons and gaps
+| Type | What | To |
+|---|---|---|
+| JSON | JobScore {score, role_family, sector, fit_reasons, gaps, hard_blockers, action} | **Write the résumé** |
+| SQLite | jobs.status = queued \| skipped | **Write the résumé** |
 
 **Prompt** (`prompts.RANK`)
 
@@ -159,17 +208,23 @@ Judge whether {first_name} is a credible candidate for this posting, as a strict
 
 ### Write the résumé
 
-**Runs:** The model · `agent/llm.py · tailor_resume → agent/resume/render.py` · output: `ResumeContent`
+**Runs:** The model · `agent/llm.py · tailor_resume → agent/resume/render.py` · output schema: `ResumeContent`
 
-**Reads**
+**Input**
 
-- from **Rank the fit**: the posting and its score notes (lens, reasons, gaps)
-- from **The storybook**: the facts
+| Type | What | From |
+|---|---|---|
+| SQLite | the posting | **Rank the fit** |
+| JSON | JobScore | **Rank the fit** |
+| Markdown | storybook | **The storybook** |
 
-**Hands on**
+**Output**
 
-- to **Writing check**: résumé lines to check
-- to **You review**: a one-page PDF (links, headline and awards are set by code)
+| Type | What | To |
+|---|---|---|
+| JSON | ResumeContent | **Writing check** |
+| PDF | out/resumes/<name>.pdf (one page) | **You review** |
+| PNG | out/resumes/<name>.png (preview) | **You review** |
 
 **Prompt** (`prompts.TAILOR`)
 
@@ -179,17 +234,21 @@ Build the one-page résumé content for this posting through the matching lens i
 
 ### Writing check
 
-**Runs:** The model · `agent/voicecheck.py (rules) · agent/llm.py · repair_text` · output: `Repaired`
+**Runs:** The model · `agent/voicecheck.py (rules) · agent/llm.py · repair_text` · output schema: `Repaired`
 
-**Reads**
+**Input**
 
-- from **Write the résumé**: every line
-- from **Answer the form**: every answer
-- from **Email applications**: every email
+| Type | What | From |
+|---|---|---|
+| Text | every bullet, answer and email | **Write the résumé**, **Answer the form**, **Email applications** |
+| YAML | profile/learned_patterns.yaml (banned phrases) | outside |
 
-**Hands on**
+**Output**
 
-- to **You review**: the same text with banned phrases rewritten, same facts; anything left is flagged for you
+| Type | What | To |
+|---|---|---|
+| Text | the same facts, banned phrases rewritten | **Write the résumé** |
+| Text | flags left for you | **You review** |
 
 **Prompt** (`prompts.REPAIR`)
 
@@ -201,19 +260,23 @@ Rewrite the text to fix the listed problems. Same facts, same or shorter length.
 
 ### Answer the form
 
-**Runs:** The model · `agent/llm.py · answer_form · agent/mission.py` · output: `FormAnswers`
+**Runs:** The model · `agent/llm.py · answer_form · agent/mission.py` · output schema: `FormAnswers`
 
-**Reads**
+**Input**
 
-- the form's questions, read live from the page
-- from **Rank the fit**: the posting
-- the company's mission in its own words (code: found in its postings)
-- from **Standing answers**: standing answers
+| Type | What | From |
+|---|---|---|
+| Web page | the form's fields, read live (label, type, required, options) | outside |
+| SQLite | the posting | **Rank the fit** |
+| Text | the company's mission, in its own words (agent/mission.py) | outside |
+| YAML | profile/standing.yaml | **Standing answers** |
 
-**Hands on**
+**Output**
 
-- to **Fill the form**: an answer for every field
-- to **You review**: questions only you can answer, with the form's own options
+| Type | What | To |
+|---|---|---|
+| JSON | FormAnswers {answers, needs_human} | **Fill the form** |
+| JSON | needs_human: questions only you can answer | **You review** |
 
 **Prompt** (`prompts.ANSWERS`)
 
@@ -231,31 +294,39 @@ For a why-us question (why this company, what excites you about us): open with t
 
 ### Fill the form
 
-**Runs:** Code, no model · `agent/apply/fill.py · the agent's browser`
+**Runs:** Code, no model · `agent/apply/fill.py · Playwright · the agent's browser`
 
-**Reads**
+**Input**
 
-- from **Answer the form**: answers
-- from **Standing answers**: standing answers
-- from **Write the résumé**: the résumé PDF
-- the agent's browser profile, with any sign-ins you made yourself
+| Type | What | From |
+|---|---|---|
+| JSON | FormAnswers | **Answer the form** |
+| YAML | standing.yaml | **Standing answers** |
+| PDF | the résumé | **Write the résumé** |
+| Web page | the employer's form, in the agent's browser profile (data/browser) | outside |
 
-**Hands on**
+**Output**
 
-- to **You review**: a full-page screenshot of the filled form; Submit is never pressed here
+| Type | What | To |
+|---|---|---|
+| PNG | out/screens/app<id>.png (full page; nothing submitted) | **You review** |
 
 ### Cover letter (first version)
 
-**Runs:** The model · `agent/cover.py · python -m agent.run cover <job_id>` · output: `CoverDraft`
+**Runs:** The model · `agent/cover.py · python -m agent.run cover <job_id>` · output schema: `CoverDraft`
 
-**Reads**
+**Input**
 
-- from **Rank the fit**: the posting and any research notes
-- from **The storybook**: the facts
+| Type | What | From |
+|---|---|---|
+| SQLite | posting + research notes | **Rank the fit** |
+| Markdown | storybook | **The storybook** |
 
-**Hands on**
+**Output**
 
-- to **You review**: a cover letter and a why-us answer, or what you must write yourself
+| Type | What | To |
+|---|---|---|
+| JSON | CoverDraft {cover_letter, why_company, needs_human} | **You review** |
 
 **Prompt** (`prompts.COVER`)
 
@@ -269,33 +340,42 @@ Draft a cover letter and a 'Why {company}' answer for {first_name}. Use only sto
 
 **Runs:** You · `dashboard → Waiting for review`
 
-**Reads**
+**Input**
 
-- from **Write the résumé**: the résumé
-- from **Fill the form**: the form screenshot
-- from **Answer the form**: questions for you
-- a checklist that must pass
+| Type | What | From |
+|---|---|---|
+| PDF | résumé | **Write the résumé** |
+| PNG | filled form | **Fill the form** |
+| JSON | questions for you | **Answer the form** |
+| Text | checklist | outside |
 
-**Hands on**
+**Output**
 
-- to **Submit**: Approve
-- to **Revise the résumé**: Change this résumé: what to change, typed or spoken
-- to **Learn from notes**: Reject, with a note
+| Type | What | To |
+|---|---|---|
+| Click | Approve | **Submit**, **Email applications** |
+| Text | Change this résumé: your note, typed or spoken | **Revise the résumé** |
+| Text | Reject, with a reason (SQLite feedback) | **Learn from notes** |
 
 ### Revise the résumé
 
-**Runs:** The model · `agent/run.py · revise · /api/applications/<id>/revise` · output: `ResumeContent`
+**Runs:** The model · `agent/run.py · revise · /api/applications/<id>/revise` · output schema: `ResumeContent`
 
-**Reads**
+**Input**
 
-- from **You review**: your note
-- from **Write the résumé**: the current résumé
-- from **Rank the fit**: the posting
-- from **The storybook**: the facts
+| Type | What | From |
+|---|---|---|
+| Text | your note | **You review** |
+| JSON | the current ResumeContent (applications.resume_json) | **Write the résumé** |
+| SQLite | the posting | **Rank the fit** |
+| Markdown | storybook | **The storybook** |
 
-**Hands on**
+**Output**
 
-- to **You review**: the résumé re-rendered in place (writing check, one page); a green dot when done
+| Type | What | To |
+|---|---|---|
+| JSON | ResumeContent | **You review** |
+| PDF | the same file, re-rendered; a green dot when done | **You review** |
 
 **Prompt** (`prompts.REVISE`)
 
@@ -307,16 +387,23 @@ Revise this one-page résumé as the person asks. Change only what the note asks
 
 ### Learn from notes
 
-**Runs:** The draft model (or the model) · `agent/learn.py` · output: `Patches`
+**Runs:** The draft model (or the model) · `agent/learn.py` · output schema: `Patches`
 
-**Reads**
+**Input**
 
-- from **You review**: your notes and the reasons you rejected drafts
-- the writing brief and preferences.yaml
+| Type | What | From |
+|---|---|---|
+| SQLite | feedback: your notes | **You review** |
+| SQLite | rejection reasons | **You review** |
+| Markdown | docs/00-house-rules.md | outside |
+| YAML | preferences.yaml | outside |
 
-**Hands on**
+**Output**
 
-- to **The storybook**: proposed fixes you apply or dismiss one by one: a brief example, a storybook line, a banned phrase, a preference
+| Type | What | To |
+|---|---|---|
+| JSON | Patches {kind, target, before, after, reason} | **The storybook** |
+| SQLite | proposals (you apply or dismiss each) | **The storybook** |
 
 **Prompt** (`prompts.LEARN`)
 
@@ -328,31 +415,43 @@ Propose the smallest patches that would have prevented each problem. Prefer one 
 
 ### Submit
 
-**Runs:** Code, no model · `agent/run.py · submit_approved · agent/apply/fill.py`
+**Runs:** Code, no model · `agent/run.py · submit_approved · agent/apply/fill.py · Playwright, visible`
 
-**Reads**
+**Input**
 
-- from **You review**: approved applications only
+| Type | What | From |
+|---|---|---|
+| Click | approved applications only | **You review** |
+| JSON | FormAnswers | **Answer the form** |
+| PDF | résumé | **Write the résumé** |
+| Web page | the employer's form | outside |
 
-**Hands on**
+**Output**
 
-- to **Track replies**: the application, sent on the employer's site, in a visible browser
+| Type | What | To |
+|---|---|---|
+| Web page | the submitted application | outside |
+| SQLite | applications.status = sent | **Track replies** |
 
 > A CAPTCHA or an emailed security code stops it: you finish it in that window. LinkedIn and Indeed are never automated.
 
 ### Email applications
 
-**Runs:** The model · `agent/llm.py · draft_email · agent/mailbox.py · send` · output: `EmailDraft`
+**Runs:** The model · `agent/llm.py · draft_email · agent/mailbox.py · send` · output schema: `EmailDraft`
 
-**Reads**
+**Input**
 
-- from **Rank the fit**: the posting, post or article
-- from **The storybook**: the facts
+| Type | What | From |
+|---|---|---|
+| Text | the posting, post or article | **Rank the fit** |
+| Markdown | storybook | **The storybook** |
 
-**Hands on**
+**Output**
 
-- to **You review**: a draft to approve or edit
-- to **Track replies**: after Approve: sent from your mailbox (SMTP)
+| Type | What | To |
+|---|---|---|
+| JSON | EmailDraft {subject, body} | **You review** |
+| SMTP | sent from your mailbox after Approve | **Track replies** |
 
 **Prompt** (`prompts.EMAIL`)
 
@@ -370,10 +469,16 @@ Propose, in 2-3 sentences, what the person would do about it, grounded in what t
 
 **Runs:** Code, no model · `agent/mailbox.py · fetch (IMAP) · agent/replies.py`
 
-**Reads**
+**Input**
 
-- your application mailbox, read-only: nothing is marked read, moved or deleted
+| Type | What | From |
+|---|---|---|
+| IMAP | your mailbox, last 3 days, read-only | outside |
+| SQLite | sent applications | **Submit** |
 
-**Hands on**
+**Output**
 
-- each reply sorted by rules (received, next step, interview, offer, rejected) and its application moved on in Applied
+| Type | What | To |
+|---|---|---|
+| SQLite | replies: confirmation · next step · interview · offer · rejected | outside |
+| SQLite | applications.stage → Applied tab | outside |

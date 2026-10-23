@@ -104,7 +104,8 @@ def learn_from(reference_text: str, reference_name: str, prompt: str) -> None:
 class Addition(BaseModel):
     file: str = Field(description="02-experience.md for jobs, 03-projects.md for projects, papers, talks, teaching")
     entry: str = Field(description="heading of an existing entry copied exactly, or a new heading in the same format "
-                                   "('Org · Title · Location · MM/YYYY - MM/YYYY' or 'Name · venue or link · year')")
+                                   "('Org · Title · Location · MM/YYYY - MM/YYYY' or 'Name · venue or link · year'), leaving "
+                                   "out any part the material doesn't state")
     context: str = Field(description="one plain sentence for a new entry; '' when adding to an existing one")
     line: str = Field(description="one résumé-ready line stating only what the material says")
     lenses: list[str] = Field(description="lens tags from 06-roles.md")
@@ -142,6 +143,12 @@ def _add_line(path: Path, entry: str, context: str, line: str) -> bool:
     return True
 
 
+def _stated(entry: str, said: str) -> str:
+    """A heading keeps only the years the material gives: 'Plugin · Figma · 2026' → 'Plugin · Figma' when no 2026 was said."""
+    parts = entry.split(" · ")
+    return " · ".join(p for i, p in enumerate(parts) if not i or all(y in said for y in re.findall(r"\b(?:19|20)\d\d\b", p)))
+
+
 def add_from(files: list[tuple[str, str]], note: str, person: str = "") -> None:
     """Background job: add what the dropped files and the note say about the person. Updates STATUS as it goes."""
     from .llm import _system
@@ -166,7 +173,8 @@ def add_from(files: list[tuple[str, str]], note: str, person: str = "") -> None:
         for a in res.additions:
             f = config.MASTER_DIR / ("03-projects.md" if a.file.startswith("03") else "02-experience.md")
             tags = [t for t in a.lenses if t in ok or t == "climate"]
-            if a.line.strip() and _add_line(f, a.entry.strip(), a.context.strip(), a.line.strip() + (f" [{', '.join(tags)}]" if tags else "")):
+            entry = _stated(a.entry.strip(), note + " ".join(t for _, t in files))
+            if a.line.strip() and _add_line(f, entry, a.context.strip(), a.line.strip() + (f" [{', '.join(tags)}]" if tags else "")):
                 STATUS["changes"].append({"where": a.entry.split(" · ")[0], "before": "", "after": a.line.strip(), "why": f"from {a.source}"})
         STATUS["done"] += 1
         others = [t for n, t in files if n in res.about_someone_else]

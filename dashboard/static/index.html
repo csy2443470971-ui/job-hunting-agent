@@ -42,6 +42,26 @@
 
   /* page */
   main { flex:1; min-width:0; overflow:auto; }
+  /* accounts: yours, other stories, demo accounts */
+  .acct-wrap { position:relative; margin:-10px 0 14px; }
+  .acct { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:10px; width:100%; padding:7px 10px; border-radius:12px; border:1px solid var(--line); background:var(--surface); cursor:pointer; }
+  .acct:hover { background:var(--hover); }
+  .av { width:28px; height:28px; border-radius:50%; background:var(--sunk); display:flex; align-items:center; justify-content:center; font-weight:650; font-size:13px; color:var(--ink2); flex:none; }
+  .acct .an { flex:1; min-width:0; } .acct b { display:block; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .acct small { display:block; font-size:11.5px; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .acct .cv { color:var(--faint); font-size:11px; }
+  body.is-demo .acct { border-color:var(--orange); } body.is-demo .acct .av { background:var(--orange-soft); color:var(--orange); } body.is-demo .acct small { color:var(--orange); }
+  .acct-menu { position:absolute; left:0; width:min(300px, calc(100vw - 24px)); top:calc(100% + 6px); z-index:40; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); padding:6px; }
+  .acct-menu button { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:10px; width:100%; padding:8px; border-radius:8px; cursor:pointer; font-size:13.5px; }
+  .acct-menu button:hover { background:var(--hover); } .acct-menu button > span:nth-child(2) { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .acct-menu i { flex:none; font-style:normal; font-size:11px; color:var(--orange); border:1px solid currentColor; border-radius:999px; padding:1px 7px; }
+  .acct-row { display:flex; align-items:center; } .acct-menu .acct-row > button:first-child { flex:1; min-width:0; }
+  .acct-menu .rm { width:auto; flex:none; font-size:12px; color:var(--mute); padding:6px 8px; } .acct-menu .rm:hover { color:var(--red); background:none; }
+  .acct-menu .new { color:var(--red); font-weight:600; border-top:1px solid var(--line2); border-radius:0 0 8px 8px; margin-top:4px; padding-top:10px; }
+  .demo-bar { display:none; background:var(--orange-soft); border:1px solid color-mix(in srgb, var(--orange) 40%, var(--line)); border-radius:12px; padding:10px 14px; font-size:13.5px; margin:0 0 18px; }
+  body.is-demo .demo-bar { display:block; }
+  .switching[hidden] { display:none; }
+  .switching { position:fixed; inset:0; z-index:90; background:color-mix(in srgb, var(--page) 86%, transparent); display:flex; align-items:center; justify-content:center; }
+  .switching > div { display:flex; align-items:center; gap:12px; font-size:15px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 22px; box-shadow:var(--shadow); }
   .page { max-width:1100px; margin:0 auto; padding:44px 48px 120px; }
   .ph { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; }
   h1 { font-size:28px; line-height:1.15; margin:0; letter-spacing:-.025em; font-weight:650; }
@@ -263,6 +283,8 @@
 <body>
 <aside data-lve-skip>
   <div class="brand"><img src="/static/icon.png" alt=""><span>Job Hunter Agent</span></div>
+  <div class="acct-wrap"><button class="acct" id="acct" onclick="toggleAccounts(event)"><span class="av" id="acct-av">·</span><span class="an"><b id="acct-name">…</b><small id="acct-kind"></small></span><span class="cv">▾</span></button>
+    <div class="acct-menu" id="acct-menu" hidden></div></div>
   <button class="nav on" data-tab="jobs"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>Job applications <span class="badge" id="c-jobs"></span></button>
   <button class="nav" data-tab="storybook"><svg class="i" viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2.5Z"/><path d="M4 19.5A2 2 0 0 0 6 21h13M9 7h6"/></svg>Storybook</button>
   <button class="nav" data-tab="activity"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</button>
@@ -272,7 +294,8 @@
     <div class="cap" id="refresh-cap"></div>
   </div>
 </aside>
-<main><div class="page" id="page" data-lve-skip></div></main>
+<main><div class="page"><div class="demo-bar" data-lve-skip><b>Demo account.</b> It finds real jobs and fills real application forms right up to Submit. Nothing is ever sent.</div><div id="page" data-lve-skip></div></div></main>
+<div class="switching" id="switching" hidden><div><span class="spin"></span><b id="switching-t"></b></div></div>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -328,7 +351,7 @@ async function showRefresh() {
   const r = await api('/api/refresh'), b = $('#refresh'), cap = $('#refresh-cap');
   b.classList.toggle('busy', r.running); b.disabled = r.running; b.querySelector('span').textContent = r.running ? 'Refreshing…' : 'Refresh';
   const bits = r.at ? [`${r.new} new ${r.new === 1 ? 'job' : 'jobs'}`, r.replies ? `${r.replies} ${r.replies === 1 ? 'reply' : 'replies'}` : '', r.updated ? 'app updated' : ''].filter(Boolean).join(' · ') : '';
-  cap.textContent = r.running ? 'Updating, checking email and job boards' : r.failed ? 'Refresh failed: see data/refresh.log' : r.at ? `Updated ${ago(r.at)} · ${bits}` : 'Not refreshed yet';
+  cap.textContent = r.running ? (ACCTS && ACCTS.demo ? 'Updating, checking job boards' : 'Updating, checking email and job boards') : r.failed ? 'Refresh failed: see data/refresh.log' : r.at ? `Updated ${ago(r.at)} · ${bits}` : 'Not refreshed yet';
   return r;
 }
 // one button for everything: the app's newest version, new jobs, and replies that move each application along
@@ -423,7 +446,7 @@ function detailApp(c, done) {
         <select style="width:auto" onchange="setStage(${c.app_id}, this.value)">${['applied', 'confirmation', 'next_step', 'interview', 'offer', 'rejected'].map(k => `<option value="${k}" ${(c.stage || 'applied') === k ? 'selected' : ''}>${STAGE[k][0]}</option>`).join('')}</select></div>
         ${(c.replies || []).length ? (c.replies || []).map(r => `<div class="reply"><div class="rh">${stageChip({status: 'sent', stage: r.kind === 'other' ? 'applied' : r.kind})}<b>${esc(r.subject)}</b><span class="rs">${esc((r.sender || '').replace(/<.*>/, ''))} · ${day(r.at)}</span>
           ${r.view_url ? `<a class="lk" href="${esc(r.view_url)}" target="_blank">Open in Gmail${I.ext}</a>` : ''}</div><p>${esc((r.snippet || '').slice(0, 280))}</p></div>`).join('')
-          : '<div style="font-size:13.5px;color:var(--mute)">No replies yet. The inbox is checked once a day.</div>'}</div>` : ''}
+          : `<div style="font-size:13.5px;color:var(--mute)">${ACCTS && ACCTS.demo ? 'Demo account: nothing was sent, so no reply will come.' : 'No replies yet. The inbox is checked once a day.'}</div>`}</div>` : ''}
       <div class="section"><div class="sh"><h4>Documents</h4></div><div class="docs">
         <button class="doc" onclick="showImg('/resume-png/${c.app_id}?v=${REVV[c.app_id] || ''}', ${esc(JSON.stringify(c.company))}, 'Résumé', '/resume/${c.app_id}')"><div class="pv"><img src="/resume-png/${c.app_id}?v=${REVV[c.app_id] || ''}" alt="">${REV[c.app_id] === 'running' ? '<span class="rbadge"><span class="spin"></span>Revising</span>' : REV[c.app_id] === 'done' ? '<span class="gdot" title="Revised"></span>' : ''}</div><div class="lb">Résumé <span>· 1 page</span></div></button>${shot}${done ? '' : reviseBox(c)}</div></div>
       ${ask}
@@ -433,7 +456,7 @@ function detailApp(c, done) {
     <div class="d-foot">${done ? `<span class="stamp">${I.check}${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)}</span>` : `
       <button class="btn primary" ${needs.length ? 'disabled' : ''} onclick="decide(${c.app_id},'approve')">${I.check}Approve</button>
       <button class="btn danger" onclick="reject(${c.app_id})">Reject</button>
-      <span class="hint">${needs.length ? `Answer the ${needs.length === 1 ? 'question' : needs.length + ' questions'} above to approve.` : (c.email_body ? 'Approving queues the email; it goes out with the next send.' : 'Approving submits it in a browser window. Nothing goes out before.')}</span>`}</div>`;
+      <span class="hint">${needs.length ? `Answer the ${needs.length === 1 ? 'question' : needs.length + ' questions'} above to approve.` : ACCTS && ACCTS.demo ? 'Demo account: approving sends nothing. In your own account, it submits this exact form.' : (c.email_body ? 'Approving queues the email; it goes out with the next send.' : 'Approving submits it in a browser window. Nothing goes out before.')}</span>`}</div>`;
 }
 
 function detailTodo(c) {
@@ -458,7 +481,8 @@ async function renderJobs(p) {
   const setup = sa.missing.length ? `<div class="banner" style="border-left-color:var(--red)">${I.alert}<div><b>Before your agent applies anywhere:</b> answer the standing questions (name, work authorization, relocation, self-identification…). ${sa.missing.length} left.
     <a class="lk" onclick="tab='storybook';pbFile='@standing';render()">Answer them now</a></div></div>` : '';
   const banner = setup + (sub === 'todo' && !cfg.jev ? `<div class="banner">${I.alert}<div>Jev isn't connected, so these are ranked by keyword match. Add <code>TYPESAFE_API_KEY</code> to <code>.env</code> to rate every posting with Jev.</div></div>` : '');
-  const empty = {review: 'Nothing is waiting for you.', todo: 'Nothing waiting to start.', applied: 'Nothing sent yet.'}[sub];
+  const empty = Object.values(lists).every(l => !l.length) ? 'No jobs yet. Press Refresh at the bottom left to find some.'
+    : {review: 'Nothing is waiting for you.', todo: 'Nothing waiting to start.', applied: 'Nothing sent yet.'}[sub];
   const keepScroll = $('.queue') ? $('.queue').scrollTop : 0;
   p.innerHTML = `<div class="ph"><div><h1>Job applications</h1></div>
       <div class="seg" style="margin:0">${Object.keys(names).map(k => `<button class="${k === sub ? 'on' : ''}" onclick="sub='${k}';editing=false;mobileOpen=false;render()">${names[k]}<span class="n">${lists[k].length}</span></button>`).join('')}</div></div>
@@ -478,7 +502,7 @@ const appliedOrder = ap => ['heard', 'rejected', 'waiting'].flatMap(k => ap.filt
 function appliedLine(c) {
   const r = latestReply(c), col = (STAGE[stageOf(c)] || STAGE.applied)[1];
   return r ? `<div class="st" style="display:flex"><span class="dot" style="background:${col}"></span><span class="sj">${esc(r.subject)}</span></div>`
-           : `<div class="st"><span class="dot" style="background:var(--faint)"></span>${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)} · no reply yet</div>`;
+           : `<div class="st"><span class="dot" style="background:var(--faint)"></span>${c.status === 'sent' ? 'Sent' : 'Approved'} ${day(c.sent_at)} · ${ACCTS && ACCTS.demo ? 'demo, not sent' : 'no reply yet'}</div>`;
 }
 function appliedQueue(list) {
   const items = k => list.filter(c => appliedBucket(c) === k).map(queueItem).join('') || '<div class="qnone">None yet.</div>';
@@ -617,6 +641,46 @@ function speak() {
 async function back() { await post('/api/storybook/back'); render(); }
 async function prop(id, a) { const r = await post(`/api/proposals/${id}/${a}`); if (r && r.ok === false) alert(r.msg); render(); }
 
+// ---- accounts: switching restarts the dashboard on the chosen account, then the page reloads ----------------------
+let ACCTS = null;
+async function loadAccounts() {
+  try { ACCTS = await api('/api/accounts'); } catch (e) { return; }
+  const a = ACCTS.accounts.find(x => x.active) || {name: 'Example', id: 'profile.example', demo: ACCTS.demo};
+  $('#acct-av').textContent = (a.name || '?').trim()[0].toUpperCase();
+  $('#acct-name').textContent = a.name;
+  $('#acct-kind').textContent = ACCTS.demo ? 'Demo · nothing is sent' : a.id ? 'Another story' : 'Your account';
+  document.body.classList.toggle('is-demo', !!ACCTS.demo);
+}
+function accountMenu() {
+  return ACCTS.accounts.map(a => `<div class="acct-row"><button onclick="switchAccount('${esc(a.id)}')"><span class="av">${esc((a.name || '?').trim()[0].toUpperCase())}</span>
+      <span>${esc(a.name)}</span>${a.demo ? '<i>Demo</i>' : ''}${a.active ? `<span style="color:var(--green)">${I.check}</span>` : ''}</button>
+      ${a.demo && !a.active ? `<button class="rm" title="Delete this demo account" onclick="removeDemo(event, '${esc(a.id)}')">Remove</button>` : ''}</div>`).join('')
+    + `<button class="new" onclick="newDemo()">+ New demo account</button>`;
+}
+function toggleAccounts(e) {
+  e.stopPropagation(); const m = $('#acct-menu');
+  if (!m.hidden || !ACCTS) return (m.hidden = true);
+  m.innerHTML = accountMenu(); m.hidden = false;
+}
+async function removeDemo(e, id) {
+  e.stopPropagation(); const a = ACCTS.accounts.find(x => x.id === id);
+  if (!a || !confirm(`Remove the demo account "${a.name}"? Its storybook, jobs, résumés and screenshots are deleted.`)) return;
+  const r = await post('/api/accounts/remove', {id}); if (!r.ok) return toast(r.msg);
+  await loadAccounts(); $('#acct-menu').innerHTML = accountMenu(); toast('Demo account removed');
+}
+document.addEventListener('click', () => { const m = $('#acct-menu'); if (m) m.hidden = true; });
+async function backOnline(text) {
+  $('#switching-t').textContent = text; $('#switching').hidden = false;
+  await new Promise(ok => setTimeout(ok, 1200));
+  for (let i = 0; i < 60; i++) { try { if ((await fetch('/api/config')).ok) return location.reload(); } catch (e) {} await new Promise(ok => setTimeout(ok, 500)); }
+  $('#switching-t').textContent = 'The dashboard did not come back. See data/app.log.';
+}
+async function switchAccount(id) {
+  const a = ACCTS.accounts.find(x => x.id === id); if (!a || a.active) return;
+  const r = await post('/api/accounts/switch', {id}); if (r.ok) backOnline(`Switching to ${a.name}…`); else toast(r.msg);
+}
+async function newDemo() { const r = await post('/api/accounts/demo'); if (r.ok) backOnline('Creating an empty demo account…'); }
+
 // ---- Setup: the first three steps let the agent work; the rest make it better --------------------------------
 let setupOpen = null, SETUP = null;
 function setupBadge(st) { const n = st.steps.filter(x => x.required && !x.done).length; const b = $('#c-setup'); if (b) b.textContent = n || ''; }
@@ -639,11 +703,14 @@ const SETUP_BODY = {
       vLLM, LM Studio, llama.cpp and OpenRouter work as an OpenAI-compatible server. Every step's model and prompt:
       <a class="lk" href="https://github.com/csy2443470971-ui/job-hunting-agent/blob/main/docs/pipeline.md" target="_blank">docs/pipeline.md</a>.</p>`;
   },
-  standing: () => `<p>The questions almost every form asks: legal name, work authorization, sponsorship, relocation, education, and the voluntary
+  standing: st => `<p>The questions almost every form asks: legal name, work authorization, sponsorship, relocation, education, and the voluntary
     self-identification questions (each has <i>Prefer not to say</i>). Answer once; the agent fills them everywhere.</p>
-    <button class="btn primary sm" onclick="tab='storybook';pbFile='@standing';render()">Answer them</button>`,
-  storybook: () => `<p>Drop your old résumés, reference letters, papers or notes, or just talk. The agent turns them into résumé lines, each with its source,
-    and never invents anything. Back undoes it.</p><button class="btn primary sm" onclick="tab='storybook';pbFile=null;render()">Tell it everything</button>`,
+    <div class="srow"><button class="btn primary sm" onclick="tab='storybook';pbFile='@standing';render()">Answer them</button>
+    ${st.demo ? `<button class="btn sm" onclick="post('/api/demo/answers').then(r => { toast(r.ok ? 'Filled in the sample answers' : r.msg); setupOpen = null; loadAccounts(); render(); })">Use the sample answers</button>` : ''}</div>`,
+  storybook: st => `<p>Drop your old résumés, reference letters, papers or notes, or just talk. The agent turns them into résumé lines, each with its source,
+    and never invents anything. Back undoes it.</p>
+    <div class="srow"><button class="btn primary sm" onclick="tab='storybook';pbFile=null;render()">Tell it everything</button>
+    ${st.demo ? `<button class="btn sm" onclick="post('/api/demo/materials').then(() => toast('The sample material is open: drag the files onto Drop anything'))">Show the sample material</button>` : ''}</div>`,
   mailbox: st => `<div class="frow"><label>Your application email<input type="text" id="mail-addr" value="${esc(st.mailbox.address)}" placeholder="you@gmail.com"></label>
       <label>App password<input type="password" id="mail-pw" autocomplete="off" placeholder="${st.mailbox.configured ? 'Saved. Paste a new one to replace it' : 'abcd efgh ijkl mnop'}"></label></div>
     <p class="hint">${st.mailbox.gmail || !st.mailbox.address ? 'Gmail: turn on 2-Step Verification, then <a class="lk" href="https://myaccount.google.com/apppasswords" target="_blank">create an app password</a> and paste it here.' : 'Use an app password from your email provider (IMAP and SMTP).'}
@@ -725,6 +792,7 @@ async function render() {
   else await renderActivity(p);
 }
 document.querySelectorAll('aside .nav').forEach(b => b.onclick = () => { tab = b.dataset.tab; clearInterval(poll); render(); });
+loadAccounts();
 api('/api/setup').then(st => { setupBadge(st); if (!st.ready) tab = 'setup'; }).catch(() => {}).finally(() => render());
 showRefresh(); setInterval(showRefresh, 60000);
 </script>
