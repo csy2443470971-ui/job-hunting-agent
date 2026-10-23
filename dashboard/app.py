@@ -244,6 +244,40 @@ def edit(app_id: int, e: EmailEdit):
     return {"ok": True}
 
 
+class Revise(BaseModel):
+    text: str
+
+
+REVISE: dict[int, dict] = {}
+
+
+@app.post("/api/applications/{app_id}/revise")
+def revise_resume(app_id: int, r: Revise):
+    """The person's note on this résumé ("lead with the climate work"): rewritten and re-rendered in the background."""
+    import threading, time
+    if not r.text.strip():
+        return {"ok": False, "msg": "Say what to change first."}
+    if REVISE.get(app_id, {}).get("state") == "running":
+        return {"ok": False, "msg": "Already revising this résumé."}
+    REVISE[app_id] = {"state": "running", "since": time.time()}
+
+    def work():
+        from agent.run import revise
+        try:
+            with db.tx() as con:
+                revise(con, app_id, r.text.strip())
+            REVISE[app_id] = {"state": "done", "at": time.time()}
+        except Exception as e:
+            REVISE[app_id] = {"state": "error", "error": str(e)[:300]}
+    threading.Thread(target=work, daemon=True).start()
+    return {"ok": True}
+
+
+@app.get("/api/applications/{app_id}/revise-status")
+def revise_status(app_id: int):
+    return REVISE.get(app_id, {"state": "idle"})
+
+
 @app.get("/screen/{app_id}")
 def screen(app_id: int):
     r = rows("SELECT sent_log FROM applications WHERE id=?", app_id)

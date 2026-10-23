@@ -114,6 +114,17 @@ def tailor_resume(job: dict, score: JobScore | None = None) -> ResumeContent:
     return structured(_system(task), "Build the one-page résumé content for this posting.\n\n" + posting, ResumeContent, effort="high", max_tokens=16000)
 
 
+def revise_resume(job: dict, current: dict, instruction: str) -> ResumeContent:
+    """The person's note on one résumé ("lead with the climate work", "shorter bullets"), applied to that résumé only.
+    Same rules as tailoring: facts come from the master documents, nothing is invented."""
+    task = ("Revise this one-page résumé as the person asks. Change only what the note asks for; keep everything else as it is. "
+            "Facts, numbers, titles and dates come from the master documents only: if the note asks for something they don't "
+            "support, leave it out and say so in tailoring_notes. Keep provenance honest.")
+    body = (f"## THE PERSON'S NOTE\n{instruction}\n\n## CURRENT RÉSUMÉ\n{json.dumps(current, ensure_ascii=False)[:20000]}\n\n"
+            f"## POSTING\nCompany: {job.get('company')}\nTitle: {job.get('title')}\n\n{(job.get('description') or '')[:8000]}")
+    return structured(_system(task), body, ResumeContent, effort="high", max_tokens=16000)
+
+
 # ---------------------------------------------------------------- answers
 class FormAnswer(BaseModel):
     question: str

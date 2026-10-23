@@ -119,6 +119,29 @@ def score(con, limit: int = 200) -> int:
     return n
 
 
+def revise(con, app_id: int, instruction: str) -> str:
+    """Rewrite one application's résumé from the person's note and re-render it in place. Returns the PDF path."""
+    from pathlib import Path
+    from . import llm
+    from .resume.render import render_one_page
+    a = dict(con.execute("SELECT * FROM applications WHERE id=?", (app_id,)).fetchone())
+    job = dict(con.execute("SELECT * FROM jobs WHERE id=?", (a["job_id"],)).fetchone())
+    sc = llm.JobScore(**json.loads(job["score_json"])) if job.get("score_json") else None
+    content = llm.revise_resume(job, json.loads(a["resume_json"] or "{}"), instruction)
+    notes = llm.clean_resume(content)
+    from .voicecheck import lint_resume
+    notes += [f"[page] {i.what}" for i in lint_resume(content.model_dump())]
+    pdf, rendered, scale = render_one_page(content.model_dump(), Path(a["resume_pdf"]).stem,
+                                           role_family=sc.role_family if sc else None, sector=job.get("sector") or (sc.sector if sc else None),
+                                           posting_title=job.get("title"))
+    db.update_application(con, app_id, resume_pdf=str(pdf), resume_json=json.dumps(rendered, ensure_ascii=False),
+                          diy_notes=(a.get("diy_notes") or "") + f"\n-- revised: {instruction}\n" + "\n".join(content.tailoring_notes + notes))
+    from .audit import log
+    log(con, "compose", "resume-revised", instruction[:200], job_id=a["job_id"], app_id=app_id)
+    con.commit()
+    return str(pdf)
+
+
 def tailor(con, job_id: int) -> int:
     from . import llm
     from .resume.render import render_one_page
