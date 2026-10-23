@@ -15,8 +15,8 @@ One command installs everything and opens the app. Its **Setup** page then walks
 
 | | |
 |---|---|
-| **Mac** | `git clone https://github.com/csy2443470971-ui/job-hunting-agent && cd job-hunting-agent && ./install.sh` <br>Job Hunter Agent goes into Applications, with its icon in the Dock. |
-| **Windows 10 / 11** | Download the repo ([ZIP](https://github.com/csy2443470971-ui/job-hunting-agent/archive/refs/heads/main.zip)), unzip it, right-click **install.ps1** → *Run with PowerShell*. <br>Job Hunter Agent goes into the Start menu and onto the desktop. |
+| **Mac** | `git clone https://github.com/siennachen2002/job-hunting-agent && cd job-hunting-agent && ./install.sh` <br>Job Hunter Agent goes into Applications, with its icon in the Dock. |
+| **Windows 10 / 11** | Download the repo ([ZIP](https://github.com/siennachen2002/job-hunting-agent/archive/refs/heads/main.zip)), unzip it, right-click **install.ps1** → *Run with PowerShell*. <br>Job Hunter Agent goes into the Start menu and onto the desktop. |
 | **Linux** | `./install.sh` adds Job Hunter Agent to your applications menu. |
 
 You need Python 3.10 or newer (the installer tells you how if it's missing). The app runs on your computer: the

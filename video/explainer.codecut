@@ -37,7 +37,7 @@ music  bed  find "light playful upbeat background, pizzicato or ukulele, positiv
       why    Real screen recording of the track step (demo data, fictional applicant).
 40.845  ending  #end  4.9s
       name   "Job Hunter <em>Agent</em>"
-      sub    "Open source · github.com/csy2443470971-ui/job-hunting-agent"
+      sub    "Open source · github.com/siennachen2002/job-hunting-agent"
       tag    "It does the grind. <em>You do the talking.</em>"
       t_tag  1.615
       edit   name, sub, tag

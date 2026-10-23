@@ -56,7 +56,7 @@ for sc in CLIPS:
     w(f"      why    Real screen recording of the {sc} step (demo data, fictional applicant).")
 w(f"{f(S['end']['start'])}  ending  #end  {f(S['end']['dur'])}s")
 w("      name   \"Job Hunter <em>Agent</em>\"")
-w("      sub    \"Open source · github.com/csy2443470971-ui/job-hunting-agent\"")
+w("      sub    \"Open source · github.com/siennachen2002/job-hunting-agent\"")
 w("      tag    \"It does the grind. <em>You do the talking.</em>\"")
 w(f"      t_tag  {f(cue_t('It does the grind') - S['end']['start'])}")
 w("      edit   name, sub, tag")
