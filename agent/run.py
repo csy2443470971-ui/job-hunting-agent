@@ -119,6 +119,30 @@ def score(con, limit: int = 200) -> int:
     return n
 
 
+def self_update() -> dict:
+    """Pull the newest version of the app (fast-forward only: local changes are never overwritten; personal data is not in git).
+    Returns {"updated": commits pulled, "restart": True when Python code changed, "update_error": why it couldn't}."""
+    import subprocess
+    git = lambda *x: subprocess.run(["git", *x], cwd=config.ROOT, capture_output=True, text=True, timeout=90)
+    try:
+        if git("rev-parse", "--is-inside-work-tree").returncode != 0 or not git("remote").stdout.strip():
+            return {"updated": 0}
+        before = git("rev-parse", "HEAD").stdout.strip()
+        r = git("pull", "--ff-only", "--quiet")
+        if r.returncode != 0:
+            print("update skipped:", (r.stderr or r.stdout).strip()[:300])
+            return {"updated": 0, "update_error": "couldn't update: local changes or no network"}
+        after = git("rev-parse", "HEAD").stdout.strip()
+        if before == after:
+            return {"updated": 0}
+        n = int(git("rev-list", "--count", f"{before}..{after}").stdout.strip() or 0)
+        changed = git("diff", "--name-only", before, after).stdout.split()
+        print(f"updated: {n} commit(s)")
+        return {"updated": n, "restart": any(f.endswith(".py") for f in changed)}
+    except Exception as e:
+        return {"updated": 0, "update_error": str(e)[:200]}
+
+
 def revise(con, app_id: int, instruction: str) -> str:
     """Rewrite one application's résumé from the person's note and re-render it in place. Returns the PDF path."""
     from pathlib import Path
@@ -367,18 +391,21 @@ def main(argv=None):
                     continue
                 mid = send(item["to"], item["subject"], item["body"], item["htmlBody"], item["attachment"])
                 mark_sent(con, item["id"], mid); print(f"sent {item['id']} to {', '.join(item['to'])}")
-        elif a.cmd == "refresh":   # the dashboard's Refresh button: boards + ranking, then a small status file
+        elif a.cmd == "refresh":   # the dashboard's Refresh button: the app itself, the job boards, the inbox; then a small status file
+            update = self_update()
             counts = discover(con); prefilter(con)
             new = sum(v[1] for v in counts.values())
+            replies = 0
             from .mailbox import configured
             if configured():
                 try:
                     from .mailbox import fetch
                     from .replies import ingest
-                    print("replies:", ingest(con, fetch(3)) or "none new")
+                    got = ingest(con, fetch(3)); replies = sum(got.values()) if got else 0
+                    print("replies:", got or "none new")
                 except Exception as e:
                     print("mail check failed:", e)
-            (config.DATA_DIR / "last_refresh.json").write_text(json.dumps({"at": db.now(), "new": new}))
+            (config.DATA_DIR / "last_refresh.json").write_text(json.dumps({"at": db.now(), "new": new, "replies": replies, **update}))
             print(f"{new} new postings")
         elif a.cmd == "prefilter":
             k, d = prefilter(con); print(f"kept {k}, dropped {d}")

@@ -318,12 +318,25 @@ function ago(s) { if (!s) return ''; const m = Math.round((Date.now() - new Date
 async function showRefresh() {
   const r = await api('/api/refresh'), b = $('#refresh'), cap = $('#refresh-cap');
   b.classList.toggle('busy', r.running); b.disabled = r.running; b.querySelector('span').textContent = r.running ? 'Refreshing…' : 'Refresh';
-  cap.textContent = r.running ? 'Checking every job board' : r.failed ? 'Refresh failed: see data/refresh.log' : r.at ? `Updated ${ago(r.at)} · ${r.new} new` : 'Not refreshed yet';
+  const bits = r.at ? [`${r.new} new ${r.new === 1 ? 'job' : 'jobs'}`, r.replies ? `${r.replies} ${r.replies === 1 ? 'reply' : 'replies'}` : '', r.updated ? 'app updated' : ''].filter(Boolean).join(' · ') : '';
+  cap.textContent = r.running ? 'Updating, checking email and job boards' : r.failed ? 'Refresh failed: see data/refresh.log' : r.at ? `Updated ${ago(r.at)} · ${bits}` : 'Not refreshed yet';
   return r;
 }
+// one button for everything: the app's newest version, new jobs, and replies that move each application along
 async function refreshJobs() {
   await post('/api/refresh'); await showRefresh();
-  clearInterval(window._rp); window._rp = setInterval(async () => { const r = await showRefresh(); if (!r.running) { clearInterval(window._rp); toast(r.failed ? 'Refresh failed' : `${r.new} new postings`); render(); } }, 3000);
+  clearInterval(window._rp); window._rp = setInterval(async () => {
+    const r = await showRefresh(); if (r.running) return;
+    clearInterval(window._rp);
+    if (r.failed) return toast('Refresh failed');
+    toast([`${r.new} new ${r.new === 1 ? 'job' : 'jobs'}`, `${r.replies || 0} new ${r.replies === 1 ? 'reply' : 'replies'}`, r.updated ? `app updated (${r.updated} change${r.updated === 1 ? '' : 's'})` : 'app up to date'].join(' · '));
+    if (r.update_error) toast(r.update_error);
+    if (r.restarting) {                      // the server is starting again on the new code: wait for it, then reload
+      $('#refresh-cap').textContent = 'Restarting on the new version…';
+      for (let i = 0; i < 40; i++) { await new Promise(ok => setTimeout(ok, 750)); try { await fetch('/api/config'); return location.reload(); } catch (e) {} }
+    } else if (r.updated) setTimeout(() => location.reload(), 1200);
+    else render();
+  }, 3000);
 }
 async function decide(id, what) { const r = await post(`/api/applications/${id}/${what}`); if (r && r.msg) toast(r.msg); sel[sub] = null; render(); }
 function toast(m) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 5000); }

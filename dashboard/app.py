@@ -93,7 +93,14 @@ def refresh_start():
 def refresh_status():
     p = REFRESH.get("proc"); f = HERE.parent / "data" / "last_refresh.json"
     last = json.loads(f.read_text()) if f.exists() else {}
-    return {"running": bool(p and p.poll() is None), "failed": bool(p and p.poll() not in (None, 0)), **last}
+    running = bool(p and p.poll() is None)
+    restarting = False
+    if not running and p and last.get("restart") and REFRESH.get("restarted_for") != last.get("at"):
+        # the update changed the app's code: start this server again on it, a moment after answering
+        import os, sys, threading
+        REFRESH["restarted_for"] = last.get("at"); restarting = True
+        threading.Timer(.6, lambda: os.execv(sys.executable, [sys.executable, "-m", "dashboard.app"])).start()
+    return {"running": running, "failed": bool(p and p.poll() not in (None, 0)), "restarting": restarting, **last}
 
 
 class Stage(BaseModel):
