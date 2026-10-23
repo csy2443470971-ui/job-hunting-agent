@@ -13,7 +13,7 @@ APP="$HERE/build/Job Hunter Agent.app"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 xcrun swiftc -O -swift-version 5 -o "$APP/Contents/MacOS/JobHunterAgent" "$HERE/JobHunterAgent.swift" \
   -framework Cocoa -framework WebKit -framework Speech -framework AVFoundation
-cp "$HERE/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+cp "$REPO/docs/brand/app-icon/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 esc() { printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/[|]/\\|/g'; }
 sed -e "s|@REPO@|$(esc "$REPO")|" -e "s|@PYTHON@|$(esc "$PY")|" "$HERE/Info.plist.in" > "$APP/Contents/Info.plist"
 codesign --force --deep -s - "$APP"

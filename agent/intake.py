@@ -81,9 +81,8 @@ def run() -> Path | None:
         return None
     corpus = "\n\n".join(f"<<<FILE {p.name}>>>\n{read_any(p)[:40000]}" for p in files)
     from .llm import _system
-    sb = structured(_system("Turn the raw material into storybook entries. Every line must be traceable to a file; "
-                            "list contradictions as conflicts; copy the person's own sentences verbatim into voice_samples."),
-                    corpus, Storybook, effort="high", max_tokens=32000)
+    from .prompts import INTAKE
+    sb = structured(_system(INTAKE), corpus, Storybook, effort="high", max_tokens=32000, tier="draft")   # a draft you edit
     out = config.MASTER_DIR / f"_intake-draft-{datetime.date.today()}.md"
     md = ["# Intake draft (review, then move what you want into the storybook files)\n"]
     for e in sb.entries:

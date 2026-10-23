@@ -2,71 +2,53 @@
 
 Five minutes. Then the agent does the tedious part and you keep the parts that matter.
 
-![Pipeline](docs/architecture.svg)
+## Start
 
-## Four things to know first
+Install it ([README → Install](README.md#install)), open **Job Hunter Agent**, and follow the **Setup** page. It opens
+there until the three required steps are done:
 
-**0. Answer the standing questions first. It's required.**
-Every application form asks the same things: your legal name, whether you're authorized to work, whether you need
-sponsorship, whether you'd relocate (and where), how you want to work, your degree and GPA, and the voluntary
-self-identification questions (gender, race, Hispanic/Latino, veteran, disability). Open the dashboard → Storybook →
-*Standing answers*, answer them once, and the agent fills them everywhere. Every self-identification question has
-*Prefer not to say*; pick it and the agent chooses the form's decline option. Until the starred ones are done, the
-agent won't prepare or submit anything. Your answers stay in `profile/standing.yaml` on your computer.
+1. **Connect a model.** Claude through the API, your Claude Code login, or an open-source model on your own computer
+   (Ollama) or server (vLLM, LM Studio, OpenRouter). Add a smaller *draft model* for ranking if you like. Press *Test*.
+2. **Answer the standing questions.** Legal name, work authorization, sponsorship, relocation (and where), how you want to
+   work, education, and the voluntary self-identification questions. Every one of those has *Prefer not to say*; pick it and
+   the agent chooses the form's decline option. Until the required ones are answered, it prepares and submits nothing.
+3. **Tell it everything.** On the **Storybook** page, drop whatever you have on *Drop anything*: old résumés, reference
+   letters, papers, portfolio text, voice memos. Or tap the mic and just talk. It adds what the material says about you as
+   résumé lines, each with the file it came from, and invents nothing. *Back to previous version* undoes it. Drop a résumé
+   that isn't yours and it learns that résumé's style instead.
 
-**Connect your application mailbox (once).** The agent sends approved emails from the address you apply with and
-reads replies there, so it can mark each application *Received*, *Next step*, *Interview*, *Offer* or *Rejected*.
-For Gmail: turn on 2-Step Verification, then Google Account → Security → App passwords → create one and paste it into
-`.env` as `JHA_MAIL_APP_PASSWORD=`. Check it with `python -m agent.run mail-test`. Reading is read-only (nothing is
-marked read, moved or deleted); you can revoke the app password any time.
+Then, when you want them: connect your **mailbox** (an app password; it reads replies and never changes your inbox), open
+the **agent's browser** to sign in to sites where you keep an account, and add a **Jev** key for faster ranking.
 
-**1. Feed it everything. It reads, you decide.**
-Open the dashboard's **Storybook** page and drop whatever you have on *Drop anything*: old résumés, reference letters,
-papers, portfolio text, cover letters you were proud of, even voice memos. Or tap the mic and just talk. Hit Send.
-The agent adds what the material says about you as résumé lines, each shown with the file it came from, and invents
-nothing. Don't like what it added? *Back to previous version* undoes all of it. (Drop a résumé that isn't yours and
-it learns that résumé's style instead.) Prefer a draft to edit by hand? Put the files in `inbox/` and run
-`python -m agent.run intake`.
+## Three things to know
 
-**2. A storybook is a story, not your autobiography.**
-Leave out what doesn't serve the story. If you're applying as a design engineer and as a strategist, those are two
-stories, so keep two storybooks:
+**A storybook is a story, not your autobiography.** Leave out what doesn't serve the story. Applying as a designer and as a
+strategist? Keep two storybooks under `profiles/` and pick one with `JHA_PROFILE=profiles/<story>`. The agent only ever says
+what the active storybook says.
 
-```bash
-cp -r profile.example profiles/design-engineer
-cp -r profile.example profiles/strategy
-JHA_PROFILE=profiles/strategy python -m agent.run daily
-```
+**Nothing leaves without your yes.** The agent finds, ranks, writes and fills. It cannot submit or send until you click
+Approve. CAPTCHAs, emailed security codes, LinkedIn and Indeed, salary questions, and any answer an employer wants in your own
+words come to you, marked.
 
-Same you, different emphasis. The agent only ever says what the active storybook says, so if a line isn't there,
-it won't show up on a résumé. That's the point.
-
-**3. Nothing leaves without your yes.**
-The agent can find, rank, write and fill. It cannot submit or send until you click Approve. It also won't touch
-CAPTCHAs, LinkedIn Easy Apply, salary questions, demographic questions you haven't given standing answers for, or any answer an employer says must be
-written by you. Those come to you, marked.
+**It never holds your passwords.** Your mailbox uses an app password you can revoke. Where a site needs an account, you sign
+in yourself in the agent's browser; the session stays there, the password never reaches the agent.
 
 ## A normal day
 
-1. **Morning.** The daily run (`python -m agent.run daily`, or the scheduled task) finds new postings, ranks them,
-   builds a one-page résumé for the good ones and fills the forms right up to the Submit button.
-2. **Coffee.** Open the dashboard: `python -m dashboard.app`, then http://127.0.0.1:8765. Go to **Review**.
-3. **Check the list.** Each application has a checklist: one page, writing checks, invented content under 15%,
-   every question answered, posting still open. Approve stays grey until all of it is green. Grey is not a bug;
-   it's the agent being honest about what's missing.
-4. **Approve, reject or fix.**
-   - Approve when you'd sign it.
-   - Reject when the role or the angle is wrong. It goes back to Compose.
-   - Fix the text first if a sentence isn't you. Emails are editable in place.
-5. **Send.** Approved forms: `python -m agent.run submit` opens a visible browser and submits. If a CAPTCHA appears,
-   that one's yours. Approved emails go out through your Gmail on the next run.
+1. **Open the app and press Refresh** (bottom left). It updates the app, finds new postings and reads new replies.
+2. **Job applications → Waiting for review.** Each has a one-page résumé, a screenshot of the filled form, and a checklist.
+   Approve stays grey until the checklist passes; the unticked line says what's missing.
+3. **Decide.**
+   - *Approve* when you'd sign it. The form is submitted in a visible browser; if a CAPTCHA appears, that one's yours.
+   - *Change this résumé*: type or say what to change ("lead with the climate work"). A *Revising* badge shows while it works,
+     a green dot when the new version is in.
+   - *Reject* with a note when the role or the angle is wrong.
+4. **Applied.** Grouped as *Heard back*, *Rejected* and *No reply yet*, each with its latest email's subject.
 
 ## Teach it
 
-Every application has a **Note to the agent** box, and Reject asks why. Write the note you'd give a new assistant:
-"Don't say *named*, say *defined the brand identity*." Overnight it turns notes into proposed fixes on the **Learn** page:
-a better example for its writing brief, a reworded line in your storybook, or a phrase to block. Click Apply on the ones
-you agree with. Changed your mind? Revert. It gets better, and it never edits itself behind your back.
+Notes and rejection reasons become proposed fixes: a better example for the writing brief, a reworded storybook line, a phrase
+to block, a preference. Apply the ones you agree with; revert any time. It never edits itself behind your back.
 
 ## When you have to step in
 
@@ -75,13 +57,15 @@ you agree with. Changed your mind? Revert. It gets better, and it never edits it
 | "Only you can answer these" | Answer them. Usually salary, start date, or a "Why us?" the employer wants in your own words. |
 | Approve is grey | Read the unticked line. It tells you what's missing. |
 | A placeholder like `[YOUR ANSWER]` in an email | The agent didn't have that fact. Write it, or add it to your storybook so it never asks again. |
-| A role you'd never take | Reject it, and add the keyword to `avoid_keywords` in `preferences.yaml`. |
+| A role you'd never take | Reject it, and say why: "no agencies" becomes a proposed preference. |
+| A model error | Setup → Connect a model → *Test* shows what's wrong. |
 
 ## Where things live
 
-- `profile/` (or `profiles/<story>/`): your storybook and settings. Private, never committed.
-- `inbox/`: drop zone for raw material.
+- `profile/`: your storybook, standing answers and preferences. Private, never committed.
+- `data/`: the database, the app's log, and the agent's browser profile.
 - `out/resumes/`: every PDF that was generated.
-- Dashboard → **Activity**: a log of everything the agent did and everything you decided.
+- **Activity** in the app: everything the agent did and everything you decided.
+- Every step and prompt: [docs/pipeline.md](docs/pipeline.md).
 
 That's it. Go outsource the boring part.

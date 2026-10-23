@@ -251,6 +251,57 @@ def edit(app_id: int, e: EmailEdit):
     return {"ok": True}
 
 
+# ---- setup: the checklist a new person follows; settings go to .env, secrets never come back to the page -------
+@app.get("/api/setup")
+def setup_status():
+    from agent.setup import status
+    return status()
+
+
+class EnvValues(BaseModel):
+    values: dict
+
+
+@app.post("/api/setup/env")
+def setup_env(e: EnvValues):
+    from agent.setup import write_env, status
+    return {"ok": True, "changed": write_env(e.values), **status()}
+
+
+class SetupTest(BaseModel):
+    what: str
+
+
+@app.post("/api/setup/test")
+def setup_test(t: SetupTest):
+    if t.what in ("model", "draft"):
+        from agent.providers import check
+        return check(t.what)
+    if t.what == "mail":
+        from agent.mailbox import test
+        try:
+            msg = test()
+            return {"ok": msg.startswith("ok"), "msg": msg}
+        except Exception as e:
+            return {"ok": False, "msg": f"{e.__class__.__name__}: {str(e)[:200]}. Check the address and the app password."}
+    if t.what == "jev":
+        from agent.jev import score_batch
+        try:
+            p = score_batch([{"company": "Example", "title": "Product Designer", "location": "New York", "description": "Design product."}])[0]
+            return {"ok": p is not None, "msg": "Jev answered." if p is not None else "No key set."}
+        except Exception as e:
+            return {"ok": False, "msg": f"{e.__class__.__name__}: {str(e)[:200]}"}
+    return {"ok": False, "msg": "unknown test"}
+
+
+@app.post("/api/setup/browser")
+def setup_browser():
+    import subprocess, sys
+    subprocess.Popen([sys.executable, "-m", "agent.run", "browser"], cwd=str(HERE.parent),
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return {"ok": True}
+
+
 class Revise(BaseModel):
     text: str
 

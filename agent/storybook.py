@@ -82,9 +82,7 @@ def learn_from(reference_text: str, reference_name: str, prompt: str) -> None:
     blocks = [(f, name, lines) for f in files for name, lines in _sections(f.read_text(encoding="utf-8"))]
     STATUS.clear(); STATUS.update(state="running", reference=reference_name, prompt=prompt, total=len(blocks), done=0, changes=[], current="")
     snapshot(f"before learning from {reference_name}")
-    task = ("Rewrite the person's résumé lines in the style of the reference résumé, following their instruction. "
-            "Borrow structure, rhythm, verbs and how impact is framed. Keep every fact, number and name the same; add nothing. "
-            "Return only lines that actually change.")
+    from .prompts import STORYBOOK_STYLE as task
     try:
         for f, name, lines in blocks:
             STATUS["current"] = name
@@ -152,10 +150,7 @@ def add_from(files: list[tuple[str, str]], note: str, person: str = "") -> None:
     STATUS.clear(); STATUS.update(state="running", mode="add", reference=" · ".join(names + (["your note"] if note.strip() else [])),
                                   prompt=note, total=len(files) + 1, done=0, changes=[], current="")
     snapshot(f"before adding from {', '.join(names) or 'your note'}")
-    task = ("Add what this material says about the person to their storybook. Use only facts the material states: never "
-            "guess numbers, titles, dates, degrees or tools. Skip anything the storybook already says. One fact per line, "
-            "résumé-ready, result first when the material gives one. In reference letters keep what the writer says the "
-            "person did, not the praise. A file about someone else adds nothing: list it in about_someone_else.")
+    from .prompts import STORYBOOK_ADD as task
     try:
         corpus = []
         for name, text in files:

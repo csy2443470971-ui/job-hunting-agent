@@ -24,9 +24,7 @@ DB_PATH = Path(os.getenv("JHA_DB", str(DATA_DIR / "jobs.sqlite")))
 for d in (DATA_DIR, RESUME_OUT, OUT_DIR / "emails"):
     d.mkdir(parents=True, exist_ok=True)
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-MODEL_TAILOR = os.getenv("MODEL_TAILOR", "claude-opus-5-5")
-MODEL_SCORE = os.getenv("MODEL_SCORE", "claude-opus-5-5")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")   # which model runs each step: agent/providers.py
 ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID", "")
 ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY", "")
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
@@ -68,9 +66,19 @@ def profile() -> dict:
     return _load_yaml(PROFILE_DIR / "profile.yaml", {})
 
 
+def _name() -> str:
+    """profile.yaml's name, else the standing answers (a new profile keeps the name only there)."""
+    n = profile().get("name")
+    if not n:
+        from .setup_answers import load
+        sa = load()
+        n = " ".join(x for x in (sa.get("preferred_name") or sa.get("legal_first"), sa.get("legal_last")) if x)
+    return n or ""
+
+
 def first_name() -> str:
-    return (profile().get("name") or "the candidate").split()[0]
+    return (_name() or "the candidate").split()[0]
 
 
 def file_stem() -> str:
-    return re.sub(r"\W+", "_", profile().get("name") or "Candidate").strip("_")
+    return re.sub(r"\W+", "_", _name() or "Candidate").strip("_")

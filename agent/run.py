@@ -343,6 +343,10 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("discover")
     sub.add_parser("refresh")
+    sub.add_parser("init")       # first run: a fresh profile/ and .env
+    sub.add_parser("setup")      # the Setup checklist, in the terminal
+    md = sub.add_parser("models"); md.add_argument("--test", action="store_true")   # which model runs what; --test calls them
+    br = sub.add_parser("browser"); br.add_argument("url", nargs="?", default="")   # the agent's browser, for you to sign in
     sub.add_parser("mail-test")
     mc = sub.add_parser("mail-check"); mc.add_argument("--days", type=int, default=3)
     ms2 = sub.add_parser("mail-send"); ms2.add_argument("--app", type=int)
@@ -372,6 +376,26 @@ def main(argv=None):
         if a.cmd == "discover":
             for k, (tot, new) in discover(con).items():
                 print(f"  {k}: {tot} postings, {new} new")
+        elif a.cmd == "init":
+            from .setup import init
+            made = init()
+            print("created: " + ", ".join(made) if made else "nothing to create: profile/ and .env already exist")
+            print("next: start the dashboard (python -m dashboard.app, or the app) and follow the Setup page")
+        elif a.cmd == "setup":
+            from .setup import report
+            print(report())
+        elif a.cmd == "models":
+            from .providers import describe, check
+            d = describe()
+            print(f"model        {d['model']['label'] or '(not set)'}  {d['model']['missing']}")
+            print(f"draft model  {d['draft']['label'] or '(none: the model does everything)'}  {d['draft']['missing']}")
+            if a.test:
+                for tier in ("model", "draft"):
+                    r = check(tier)
+                    print(f"test {tier:5s}  " + (f"ok in {r['ms']} ms ({r['model']})" if r["ok"] else r.get("error", "failed")))
+        elif a.cmd == "browser":
+            from .apply.browser import open_for_signing_in
+            print("opened the agent's browser (" + open_for_signing_in(a.url) + "): sign in, then close the window")
         elif a.cmd == "mail-test":
             from .mailbox import test
             print(test())

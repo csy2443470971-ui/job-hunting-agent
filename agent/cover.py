@@ -19,9 +19,8 @@ class CoverDraft(BaseModel):
 
 def draft(job: dict, research: str = "") -> CoverDraft:
     from .llm import _system
-    task = (f"Draft a cover letter and a 'Why {job.get('company')}' answer for {config.first_name()}. Use only storybook facts "
-            "and what the posting or research says about the company. If the employer requires the candidate's own first draft, "
-            "leave both fields empty and explain in needs_human.")
+    from .prompts import COVER
+    task = COVER.format(company=job.get("company"), first_name=config.first_name())
     body = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\n\n## Posting\n{(job.get('description') or '')[:10000]}"
             + (f"\n\n## Research notes\n{research[:6000]}" if research else ""))
     return structured(_system(task), body, CoverDraft, effort="high", max_tokens=6000)

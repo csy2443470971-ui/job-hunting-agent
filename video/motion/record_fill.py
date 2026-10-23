@@ -1,8 +1,8 @@
 """Film the real filler: agent/apply/fill.py fills ats.html (a demo Greenhouse-style form) for the demo applicant.
 
 Nothing about the filling is staged: the agent's own fill() runs on the page with the demo profile's standing
-answers and the demo application's answers. Only the browser is wrapped: 2x pixels, a screencast of every
-frame, and the page's field log (which field was active, when) read just before the browser closes.
+answers and the demo application's answers. Only the browser it opens (agent/apply/browser.py · open_page) is
+swapped for a filmed one: 2x pixels, a screencast of every frame, and the page's field log read before it closes.
 
     python3 record_fill.py   ->  rec_fill/ (raw 2x frames, field log, the filler's own screenshot), then img/fill/ + img/fill.json
                                  + img/shot.jpg at film size
@@ -17,40 +17,35 @@ os.environ["JHA_PROFILE"] = "profile.example"           # the fictional applican
 os.environ["JHA_DB"] = "data/demo.sqlite"
 os.chdir(REPO); sys.path.insert(0, str(REPO))
 
-from playwright.sync_api import Browser
+import agent.apply.browser as browser_mod
 OUT = ROOT / "rec_fill"
 shutil.rmtree(OUT, ignore_errors=True); OUT.mkdir()
 frames, state = [], {}
-_new_page, _close = Browser.new_page, Browser.close
 
 
-def new_page(self, **kw):
-    kw["device_scale_factor"] = 2
-    pg = _new_page(self, **kw)
+def open_page(p, headless=True, viewport=None):
+    """The filler's browser, filmed: a fresh profile at 2x, a screencast of every frame, the field log read before closing."""
+    b = p.chromium.launch(headless=headless)
+    pg = b.new_page(viewport=viewport, device_scale_factor=2)
     cdp = pg.context.new_cdp_session(pg)
 
-    def on_frame(p):
+    def on_frame(e):
         n = len(frames)
-        (OUT / f"{n:05d}.jpg").write_bytes(base64.b64decode(p["data"]))
-        frames.append({"f": f"{n:05d}.jpg", "t": p["metadata"]["timestamp"] * 1000,
-                       "scroll": p["metadata"].get("scrollOffsetY", 0)})
-        cdp.send("Page.screencastFrameAck", {"sessionId": p["sessionId"]})
+        (OUT / f"{n:05d}.jpg").write_bytes(base64.b64decode(e["data"]))
+        frames.append({"f": f"{n:05d}.jpg", "t": e["metadata"]["timestamp"] * 1000, "scroll": e["metadata"].get("scrollOffsetY", 0)})
+        cdp.send("Page.screencastFrameAck", {"sessionId": e["sessionId"]})
     cdp.on("Page.screencastFrame", on_frame)
     cdp.send("Page.startScreencast", {"format": "jpeg", "quality": 90, "maxWidth": 2560, "maxHeight": 3200})
-    state.update(page=pg, cdp=cdp)
-    return pg
 
-
-def close(self, *a, **kw):
-    pg = state.get("page")
-    if pg:
+    def close():
         pg.wait_for_timeout(400)
         state["fields"] = pg.evaluate("window.__log")
-        state["cdp"].send("Page.stopScreencast")
-    return _close(self, *a, **kw)
+        cdp.send("Page.stopScreencast")
+        b.close()
+    return pg, close
 
 
-Browser.new_page, Browser.close = new_page, close
+browser_mod.open_page = open_page
 
 from agent.apply.fill import fill
 con = sqlite3.connect("data/demo.sqlite")

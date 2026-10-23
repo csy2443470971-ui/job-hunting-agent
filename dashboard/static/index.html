@@ -138,8 +138,8 @@
   .d-foot { display:flex; align-items:center; gap:8px; padding:14px 34px; border-top:1px solid var(--line); background:var(--surface); }
   .hint { font-size:13px; color:var(--mute); margin-left:6px; }
   .stamp { font-size:13.5px; color:var(--ink2); display:flex; align-items:center; gap:7px; } .stamp svg { color:var(--red); }
-  input[type=text], textarea, select { font:inherit; font-size:14px; width:100%; padding:8px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); transition:border-color .12s, box-shadow .12s; }
-  input[type=text]:focus, textarea:focus, select:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px color-mix(in srgb, var(--orange) 18%, transparent); }
+  input[type=text], input[type=password], textarea, select { font:inherit; font-size:14px; width:100%; padding:8px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); transition:border-color .12s, box-shadow .12s; }
+  input[type=text]:focus, input[type=password]:focus, textarea:focus, select:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px color-mix(in srgb, var(--orange) 18%, transparent); }
   textarea { min-height:90px; resize:vertical; line-height:1.5; }
   .banner { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink2); padding:11px 14px; border:1px solid var(--line); border-left:3px solid var(--orange); border-radius:10px; background:var(--surface); margin-bottom:14px; }
   .banner code { font-family:var(--mono); font-size:12.5px; background:var(--sunk); padding:1px 5px; border-radius:4px; }
@@ -175,6 +175,24 @@
   .drop:hover, .drop.over { border-color:var(--orange); color:var(--ink2); } .drop.over { background:var(--orange-soft); } .drop.over .di, .drop:hover .di { color:var(--orange); }
   .status { display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--ink2); margin:-12px 0 20px; }
   .spin { width:14px; height:14px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--red); animation:sp .8s linear infinite; } @keyframes sp { to { transform:rotate(360deg); } }
+  /* Setup */
+  .prog { height:6px; border-radius:6px; background:var(--sunk); overflow:hidden; margin:2px 0 6px; } .prog i { display:block; height:100%; background:var(--red); }
+  .panel.stp { padding:0; overflow:hidden; margin-bottom:10px; }
+  .stp-h { all:unset; box-sizing:border-box; width:100%; display:flex; align-items:center; gap:14px; padding:15px 20px; cursor:pointer; }
+  .stp .num { width:28px; height:28px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font:600 13px var(--mono); color:var(--mute); flex:none; }
+  .stp.done .num { background:var(--green); border-color:var(--green); color:#fff; } .stp.done .num svg { width:15px; height:15px; }
+  .stp .tt { flex:1; min-width:0; } .stp .tt b { font-weight:620; font-size:15px; } .stp .tt small { display:block; color:var(--mute); font-size:13px; margin-top:2px; }
+  .stp .opt { margin-left:8px; font-size:11.5px; color:var(--mute); border:1px solid var(--line); border-radius:999px; padding:2px 8px; font-weight:500; }
+  .stp .cv { color:var(--faint); transition:transform .15s; } .stp.open .cv { transform:rotate(90deg); }
+  .stp-b { padding:0 20px 18px 62px; font-size:14px; } .stp-b p { margin:0 0 10px; color:var(--ink2); } .stp-b .hint { color:var(--mute); font-size:13px; }
+  .stp-b code { font:12.5px var(--mono); background:var(--sunk); padding:1px 5px; border-radius:5px; }
+  .mrow { display:grid; grid-template-columns:210px minmax(0,1fr) minmax(0,1fr); gap:10px; align-items:start; margin-bottom:10px; }
+  .mrow .ml { font-weight:600; font-size:13.5px; } .mrow .ml small { display:block; font-weight:400; color:var(--mute); font-size:12px; margin-top:2px; line-height:1.4; }
+  .frow { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; margin-bottom:10px; }
+  .frow label { font-size:12.5px; color:var(--ink2); font-weight:600; display:flex; flex-direction:column; gap:5px; }
+  .srow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px; } .res { font-size:13px; } .res.ok { color:var(--green); } .res.bad { color:var(--red); }
+  .ready { display:flex; align-items:center; gap:14px; border-color:color-mix(in srgb, var(--green) 45%, var(--line)); }
+  @media (max-width: 760px) { .mrow, .frow { grid-template-columns:1fr; } .stp-b { padding-left:20px; } }
   .panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:18px 20px; margin-bottom:16px; }
   .progress { height:5px; background:var(--sunk); border-radius:5px; overflow:hidden; margin:12px 0 8px; } .progress i { display:block; height:100%; background:linear-gradient(90deg, var(--orange), var(--red)); border-radius:5px; transition:width .4s; }
   .change .plus { color:var(--green); font-weight:600; }
@@ -248,6 +266,7 @@
   <button class="nav on" data-tab="jobs"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>Job applications <span class="badge" id="c-jobs"></span></button>
   <button class="nav" data-tab="storybook"><svg class="i" viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2.5Z"/><path d="M4 19.5A2 2 0 0 0 6 21h13M9 7h6"/></svg>Storybook</button>
   <button class="nav" data-tab="activity"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</button>
+  <button class="nav" data-tab="setup"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Setup <span class="badge" id="c-setup"></span></button>
   <div class="side-foot">
     <button class="btn refresh" id="refresh" onclick="refreshJobs()"><svg class="i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg><span>Refresh</span></button>
     <div class="cap" id="refresh-cap"></div>
@@ -576,7 +595,7 @@ async function reviseResume(id) {
 let recInto = null;
 function speakInto(fieldId, btn, id) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return alert('Voice input needs Chrome or Safari.');
+  if (!SR) return noVoice($('#' + fieldId));
   if (recInto) { recInto.stop(); return; }
   const box = $('#' + fieldId), start = box.value ? box.value + ' ' : '';
   recInto = new SR(); recInto.continuous = true; recInto.interimResults = true; recInto.lang = navigator.language || 'en-US';
@@ -584,9 +603,10 @@ function speakInto(fieldId, btn, id) {
   recInto.onend = () => { recInto = null; btn.classList.remove('on'); };
   btn.classList.add('on'); recInto.start();
 }
+const noVoice = box => { if (/Windows/.test(navigator.userAgent)) { box && box.focus(); toast('Press Windows key + H to dictate into this box.'); } else alert('Voice input needs Chrome or Safari.'); };
 function speak() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return alert('Voice input needs Chrome or Safari.');
+  if (!SR) return noVoice($('#ask'));
   if (rec) { rec.stop(); return; }
   rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = navigator.language || 'en-US';
   const box = $('#ask'), start = box.value ? box.value + ' ' : '';
@@ -596,6 +616,97 @@ function speak() {
 }
 async function back() { await post('/api/storybook/back'); render(); }
 async function prop(id, a) { const r = await post(`/api/proposals/${id}/${a}`); if (r && r.ok === false) alert(r.msg); render(); }
+
+// ---- Setup: the first three steps let the agent work; the rest make it better --------------------------------
+let setupOpen = null, SETUP = null;
+function setupBadge(st) { const n = st.steps.filter(x => x.required && !x.done).length; const b = $('#c-setup'); if (b) b.textContent = n || ''; }
+const NAME_HINT = {anthropic: 'claude-opus-5-5', 'claude-code': 'Empty: your default model', ollama: 'qwen3:32b', openai: 'Qwen/Qwen3-32B'};
+const DRAFT_HINT = {anthropic: 'claude-haiku-5-5', 'claude-code': 'Empty: your default model', ollama: 'qwen3:4b', openai: 'Qwen/Qwen3-8B'};
+const hint = (tier, pv) => (tier === 'draft' ? DRAFT_HINT : NAME_HINT)[pv] || '';
+const SETUP_BODY = {
+  model: st => {
+    const m = st.models, opts = (cur, draft) => (draft ? [['', 'None: the model does everything']] : [])
+      .concat(Object.entries(st.providers)).map(([k, l]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${esc(l)}</option>`).join('');
+    const row = (tier, cur, title, help) => `<div class="mrow"><div class="ml">${title}<small>${help}</small></div>
+      <select id="p-${tier}" onchange="setupFields()">${opts(cur.provider, tier === 'draft')}</select>
+      <input type="text" id="n-${tier}" value="${esc(cur.name)}" placeholder="${esc(hint(tier, cur.provider))}"></div>`;
+    return row('model', m.model, 'The model', 'Writes everything that goes out under your name, and decides what is true about you.')
+      + row('draft', m.draft, 'Draft model', 'Optional. Ranks every posting and proposes fixes from your notes. Empty: the model does it.')
+      + `<div id="mfields"></div>
+      <div class="srow"><button class="btn primary sm" onclick="saveModels()">Save</button><button class="btn sm" onclick="testSetup('model', this)">Test the model</button>
+        <button class="btn sm" onclick="testSetup('draft', this)">Test the draft model</button><span class="res" id="res-model"></span></div>
+      <p class="hint">Open-source models: install <a class="lk" href="https://ollama.com" target="_blank">Ollama</a>, run <code>ollama pull qwen3:32b</code>, and choose Ollama.
+      vLLM, LM Studio, llama.cpp and OpenRouter work as an OpenAI-compatible server. Every step's model and prompt:
+      <a class="lk" href="https://github.com/csy2443470971-ui/job-hunting-agent/blob/main/docs/pipeline.md" target="_blank">docs/pipeline.md</a>.</p>`;
+  },
+  standing: () => `<p>The questions almost every form asks: legal name, work authorization, sponsorship, relocation, education, and the voluntary
+    self-identification questions (each has <i>Prefer not to say</i>). Answer once; the agent fills them everywhere.</p>
+    <button class="btn primary sm" onclick="tab='storybook';pbFile='@standing';render()">Answer them</button>`,
+  storybook: () => `<p>Drop your old résumés, reference letters, papers or notes, or just talk. The agent turns them into résumé lines, each with its source,
+    and never invents anything. Back undoes it.</p><button class="btn primary sm" onclick="tab='storybook';pbFile=null;render()">Tell it everything</button>`,
+  mailbox: st => `<div class="frow"><label>Your application email<input type="text" id="mail-addr" value="${esc(st.mailbox.address)}" placeholder="you@gmail.com"></label>
+      <label>App password<input type="password" id="mail-pw" autocomplete="off" placeholder="${st.mailbox.configured ? 'Saved. Paste a new one to replace it' : 'abcd efgh ijkl mnop'}"></label></div>
+    <p class="hint">${st.mailbox.gmail || !st.mailbox.address ? 'Gmail: turn on 2-Step Verification, then <a class="lk" href="https://myaccount.google.com/apppasswords" target="_blank">create an app password</a> and paste it here.' : 'Use an app password from your email provider (IMAP and SMTP).'}
+      The agent only reads: nothing is marked read, moved or deleted. It sends only the emails you approve, and you can revoke the app password any time.</p>
+    <div class="srow"><button class="btn primary sm" onclick="saveSetup({JHA_MAIL_ADDRESS: $('#mail-addr').value, JHA_MAIL_APP_PASSWORD: $('#mail-pw').value})">Save</button>
+      <button class="btn sm" onclick="testSetup('mail', this)">Test</button><span class="res" id="res-mail"></span></div>`,
+  browser: st => `<p>Only for sites where you keep an account, like a company's Workday. Sign in there yourself, once; the agent reuses the session
+    when it fills that site's forms. It never sees, types or keeps a password. ${st.browser.chrome ? 'It opens Google Chrome with its own profile, separate from yours.' : 'It opens its own browser window.'}</p>
+    <p class="hint">No need to sign in to LinkedIn or Indeed: they are never automated. CAPTCHAs and emailed security codes are always yours: when one appears,
+    the agent stops and you finish it in its window.</p>
+    <div class="srow"><button class="btn primary sm" onclick="post('/api/setup/browser').then(() => toast('The agent\'s browser is opening. Sign in, then close it.'))">Open the agent's browser</button></div>`,
+  jev: st => `<p>Jev (TypeSafe) rates every posting before a model reads it, so ranking is faster and cheaper. Without it, a keyword match ranks them.</p>
+    <div class="frow"><label>TypeSafe API key<input type="password" id="jev-key" autocomplete="off" placeholder="${st.models.keys.TYPESAFE_API_KEY ? 'Saved. Paste a new one to replace it' : 'Paste your key'}"></label></div>
+    <div class="srow"><button class="btn primary sm" onclick="saveSetup({TYPESAFE_API_KEY: $('#jev-key').value})">Save</button>
+      <button class="btn sm" onclick="testSetup('jev', this)">Test</button><span class="res" id="res-jev"></span></div>`,
+};
+async function renderSetup(p) {
+  const st = SETUP = await api('/api/setup');
+  setupBadge(st);
+  const req = st.steps.filter(x => x.required), done = req.filter(x => x.done).length;
+  if (setupOpen === null) { const first = st.steps.find(x => x.required && !x.done); setupOpen = first ? first.id : ''; }
+  p.innerHTML = `<div class="ph"><div><h1>Setup</h1><p class="sub">The first three steps let the agent work; the others make it better. Everything stays on this computer.</p></div></div>
+    ${st.ready ? `<div class="panel ready"><span style="color:var(--green)">${I.check}</span><div style="flex:1"><b>You're set.</b> Press Refresh at the bottom left to find your first jobs.</div>
+        <button class="btn sm" onclick="tab='jobs';render()">Job applications</button></div>`
+      : `<div class="prog"><i style="width:${Math.round(100 * done / req.length)}%"></i></div><p class="sub" style="margin:0 0 16px">${done} of ${req.length} required steps done</p>`}
+    ${st.steps.map((x, i) => `<section class="panel stp ${x.done ? 'done' : ''} ${setupOpen === x.id ? 'open' : ''}">
+      <button class="stp-h" onclick="setupOpen = setupOpen === '${x.id}' ? '' : '${x.id}'; render()"><span class="num">${x.done ? I.check : i + 1}</span>
+        <span class="tt"><b>${esc(x.title)}</b>${x.required ? '' : '<span class="opt">Optional</span>'}<small>${esc(x.detail)}</small></span><span class="cv">›</span></button>
+      ${setupOpen === x.id ? `<div class="stp-b">${SETUP_BODY[x.id](st)}</div>` : ''}</section>`).join('')}`;
+  setupFields();
+}
+function setupFields() {
+  const box = $('#mfields'); if (!box || !SETUP) return;
+  const ps = ['model', 'draft'].map(t => $('#p-' + t).value);
+  ['model', 'draft'].forEach(t => { const n = $('#n-' + t); n.placeholder = hint(t, $('#p-' + t).value); n.disabled = !$('#p-' + t).value; });
+  const k = SETUP.models.keys, saved = 'Saved. Paste a new one to replace it';
+  box.innerHTML = [
+    ps.includes('anthropic') && `<label>Anthropic API key<input type="password" id="k-ANTHROPIC_API_KEY" autocomplete="off" placeholder="${k.ANTHROPIC_API_KEY ? saved : 'sk-ant-…'}"></label>`,
+    ps.includes('openai') && `<label>Server address<input type="text" id="k-JHA_OPENAI_BASE_URL" value="${esc(SETUP.models.openai_base_url)}" placeholder="http://localhost:8000/v1"></label>`,
+    ps.includes('openai') && `<label>Server API key (if it needs one)<input type="password" id="k-JHA_OPENAI_API_KEY" autocomplete="off" placeholder="${k.JHA_OPENAI_API_KEY ? saved : 'optional'}"></label>`,
+    ps.includes('ollama') && `<label>Ollama address<input type="text" id="k-OLLAMA_BASE_URL" value="${esc(SETUP.models.ollama_base_url)}" placeholder="http://localhost:11434/v1"></label>`,
+  ].filter(Boolean).join('');
+  box.className = box.innerHTML ? 'frow' : '';
+  if (ps.includes('claude-code')) box.insertAdjacentHTML('beforeend', '<p class="hint" style="grid-column:1/-1">Claude Code: install it and sign in once (<code>claude</code> in a terminal). No API key needed.</p>');
+}
+async function saveSetup(values) {
+  const r = await post('/api/setup/env', {values});
+  toast(r.ok ? 'Saved' : 'Could not save'); await render();
+}
+function saveModels() {
+  const spec = t => { const pv = $('#p-' + t).value, n = $('#n-' + t).value.trim(); return pv ? pv + (n ? ':' + n : '') : ''; };
+  const v = {JHA_MODEL: spec('model'), JHA_DRAFT_MODEL: spec('draft')};
+  document.querySelectorAll('#mfields input').forEach(i => { v[i.id.slice(2)] = i.value; });
+  saveSetup(v);
+}
+async function testSetup(what, btn) {
+  const out = $('#res-' + (what === 'draft' ? 'model' : what)), old = btn.innerHTML;
+  btn.innerHTML = '<span class="spin"></span>Testing…'; btn.disabled = true; out.textContent = ''; out.className = 'res';
+  const r = await post('/api/setup/test', {what});
+  btn.innerHTML = old; btn.disabled = false;
+  out.className = 'res ' + (r.ok ? 'ok' : 'bad');
+  out.textContent = r.ok ? (r.ms != null ? `${what === 'draft' ? 'Draft model' : 'Model'} answered in ${(r.ms / 1000).toFixed(1)} s (${r.model}).` : r.msg) : (r.error || r.msg || 'Failed');
+}
 
 async function renderActivity(p) {
   const ev = await api('/api/events');
@@ -610,10 +721,12 @@ async function render() {
   const p = $('#page');
   if (tab === 'jobs') await renderJobs(p);
   else if (tab === 'storybook') await renderStorybook(p);
+  else if (tab === 'setup') await renderSetup(p);
   else await renderActivity(p);
 }
 document.querySelectorAll('aside .nav').forEach(b => b.onclick = () => { tab = b.dataset.tab; clearInterval(poll); render(); });
-render(); showRefresh(); setInterval(showRefresh, 60000);
+api('/api/setup').then(st => { setupBadge(st); if (!st.ready) tab = 'setup'; }).catch(() => {}).finally(() => render());
+showRefresh(); setInterval(showRefresh, 60000);
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <script src="/static/live-editor.js" defer></script>

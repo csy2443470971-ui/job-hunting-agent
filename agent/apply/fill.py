@@ -80,11 +80,11 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
          headed: bool = False) -> dict:
     log = []
     with sync_playwright() as p:
-        b = p.chromium.launch(headless=not headed)
-        pg = b.new_page(viewport={"width": 1280, "height": 1600})
+        from .browser import open_page   # the agent's own browser profile, with any sign-ins you made there
+        pg, close = open_page(p, headless=not headed, viewport={"width": 1280, "height": 1600})
         pg.goto(url, wait_until="networkidle", timeout=60000); pg.wait_for_timeout(1500)
         if "not found" in pg.inner_text("body")[:300].lower():
-            b.close(); return {"ok": False, "error": "posting closed", "log": log}
+            close(); return {"ok": False, "error": "posting closed", "log": log}
         fields = pg.evaluate(FIELDS_JS)
         # files first: some ATSs (Ashby) parse an uploaded résumé and reset the form state, wiping earlier typing
         fields.sort(key=lambda f: 0 if f["type"] == "file" else 1)
@@ -256,5 +256,5 @@ def fill(url: str, answers: dict[str, str], resume_pdf: str | None, shot_path: s
                 still_form = False
             result["submitted"] = bool(confirmed) and not still_form
             pg.screenshot(path=shot_path.replace(".png", "-after.png"), full_page=True)
-        b.close()
+        close()
     return result

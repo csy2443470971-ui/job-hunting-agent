@@ -12,7 +12,8 @@ import re
 from typing import Literal
 from pydantic import BaseModel, Field
 from . import config
-from .providers import structured  # anthropic | openai_compat | claude_code, see agent/providers.py
+from . import prompts as P         # every prompt, in one file
+from .providers import structured  # the model (and the optional draft model), see agent/providers.py
 
 
 def _brief() -> str:
@@ -45,9 +46,8 @@ def score_job(job: dict) -> JobScore:
     roles = config.roles()
     posting = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\nLocation: {job.get('location')}\n"
                f"Remote: {job.get('remote')}\nURL: {job.get('url')}\n\n{(job.get('description') or '')[:12000]}")
-    return structured(_system(f"Judge whether {config.first_name()} is a credible candidate for this posting, as a strict recruiter in that field would. "
-                       "Map it to one role family below; respect that family's seniority guard (cap at 50, action 'maybe'). "
-                       "Work authorisation is settled, so it is never a blocker. Role families: " + json.dumps(roles, ensure_ascii=False)), posting, JobScore, effort="low", max_tokens=2000, model=config.MODEL_SCORE)
+    task = P.RANK.format(first_name=config.first_name(), roles=json.dumps(roles, ensure_ascii=False))
+    return structured(_system(task), posting, JobScore, effort="low", max_tokens=2000, tier="draft")   # every posting: the draft model
 
 
 # ---------------------------------------------------------------- résumé
@@ -105,9 +105,7 @@ class ResumeContent(BaseModel):
 
 def tailor_resume(job: dict, score: JobScore | None = None) -> ResumeContent:
     diy_max = config.preferences().get("automation", {}).get("diy_max", 0.15)
-    task = (f"Build the one-page résumé content for this posting through the matching lens in 06-roles.md. "
-            f"Mark each item's provenance honestly; 'new' items must stay under {diy_max:.0%}. "
-            "Where a piece of work has a URL in the master documents, set link_text and link.")
+    task = P.TAILOR.format(diy_max=f"{diy_max:.0%}")
     posting = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\nLocation: {job.get('location')}\n\n{(job.get('description') or '')[:12000]}")
     if score:
         posting += "\n\n## SCORING NOTES\n" + score.model_dump_json(indent=1)
@@ -117,9 +115,7 @@ def tailor_resume(job: dict, score: JobScore | None = None) -> ResumeContent:
 def revise_resume(job: dict, current: dict, instruction: str) -> ResumeContent:
     """The person's note on one résumé ("lead with the climate work", "shorter bullets"), applied to that résumé only.
     Same rules as tailoring: facts come from the master documents, nothing is invented."""
-    task = ("Revise this one-page résumé as the person asks. Change only what the note asks for; keep everything else as it is. "
-            "Facts, numbers, titles and dates come from the master documents only: if the note asks for something they don't "
-            "support, leave it out and say so in tailoring_notes. Keep provenance honest.")
+    task = P.REVISE
     body = (f"## THE PERSON'S NOTE\n{instruction}\n\n## CURRENT RÉSUMÉ\n{json.dumps(current, ensure_ascii=False)[:20000]}\n\n"
             f"## POSTING\nCompany: {job.get('company')}\nTitle: {job.get('title')}\n\n{(job.get('description') or '')[:8000]}")
     return structured(_system(task), body, ResumeContent, effort="high", max_tokens=16000)
@@ -140,15 +136,12 @@ class FormAnswers(BaseModel):
 
 
 WHY_US = re.compile(r"\bwhy\b.*\b(us|join|interest|company|here)|interested in|excit|what (draws|attracts)|most interesting aspects|motivat", re.I)
-WHY_US_RULE = ("For a why-us question (why this company, what excites you about us): open with the company's mission in a sentence, "
-               "in their words or close to them; then why it matters to the candidate as a person: character, habits, what they "
-               "love doing (07-voice.md); experience last, one light touch at most. Never open with the candidate. "
-               "A little American warmth and energy is welcome; hype words are not.")
+WHY_US_RULE = P.WHY_US
 
 
 def answer_form(job: dict, questions: list[dict]) -> FormAnswers:
     """questions: [{label, required, type, options?}] extracted from the ATS form."""
-    task = f"Answer this application form. Anything only {config.first_name()} can answer goes in needs_human with a short reason."
+    task = P.ANSWERS.format(first_name=config.first_name())
     body = (f"Company: {job.get('company')}\nTitle: {job.get('title')}\n\n## QUESTIONS\n" +
             json.dumps(questions, ensure_ascii=False, indent=1) + "\n\n## POSTING\n" + (job.get('description') or '')[:8000])
     if any(WHY_US.search(q.get("label") or "") for q in questions):
@@ -195,11 +188,10 @@ class EmailDraft(BaseModel):
 
 def draft_email(kind: Literal["application", "proposal", "social_mention"], company: str, context: str,
                 problem_statement: str = "") -> EmailDraft:
-    task = (f"Write a {kind.replace('_', ' ')} email from {config.first_name()} to this company. Hinge it on one concrete thing in the context; "
-            "if the context is thin, write less rather than pad.")
+    task = P.EMAIL.format(kind=kind.replace("_", " "), first_name=config.first_name())
     body = f"Company: {company}\n\n## CONTEXT (posting / post / article)\n{context[:10000]}"
     if problem_statement:
-        body += f"\n\n## THEIR STATED PROBLEM\n{problem_statement}\n\nPropose, in 2-3 sentences, what the person would do about it, grounded in what they have actually done."
+        body += f"\n\n## THEIR STATED PROBLEM\n{problem_statement}\n\n{P.EMAIL_PROBLEM}"
     return structured(_system(task), body, EmailDraft, effort="high", max_tokens=4000)
 
 
@@ -210,7 +202,7 @@ class Repaired(BaseModel):
 
 def repair_text(text: str, problems: str, kind: str = "resume") -> str:
     """Rewrite one bullet / answer / email so it passes the style guide's bans. Facts must not change."""
-    return structured(_system("Rewrite the text to fix the listed problems. Same facts, same or shorter length."), f"Kind: {kind}\nProblems:\n{problems}\n\nText:\n{text}", Repaired, effort="low", max_tokens=4000).text
+    return structured(_system(P.REPAIR), f"Kind: {kind}\nProblems:\n{problems}\n\nText:\n{text}", Repaired, effort="low", max_tokens=4000).text
 
 
 def clean_resume(content: "ResumeContent") -> list[str]:

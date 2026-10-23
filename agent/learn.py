@@ -58,11 +58,9 @@ def propose(con) -> int:
     body = ("## Notes from the person\n" + "\n".join(f"- (app {n['app_id']}) {n['text']}" for n in notes) +
             "\n\n## Reasons given when rejecting drafts\n" + "\n".join(f"- (app {r['id']}) {r['error']}" for r in rejected) +
             "\n\n## Current brief\n" + (config.DOCS_DIR / "00-house-rules.md").read_text(encoding="utf-8"))
-    task = ("Propose the smallest patches that would have prevented each problem. Prefer one example row in the brief over a new rule; "
-            "keep the brief to one page. Use storybook_line only to reword an existing line with the same facts, quoting it exactly in 'before'. "
-            "Use ban_phrase for a phrase that should never appear. Use preference for changes to what to apply for, where, or how often: replace one exact line of preferences.yaml in 'before' with the edited line in 'after'. Skip notes that need no change.")
+    from .prompts import LEARN as task
     body += "\n\n## Current preferences.yaml\n" + (config.PROFILE_DIR / "preferences.yaml").read_text(encoding="utf-8")
-    res = structured(_system(task), body, Patches, effort="high", max_tokens=6000)
+    res = structured(_system(task), body, Patches, effort="high", max_tokens=6000, tier="draft")   # you apply each one
     for p in res.patches:
         con.execute("INSERT INTO proposals(at, kind, target, before, after, reason, source) VALUES (?,?,?,?,?,?,?)",
                     (db.now(), p.kind, p.target, p.before, p.after, p.reason, p.source))

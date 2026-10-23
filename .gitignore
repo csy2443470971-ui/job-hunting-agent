@@ -51,3 +51,6 @@ deck/live-editor.js
 
 # the Mac app build
 mac/build/
+
+# the installers create these
+.venv/
